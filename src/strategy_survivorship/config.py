@@ -24,11 +24,20 @@ from typing import Any
 # Order in which independent random streams are spawned from the root
 # SeedSequence.  This order is part of the reproducibility contract: changing it
 # changes every downstream number.  Never reorder, only append.
+# Appending to this tuple is safe: SeedSequence.spawn(n) hands child i the key
+# (i,), so a longer spawn leaves the first four children bit-identical and every
+# Stage 1 number reproduces unchanged.  Never reorder, only append.
 STREAM_ORDER: tuple[str, ...] = (
     "calibration_valid",
     "test_valid",
     "test_invalid",
     "diagnostic",
+    # --- Stage 1.1 ---
+    "prob_time_valid",
+    "prob_time_invalid",
+    "switch_fixed",
+    "switch_random",
+    "switch_matched_cal",
 )
 
 
@@ -59,13 +68,43 @@ class Stage1Config:
     eval_horizons: tuple[int, ...] = (126, 252, 504)  # half-year / 1y / 2y
     # 100 replications put the relative SE of an estimated sd near 7%, enough to
     # separate 'no calibration excess' from a 25% inflation. 20 was not.
-    n_calibration_replications: int = 100
+    # The Beta / Beta-binomial law in `analytic_calibration` is exact, so this
+    # replication study is now an optional cross-check, not a default step.
+    n_calibration_replications: int = 0
     wilson_z: float = 1.959963984540054  # two-sided 95%
 
     # --- single-shock diagnostic (NOT part of the benchmark) ---------------
     shock_day: int = 252  # 1-based trading day the shock is added on
     shock_in_daily_sigma: float = 8.0  # +/- this many sigma_daily
     diagnostic_path_index: int = 0  # fixed path id, chosen before looking at it
+
+    # --- Stage 1.1 diagnostics ---------------------------------------------
+    # Probability-time: how long belief takes to move.  These horizons are a
+    # separate diagnostic and do NOT inherit the 504-day false-alarm budget.
+    prob_time_paths: int = 5000
+    prob_time_report_days: tuple[int, ...] = (126, 252, 504)
+    prob_time_long_days: tuple[int, ...] = (1260, 2520)  # 5y, 10y
+    prob_thresholds: tuple[float, ...] = (0.80, 0.90, 0.95)
+    prob_coverage_target: float = 0.80
+    brier_days: tuple[int, ...] = (252, 504)
+    sensitivity_sharpe: tuple[float, ...] = (1.0, 0.6)
+
+    # Random failure time.  T = last valid trading day; every path is watched for
+    # `switch_post_window` further days, so the post-failure window is identical
+    # for every T.
+    switch_fixed_T: tuple[int, ...] = (0, 252, 756, 1260)
+    switch_fixed_paths: int = 2000
+    switch_random_paths: int = 5000
+    switch_random_T_max: int = 1260
+    switch_post_window: int = 504
+    switch_post_horizons: tuple[int, ...] = (126, 252, 504)
+    # Declared before the run so the random group cannot be re-binned to taste.
+    switch_T_bin_edges: tuple[int, ...] = (0, 252, 504, 756, 1008, 1261)
+    # Matched pre-failure false-alarm diagnostic: a common nominal budget is
+    # not a common realised pre-failure alarm rate, so each detector is
+    # re-calibrated on independent valid-only paths to hit this rate.
+    switch_matched_pre_fa: float = 0.15
+    switch_matched_cal_paths: int = 2000
 
     # --- reproducibility ----------------------------------------------------
     root_seed: int = 20260905
@@ -137,6 +176,11 @@ class Stage1Config:
         }
         return d
 
+    @property
+    def switch_max_days(self) -> int:
+        """Longest path any switching group needs: latest T plus the post window."""
+        return max(max(self.switch_fixed_T), self.switch_random_T_max) + self.switch_post_window
+
     def smoke(self) -> "Stage1Config":
         """A tiny variant used to check the pipeline runs before the full scale."""
         from dataclasses import replace
@@ -146,7 +190,9 @@ class Stage1Config:
             n_calibration=400,
             n_test_valid=400,
             n_test_invalid=400,
-            n_calibration_replications=3,
+            prob_time_paths=200,
+            switch_fixed_paths=150,
+            switch_random_paths=200,
             label="stage1_smoke",
         )
 

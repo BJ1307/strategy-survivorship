@@ -1,0 +1,13 @@
+detector,true_state,threshold_b,diagnostic_horizon_days,n_paths,frac_reached,frac_not_reached,median_first_hit_days,median_first_hit_note,days_to_80pct_coverage,days_to_80pct_note
+binary_gaussian,valid,0.8,2520,5000,0.2258,0.7742,,not reached within 2520d,,not reached within 2520d
+binary_gaussian,valid,0.9,2520,5000,0.0962,0.9038,,not reached within 2520d,,not reached within 2520d
+binary_gaussian,valid,0.95,2520,5000,0.043,0.957,,not reached within 2520d,,not reached within 2520d
+binary_gaussian,invalid,0.8,2520,5000,0.9598,0.040200000000000014,430,,1009,
+binary_gaussian,invalid,0.9,2520,5000,0.9132,0.08679999999999999,787,,1607,
+binary_gaussian,invalid,0.95,2520,5000,0.8588,0.1412,1122,,2123,
+binary_student_t,valid,0.8,2520,5000,0.314,0.6859999999999999,,not reached within 2520d,,not reached within 2520d
+binary_student_t,valid,0.9,2520,5000,0.1568,0.8432,,not reached within 2520d,,not reached within 2520d
+binary_student_t,valid,0.95,2520,5000,0.08,0.92,,not reached within 2520d,,not reached within 2520d
+binary_student_t,invalid,0.8,2520,5000,0.961,0.039000000000000035,345,,874,
+binary_student_t,invalid,0.9,2520,5000,0.9292,0.07079999999999997,629,,1381,
+binary_student_t,invalid,0.95,2520,5000,0.8882,0.11180000000000001,913,,1879,

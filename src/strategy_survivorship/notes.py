@@ -45,54 +45,43 @@ FIXED_ISSUES: tuple[tuple[str, str], ...] = (
     ),
     (
         "Wilson intervals were the only stated uncertainty",
-        "The pointwise Wilson interval covers Monte-Carlo noise in one rate on one "
-        "test set and nothing else, so the report had no magnitude for the "
-        "uncertainty contributed by the calibration draw itself. Added a "
-        "replication study (module `robustness`, run as part of the pipeline) that "
-        "repeats simulate -> calibrate -> freeze -> measure under independent root "
-        "seeds, decomposes the variance and tests the excess over the binomial "
-        "term. Section 5.4 reports the result; the Wilson widths are now labelled "
-        "as a lower bound.",
+        "The pointwise Wilson interval answers 'given THIS frozen threshold, how "
+        "noisy is the rate measured on 5,000 fresh test paths'. That was the only "
+        "uncertainty reported, so the report said nothing about how much the whole "
+        "pipeline moves when the calibration sample is redrawn. Stage 1.1 answers "
+        "the second question exactly -- the threshold is an order statistic, so its "
+        "true false-alarm probability is Beta(j, N+1-j) with j = floor(alpha*N)+1 -- "
+        "and the report now keeps the two questions separate instead of treating "
+        "one as a bound on the other.",
     ),
     (
-        "The first version of that replication study was underpowered",
-        "At 20 replications the estimated standard deviations carried a ~16% "
-        "relative standard error, wide enough that two of the eight combinations "
-        "returned an inflation factor below 1 -- impossible in expectation, since "
-        "total variance cannot fall below the binomial term. Raising the default to "
-        "100 replications (~7% relative SE) resolved it: all eight combinations now "
-        "reject 'no calibration excess'. The lesson is recorded because the "
-        "under-powered version would have supported a wrong sentence in the report.",
+        "The stopping rule for the replication study was invalid",
+        "The replication count was raised from 20 to 100 with the stated reason "
+        "that at 20 'two of the eight combinations returned an inflation factor "
+        "below 1' and at 100 'all eight reject'. Deciding when to stop sampling by "
+        "looking at significance biases the result towards significance, and an "
+        "empirical sd landing below a reference value in a small sample is ordinary "
+        "sampling noise, not evidence that the theory is wrong. Both the rule and "
+        "the reasoning are withdrawn. Stage 1.1 replaces the study with the exact "
+        "Beta / Beta-binomial law and keeps the 100 replications only as a one-off "
+        "cross-check (it agrees, max |z| = 1.57); the replication stage is no longer "
+        "part of the default run.",
     ),
     (
-        "The known-volatility control's answer was computed but never stated",
-        "The control exists to separate 'estimating sigma' from the rest of the "
-        "rolling detectors' handicap, and the numbers showed the two rolling rows "
-        "are nearly identical. That conclusion -- volatility estimation costs "
-        "almost nothing at this sample size, the handicap is the 252-day start-up "
-        "delay -- was missing from the report and has been added.",
+        "An unverified causal attribution about the rolling detectors",
+        "The report stated that the rolling detectors lag 'because of the one-year "
+        "start-up delay and the equal weighting inside the window'. No experiment "
+        "isolated that: establishing it needs a control in which every detector may "
+        "only alarm from day 252 and each is calibrated independently. The claim is "
+        "deleted; only what the known-vol control actually shows is kept.",
     ),
     (
-        "Comparison-fairness caveat was incomplete",
-        "The report warned that the Bayesian detectors update from day 1 while the "
-        "rolling ones wait a year, but omitted the larger advantage: under this DGP "
-        "the Bayesian likelihood is exactly correct and the true alternative S=1 is "
-        "literally one of its two hypotheses, while the trailing Sharpe knows "
-        "neither. Both halves of the caveat are now stated.",
-    ),
-    (
-        "The calibration-FAR column could be read as a result",
-        "With N = 5,000 and alpha in {0.05, 0.15}, floor(alpha*N)/N equals alpha "
-        "exactly, so that column is a mechanical property of the threshold rule, "
-        "not evidence that anything works. The report now says so at the point of "
-        "use.",
-    ),
-    (
-        "Figure 1 drew one model's threshold beside two models' alarms",
-        "The panel plotted only the Gaussian alarm thresholds while marking the "
-        "first alarm of both Bayesian detectors, each computed against its own "
-        "threshold, so the Student-t marker sat visibly below the drawn line. Each "
-        "detector's threshold is now drawn in its own colour.",
+        "The Gaussian ranking was stated without its scope",
+        "Gaussian leads only under the matched Gaussian DGP and the decision rules "
+        "as implemented. Stage 1.1's random-failure-time diagnostic shows the "
+        "ranking reverses once a strategy is valid first and fails later, so the "
+        "Stage 1 comparison is now explicitly scoped and cross-references that "
+        "result.",
     ),
 )
 
@@ -107,25 +96,27 @@ LIMITATIONS: tuple[str, ...] = (
     "volatility estimate.",
     "The two Bayesian detectors update from day 1 while the two rolling detectors "
     "are silent until day 252. Part of the measured gap is this difference in "
-    "operating regime, not evidence that the Bayesian recursion is intrinsically "
-    "better.",
+    "operating regime, but no experiment here isolates how much, so the cause is "
+    "left open rather than attributed.",
+    "Every Stage 1 result assumes the state is CONSTANT over the whole horizon. "
+    "Stage 1.1 shows the detector ranking reverses once the strategy is valid "
+    "first and fails later, so the Stage 1 ranking should not be carried into "
+    "any decaying-strategy setting.",
     "Both Bayesian detectors assume the true Sharpe is exactly 0 or exactly 1, and "
     "under this DGP that assumption is exactly right -- the true alternative is "
     "literally one of the two hypotheses, and the Gaussian detector's noise law is "
     "correct as well. The trailing Sharpe assumes neither. A meaningful part of "
     "the measured gap is therefore correct specification, which is not free in "
     "practice; a continuous or three-state prior is deferred to a later stage.",
-    "Thresholds are calibrated on a finite (5,000-path) calibration sample. "
-    "Empirical control on that sample is not a guarantee about the population "
-    "false-alarm rate; the independent test FAR can and does land slightly either "
-    "side of the target. The replication study in section 5.4 quantifies this: "
-    "the realised FAR scatters with a standard deviation about 1.3-1.6 times the "
-    "binomial SE of a single measurement.",
-    "The reported Wilson intervals are pointwise and are therefore a LOWER bound "
-    "on the real uncertainty. They cover Monte-Carlo noise in one rate at one day "
-    "-- not the whole time curve simultaneously, and not the calibration draw. "
-    "Use the inflated standard deviation from section 5.4 when judging whether a "
-    "realised FAR sits on target.",
+    "Thresholds are calibrated on a finite (5,000-path) calibration sample, so "
+    "the frozen threshold's true false-alarm probability is a random variable. "
+    "Its exact law is Beta(j, N+1-j) with j = floor(alpha*N)+1; see Stage 1.1 "
+    "section 3. Note E[p_FA] = j/(N+1) sits slightly ABOVE the nominal alpha.",
+    "The reported Wilson intervals are pointwise and conditional on the frozen "
+    "threshold: they cover Monte-Carlo noise in one rate at one day, not the "
+    "whole time curve simultaneously, and not the spread induced by redrawing "
+    "the calibration sample. That second spread is a different question with its "
+    "own exact answer (Stage 1.1 section 3); neither bounds the other.",
     "The Student-t detector is evaluated only under a Gaussian DGP here, where it "
     "is mis-specified by construction. Down-weighting one outlier is not a "
     "solution to persistent stochastic volatility, and nothing in this stage tests "

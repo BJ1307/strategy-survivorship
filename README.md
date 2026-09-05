@@ -43,13 +43,14 @@ pip install -r requirements.txt && pip install -e .
 
 ```bash
 .venv/bin/python -m pytest                                # 验证
-.venv/bin/python -m strategy_survivorship.run_stage1      # 正式规模实验 + 全部输出
+.venv/bin/python -m strategy_survivorship.run_stage1      # 主 benchmark（约 3 秒）
+.venv/bin/python -m strategy_survivorship.run_stage11     # Stage 1.1 诊断（约 20 秒）
 ```
 
-第二条命令重建 `outputs/` 下的**全部**结果：表格、JSON、四张图和研究报告。
+这两条命令重建 `outputs/` 下的**全部**结果：表格、JSON、四张图和研究报告。
 不依赖任何 notebook，也不需要手动按顺序执行单元格。
-在一台普通笔记本上约需 **100 秒**，其中约 95 秒是 100 次独立复算的校准不确定性研究
-（`--replications 0` 可跳过，主实验本身只要约 3 秒）。
+在一台普通笔记本上主 benchmark 约 3 秒、Stage 1.1 约 20 秒。
+校准不确定性已改用解析解，不再需要昂贵的重复模拟。
 
 其它选项：
 
@@ -58,7 +59,7 @@ pip install -r requirements.txt && pip install -e .
 | `--smoke` | 400 条路径的小规模冒烟运行，约 1 秒，输出到 `outputs/smoke/` |
 | `--out DIR` | 指定输出目录 |
 | `--seed N` | 覆盖根随机种子（用于稳定性检查，**不用于**挑选好看的结果） |
-| `--replications N` | 校准不确定性研究的复算次数（默认 100；`0` 关闭）|
+| `--replications N` | 校准不确定性的重复模拟次数（默认 `0`，已被解析解取代；设 N≥2 可作交叉验证）|
 | `--no-figures` | 跳过绘图 |
 
 ---
@@ -72,7 +73,12 @@ src/strategy_survivorship/
   detectors.py    四个检测器 + 影响函数
   evaluate.py     阈值校准、首次穿越、指标与区间
   plots.py        四张图
-  robustness.py   多种子复算：阈值抽样对实际误杀率的贡献
+  robustness.py   多种子复算（可选交叉验证，默认关闭）
+  analytic_calibration.py  门槛真实误杀概率的 Beta / Beta-binomial 精确律
+  probability_time.py      失效概率 q_n、概率门槛首达时间、Brier 与可靠性
+  switching.py             随机失效时间 T 的 DGP 与指标（含匹配失效前误杀对照）
+  paired.py                检测器之间的配对差异与区间
+  plots_stage11.py / report_stage11.py / run_stage11.py   Stage 1.1 图、报告、流程
   report.py       生成 stage1_report.md
   notes.py        写入报告的“已修正问题”与“限制”
   run_stage1.py   端到端流程（一条命令）
@@ -90,7 +96,10 @@ theory.md         公式、符号、单位、推导、参考链接
 | `outputs/stage1_summary.json` | 参数、样本规模、阈值、指标、诊断、耗时的紧凑汇总 |
 | `outputs/stage1_first_passages.csv` | 每条测试路径：真实状态、是否报警、首次报警日、截断时间 |
 | `outputs/stage1_curves.csv` | 每日累计报警率曲线（逐检测器 / α / 状态） |
-| `outputs/stage1_calibration_robustness.csv` | 100 次复算下阈值与实际误杀率的分布、方差分解与检验 |
+| `outputs/stage1_calibration_robustness.csv` | 100 次复算（一次性交叉验证，非默认步骤）|
+| `outputs/stage11_report.md` | **Stage 1.1 报告**：解释修正、概率-时间、随机失效时间 |
+| `outputs/stage11_*.csv` | Stage 1.1 各项结果（解析校准、配对比较、概率门槛、失效时间指标等）|
+| `outputs/figures/fig1{1,2,3,4}_*.png` | Stage 1.1 四张图 |
 | `outputs/stage1_diagnostic_traces.csv` | 冲击诊断逐日收益、增量、log odds、概率 |
 | `outputs/run_metadata.json` | 运行配置、随机流指纹、环境版本、分阶段耗时 |
 | `outputs/figures/fig1_example_paths.png` | 固定示例路径的累计收益与两个贝叶斯概率 |

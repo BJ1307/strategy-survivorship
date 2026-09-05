@@ -243,7 +243,10 @@ def write_report(
     A("### 5.3 怎么读这些数字")
     A("")
     A(
-        "比较应当围绕**实际误杀率、检出曲线和等待时间**三者一起看，不要根据单张图或单个数字宣布普遍最优："
+        "比较应当围绕**实际误杀率、检出曲线和等待时间**三者一起看。"
+        "本节任何排序都只在**当前匹配的高斯 DGP** 与**当前已实现的决策规则**下成立，"
+        "不构成普遍最优的结论；Stage 1.1 的随机失效时间诊断显示，"
+        "一旦策略先有效后失效，这个排序会反转："
     )
     A("")
     A(
@@ -269,8 +272,10 @@ def write_report(
         f"- **known-vol 控制组回答了它被造出来的那个问题**：把滚动 Sharpe 的分母换成已知日波动率之后，"
         "检出率与截断平均检测时间几乎没有变化（见上表两行的差异）。"
         f"也就是说在 {cfg.rolling_window} 天窗口、n = "
-        f"{summary['sample_sizes']['test_invalid_paths']} 的规模下，**估计波动率本身几乎不构成代价**；"
-        "滚动模型落后的原因是一年的启动延迟和窗口内的等权平均，不是波动率估计误差。"
+        f"{summary['sample_sizes']['test_invalid_paths']} 的规模下，**估计波动率本身几乎不构成代价**。"
+        "至于滚动模型落后的**原因**是什么，本阶段没有做能够分离的实验："
+        "要归因于启动延迟，必须另做一组让所有检测器都从第 252 天才允许报警、并各自独立校准的对照。"
+        "在那之前不对原因下结论。"
     )
     A(
         "- 本轮数据是高斯的，Student-t 检测器属于**似然失配**模型，"
@@ -279,80 +284,28 @@ def write_report(
     )
     A("")
 
-    rb = summary.get("calibration_robustness")
-    if rb:
-        R = int(rb[0]["n_replications"])
-        A("### 5.4 阈值本身的不确定性（Wilson 区间没有覆盖的部分）")
-        A("")
-        A(
-            "上面每个 Wilson 区间只覆盖“在一份测试集上测一个比率”的蒙特卡洛噪声。"
-            "但阈值本身也是从一份有限的校准样本估出来的：换一份校准抽样就会得到不同的阈值，"
-            "进而得到不同的实际误杀率。为了给这部分不确定性一个量级，"
-            f"把整个「模拟 → 在 {summary['sample_sizes']['calibration_valid_paths']} 条有效路径上校准 → 冻结 → "
-            f"在另外 {summary['sample_sizes']['test_valid_paths']} 条独立有效路径上测量」的流程，"
-            f"在 **{R} 个互相独立的根种子**下完整重复（这些种子不含正式实验所用的那个）。"
-        )
-        A("")
-        A(
-            "重画一次全部数据时，实际误杀率的方差可以分解为"
-            "「阈值抽样带来的方差」加「测试集二项方差」。下表的“校准分量”即前者的估计"
-            "（取超出二项方差的部分再开方；若估计为负说明本研究分辨不出，记为 0）。"
-        )
-        A("")
-        A(
-            "| 检测器 | α | 实际误杀率均值 | 标准差 | 单次二项 SE | 放大倍数 | 校准分量 sd | p（无校准附加方差） | 阈值 sd |"
-        )
-        A("|---|---|---|---|---|---|---|---|---|")
-        for r in rb:
-            star = "" if r["p_value_no_calibration_excess"] >= 0.05 else " **\\***"
-            calib = "≈0（分辨不出）" if r["calibration_excess_var_is_negative"] else f"{r['calibration_only_sd']:.4f}"
-            A(
-                f"| {LABELS[r['detector']]} | {r['far_target']:g} | {r['mean_test_far']:.4f} | "
-                f"{r['sd_test_far']:.4f} ± {r['sd_test_far_se']:.4f} | "
-                f"{r['binomial_se_single_run']:.4f} | {r['sd_inflation_vs_binomial']:.2f}× | "
-                f"{calib} | {_pval(r['p_value_no_calibration_excess'])}{star} | {r['sd_threshold']:.4f} |"
-            )
-        A("")
-        A("（`*` = 在 0.05 水平上可以拒绝“没有校准附加方差”。）")
-        A("")
-
-        # --- conclusions computed from the table, never hard-coded ------------
-        bias = [(r["mean_test_far"] - r["far_target"]) / r["far_target"] for r in rb]
-        sig = [r for r in rb if r["p_value_no_calibration_excess"] < 0.05]
-        infl_sig = [r["sd_inflation_vs_binomial"] for r in sig]
-        A(
-            f"**(1) 校准规则基本无偏。** {R} 次复算中，实际误杀率均值与目标的相对偏差在 "
-            f"{min(bias) * 100:+.1f}% 到 {max(bias) * 100:+.1f}% 之间。"
-            "所以第 5.1–5.2 节里实际误杀率略高于或略低于目标，属于抽样波动，不是系统性偏差；"
-            "也不需要用测试集去回调阈值。"
-        )
-        A("")
-        if sig:
-            names = "、".join(sorted({LABELS[r["detector"]] for r in sig}))
-            A(
-                f"**(2) 逐点 Wilson 区间是下界，但幅度有限。** "
-                f"{len(sig)}/{len(rb)} 个组合（{names}）可以在 0.05 水平上拒绝"
-                "“实际误杀率的散布只等于二项噪声”，其标准差是单次二项标准误的 "
-                f"{min(infl_sig):.2f}–{max(infl_sig):.2f} 倍；"
-                + ("" if len(sig) == len(rb) else "其余组合的校准附加方差在本研究的分辨率下测不出来。")
-                + "结论是：判断某个实际误杀率是否偏离目标时，应当用本表的标准差列，"
-                "而不是正文的 Wilson 宽度——后者会偏窄。"
-            )
-        else:
-            A(
-                "**(2) 本研究未能分辨出校准附加方差。** 所有组合都无法在 0.05 水平上拒绝"
-                "“实际误杀率的散布只等于二项噪声”。这**不等于**阈值不确定性为零，"
-                f"只说明它小于 {R} 次复算能分辨的幅度；Wilson 区间仍应视为下界。"
-            )
-        A("")
-        A(
-            f"（每个标准差本身由 {R} 次复算估出，相对标准误约 "
-            f"{100 / (2 * (R - 1)) ** 0.5:.0f}%；表中已给出 ± 值。"
-            "卡方检验假设各次复算的误杀率近似正态，在 n = "
-            f"{summary['sample_sizes']['test_valid_paths']} 下是合理近似但并非精确。"
-            "完整结果见 `stage1_calibration_robustness.csv`。）"
-        )
-        A("")
+    A("### 5.4 两种不同的不确定性，不要互相当作对方的界")
+    A("")
+    A(
+        "正文表格里的 Wilson 区间回答的是：**给定这次已经冻结的门槛**，"
+        "在 5,000 条独立测试路径上测到的误杀率有多少蒙特卡洛噪声。"
+        "对这个问题它是合适的区间估计，**不是**下界。"
+    )
+    A("")
+    A(
+        "另一个问题是：**整条流程重新走一遍**（重新抽校准集、重新选门槛、重新抽测试集），"
+        "实测误杀率会有多大波动。这两个问题不同，答案也不同，"
+        "任何一个都不应被当作另一个的界。"
+    )
+    A("")
+    A(
+        "第二个问题有**精确解**，不需要昂贵的重复模拟：门槛是校准集路径最小值的第 "
+        "`j = ⌊αN⌋+1` 个顺序统计量，在最小值分布连续时其真实误杀概率服从 `Beta(j, N+1−j)`，"
+        "测试集报警数服从 `BetaBinomial(n_test, j, N+1−j)`。"
+        "推导、数值与同 100 次重复模拟的一致性检验见 Stage 1.1 报告第 3 节"
+        "（`outputs/stage11_report.md`）与 `stage11_analytic_calibration.csv`。"
+    )
+    A("")
 
     # ---------------- 6 ----------------
     A("## 6. 单次冲击诊断")

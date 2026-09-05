@@ -21,11 +21,60 @@
       252,
       504
     ],
-    "n_calibration_replications": 100,
+    "n_calibration_replications": 0,
     "wilson_z": 1.959963984540054,
     "shock_day": 252,
     "shock_in_daily_sigma": 8.0,
     "diagnostic_path_index": 0,
+    "prob_time_paths": 5000,
+    "prob_time_report_days": [
+      126,
+      252,
+      504
+    ],
+    "prob_time_long_days": [
+      1260,
+      2520
+    ],
+    "prob_thresholds": [
+      0.8,
+      0.9,
+      0.95
+    ],
+    "prob_coverage_target": 0.8,
+    "brier_days": [
+      252,
+      504
+    ],
+    "sensitivity_sharpe": [
+      1.0,
+      0.6
+    ],
+    "switch_fixed_T": [
+      0,
+      252,
+      756,
+      1260
+    ],
+    "switch_fixed_paths": 2000,
+    "switch_random_paths": 5000,
+    "switch_random_T_max": 1260,
+    "switch_post_window": 504,
+    "switch_post_horizons": [
+      126,
+      252,
+      504
+    ],
+    "switch_T_bin_edges": [
+      0,
+      252,
+      504,
+      756,
+      1008,
+      1261
+    ],
+    "switch_matched_pre_fa": 0.15,
+    "switch_matched_cal_paths": 2000,
     "root_seed": 20260905,
     "label": "stage1_benchmark",
     "notes": [
@@ -43,7 +92,12 @@
         "calibration_valid",
         "test_valid",
         "test_invalid",
-        "diagnostic"
+        "diagnostic",
+        "prob_time_valid",
+        "prob_time_invalid",
+        "switch_fixed",
+        "switch_random",
+        "switch_matched_cal"
       ]
     }
   },
@@ -89,18 +143,56 @@
       ],
       "n_children_spawned": 0,
       "pool_size": 4
+    },
+    "prob_time_valid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        4
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "prob_time_invalid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        5
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_fixed": {
+      "entropy": 20260905,
+      "spawn_key": [
+        6
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_random": {
+      "entropy": 20260905,
+      "spawn_key": [
+        7
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_matched_cal": {
+      "entropy": 20260905,
+      "spawn_key": [
+        8
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
     }
   },
   "timings_seconds": {
-    "simulate_s": 0.04932445799931884,
-    "test_statistics_s": 0.9175239579635672,
-    "calibration_s": 0.4543610420078039,
-    "evaluation_s": 0.168551083013881,
-    "diagnostic_s": 0.0016550840227864683,
-    "calibration_robustness_s": 93.50921733299037,
-    "tables_s": 0.2841795840067789,
-    "figures_s": 1.2827377920038998,
-    "total_s": 96.66758125001797
+    "simulate_s": 0.060115000000024565,
+    "test_statistics_s": 0.8412881669999877,
+    "calibration_s": 0.4377937920000079,
+    "evaluation_s": 0.19610141699999417,
+    "diagnostic_s": 0.002527499999985139,
+    "tables_s": 0.23992950000001656,
+    "total_s": 1.7777829579999889
   },
   "command": "python -m strategy_survivorship.run_stage1"
 }

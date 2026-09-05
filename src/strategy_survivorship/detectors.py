@@ -61,14 +61,18 @@ def _rolling_window_sums(x: np.ndarray, window: int) -> np.ndarray:
 
 
 def binary_gaussian_increments(returns: np.ndarray, cfg: Stage1Config) -> np.ndarray:
-    """One-step log-likelihood ratio log p(z | S=1) - log p(z | S=0).
+    """One-step log-likelihood ratio log p(z | S=s) - log p(z | S=0).
 
     With z ~ N(S/sqrt(D), 1) the Gaussian quadratic terms cancel exactly:
 
-        increment_t = z_t / sqrt(D) - 1 / (2 D).
+        increment_t = z_t * s / sqrt(D) - s^2 / (2 D),
+
+    where s = cfg.sharpe_valid is the alternative being tested (s = 1 in Stage 1,
+    which is why this used to be written with the constants folded in).
     """
     z = standardise(returns, cfg)
-    return z / cfg.sqrt_D - 1.0 / (2.0 * cfg.D)
+    s = cfg.sharpe_valid
+    return z * s / cfg.sqrt_D - s * s / (2.0 * cfg.D)
 
 
 def binary_gaussian_log_odds(returns: np.ndarray, cfg: Stage1Config) -> np.ndarray:
@@ -92,7 +96,8 @@ def binary_student_t_increments(returns: np.ndarray, cfg: Stage1Config) -> np.nd
     z = standardise(returns, cfg)
     nu = cfg.student_t_df
     a = cfg.student_t_scale
-    return student_t.logpdf(z, df=nu, loc=1.0 / cfg.sqrt_D, scale=a) - student_t.logpdf(
+    loc_alt = cfg.sharpe_valid / cfg.sqrt_D
+    return student_t.logpdf(z, df=nu, loc=loc_alt, scale=a) - student_t.logpdf(
         z, df=nu, loc=0.0, scale=a
     )
 

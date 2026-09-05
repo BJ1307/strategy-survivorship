@@ -44,7 +44,7 @@ r_t = S * σ_ann / D  +  (σ_ann / √D) * ε_t ,   ε_t ~ iid N(0, 1)
 
 收益已理解为**扣除成本后**的策略超额收益，本阶段不再额外扣一次成本。真实 Sharpe 是生成过程的参数：路径生成后**没有**任何事后平移或重新缩放，每条路径的样本 Sharpe 保持其自然的随机波动。
 
-随机流：以 `SeedSequence(20260905)` 为根，按固定顺序 `calibration_valid / test_valid / test_invalid / diagnostic` spawn 出四条互相独立的子流。所有检测器评价的是**同一份**测试路径，没有任何模型使用自己单独生成的收益。
+随机流：以 `SeedSequence(20260905)` 为根，按固定顺序 `calibration_valid / test_valid / test_invalid / diagnostic / prob_time_valid / prob_time_invalid / switch_fixed / switch_random / switch_matched_cal` spawn 出四条互相独立的子流。所有检测器评价的是**同一份**测试路径，没有任何模型使用自己单独生成的收益。
 
 ## 3. 四个检测器
 
@@ -148,39 +148,22 @@ r_t = S * σ_ann / D  +  (σ_ann / √D) * ε_t ,   ε_t ~ iid N(0, 1)
 
 ### 5.3 怎么读这些数字
 
-比较应当围绕**实际误杀率、检出曲线和等待时间**三者一起看，不要根据单张图或单个数字宣布普遍最优：
+比较应当围绕**实际误杀率、检出曲线和等待时间**三者一起看。本节任何排序都只在**当前匹配的高斯 DGP** 与**当前已实现的决策规则**下成立，不构成普遍最优的结论；Stage 1.1 的随机失效时间诊断显示，一旦策略先有效后失效，这个排序会反转：
 
 - 校准把每个检测器**在校准集上**压到同一个误杀率预算，因此检出率之间的比较是在大致相同的误杀成本下进行的。但测试集上的实际误杀率仍会围绕目标波动，读检出率时必须同时看同一行的实际误杀率。
 - 两个滚动模型在第 252 天之前既不会误杀也不可能检出，它们的曲线在前一年恒为 0。这是运行方式，不是性能。
 - **两个贝叶斯检测器在本轮享有一个结构性优势**：它们的似然恰好就是真实生成过程（Gaussian 版本连噪声分布都完全正确），而且真实的备择假设 S = 1 正是它们两个候选假设之一。滚动 Sharpe 是一个不知道备择假设、也不假设噪声分布的通用估计量。因此这里的差距同时包含了“递推方式”和“模型设定恰好正确”两件事，后者在真实场景中不会免费获得。
 - Random closure 是解析参考线，对有效和无效策略给出**完全相同**的累计报警概率；任何一个真正在利用数据的检测器，其检出曲线都应当明显高于它。
-- **known-vol 控制组回答了它被造出来的那个问题**：把滚动 Sharpe 的分母换成已知日波动率之后，检出率与截断平均检测时间几乎没有变化（见上表两行的差异）。也就是说在 252 天窗口、n = 5000 的规模下，**估计波动率本身几乎不构成代价**；滚动模型落后的原因是一年的启动延迟和窗口内的等权平均，不是波动率估计误差。
+- **known-vol 控制组回答了它被造出来的那个问题**：把滚动 Sharpe 的分母换成已知日波动率之后，检出率与截断平均检测时间几乎没有变化（见上表两行的差异）。也就是说在 252 天窗口、n = 5000 的规模下，**估计波动率本身几乎不构成代价**。至于滚动模型落后的**原因**是什么，本阶段没有做能够分离的实验：要归因于启动延迟，必须另做一组让所有检测器都从第 252 天才允许报警、并各自独立校准的对照。在那之前不对原因下结论。
 - 本轮数据是高斯的，Student-t 检测器属于**似然失配**模型，它在这里表现不如 Gaussian 是预期之中的结果，不是需要修掉的 bug；我们也没有为了让它好看而调整数据或参数。
 
-### 5.4 阈值本身的不确定性（Wilson 区间没有覆盖的部分）
+### 5.4 两种不同的不确定性，不要互相当作对方的界
 
-上面每个 Wilson 区间只覆盖“在一份测试集上测一个比率”的蒙特卡洛噪声。但阈值本身也是从一份有限的校准样本估出来的：换一份校准抽样就会得到不同的阈值，进而得到不同的实际误杀率。为了给这部分不确定性一个量级，把整个「模拟 → 在 5000 条有效路径上校准 → 冻结 → 在另外 5000 条独立有效路径上测量」的流程，在 **100 个互相独立的根种子**下完整重复（这些种子不含正式实验所用的那个）。
+正文表格里的 Wilson 区间回答的是：**给定这次已经冻结的门槛**，在 5,000 条独立测试路径上测到的误杀率有多少蒙特卡洛噪声。对这个问题它是合适的区间估计，**不是**下界。
 
-重画一次全部数据时，实际误杀率的方差可以分解为「阈值抽样带来的方差」加「测试集二项方差」。下表的“校准分量”即前者的估计（取超出二项方差的部分再开方；若估计为负说明本研究分辨不出，记为 0）。
+另一个问题是：**整条流程重新走一遍**（重新抽校准集、重新选门槛、重新抽测试集），实测误杀率会有多大波动。这两个问题不同，答案也不同，任何一个都不应被当作另一个的界。
 
-| 检测器 | α | 实际误杀率均值 | 标准差 | 单次二项 SE | 放大倍数 | 校准分量 sd | p（无校准附加方差） | 阈值 sd |
-|---|---|---|---|---|---|---|---|---|
-| Binary Gaussian | 0.05 | 0.0498 | 0.0042 ± 0.0003 | 0.0031 | 1.37× | 0.0029 | 2.1e-07 **\*** | 0.0308 |
-| Binary Student-t (nu=5) | 0.05 | 0.0501 | 0.0043 ± 0.0003 | 0.0031 | 1.41× | 0.0031 | 2.3e-08 **\*** | 0.0395 |
-| Trailing 12m Sharpe | 0.05 | 0.0493 | 0.0040 ± 0.0003 | 0.0031 | 1.28× | 0.0025 | 5.1e-05 **\*** | 0.0246 |
-| Known-vol rolling (control) | 0.05 | 0.0495 | 0.0039 ± 0.0003 | 0.0031 | 1.27× | 0.0024 | 8.7e-05 **\*** | 0.0249 |
-| Binary Gaussian | 0.15 | 0.1497 | 0.0079 ± 0.0006 | 0.0050 | 1.56× | 0.0060 | 0.0e+00 **\*** | 0.0216 |
-| Binary Student-t (nu=5) | 0.15 | 0.1505 | 0.0071 ± 0.0005 | 0.0050 | 1.40× | 0.0049 | 4.0e-08 **\*** | 0.0216 |
-| Trailing 12m Sharpe | 0.15 | 0.1494 | 0.0074 ± 0.0005 | 0.0050 | 1.46× | 0.0054 | 4.0e-10 **\*** | 0.0188 |
-| Known-vol rolling (control) | 0.15 | 0.1495 | 0.0078 ± 0.0006 | 0.0050 | 1.54× | 0.0059 | 0.0e+00 **\*** | 0.0191 |
-
-（`*` = 在 0.05 水平上可以拒绝“没有校准附加方差”。）
-
-**(1) 校准规则基本无偏。** 100 次复算中，实际误杀率均值与目标的相对偏差在 -1.4% 到 +0.3% 之间。所以第 5.1–5.2 节里实际误杀率略高于或略低于目标，属于抽样波动，不是系统性偏差；也不需要用测试集去回调阈值。
-
-**(2) 逐点 Wilson 区间是下界，但幅度有限。** 8/8 个组合（Binary Gaussian、Binary Student-t (nu=5)、Known-vol rolling (control)、Trailing 12m Sharpe）可以在 0.05 水平上拒绝“实际误杀率的散布只等于二项噪声”，其标准差是单次二项标准误的 1.27–1.56 倍；结论是：判断某个实际误杀率是否偏离目标时，应当用本表的标准差列，而不是正文的 Wilson 宽度——后者会偏窄。
-
-（每个标准差本身由 100 次复算估出，相对标准误约 7%；表中已给出 ± 值。卡方检验假设各次复算的误杀率近似正态，在 n = 5000 下是合理近似但并非精确。完整结果见 `stage1_calibration_robustness.csv`。）
+第二个问题有**精确解**，不需要昂贵的重复模拟：门槛是校准集路径最小值的第 `j = ⌊αN⌋+1` 个顺序统计量，在最小值分布连续时其真实误杀概率服从 `Beta(j, N+1−j)`，测试集报警数服从 `BetaBinomial(n_test, j, N+1−j)`。推导、数值与同 100 次重复模拟的一致性检验见 Stage 1.1 报告第 3 节（`outputs/stage11_report.md`）与 `stage11_analytic_calibration.csv`。
 
 ## 6. 单次冲击诊断
 
@@ -250,21 +233,20 @@ r_t = S * σ_ann / D  +  (σ_ann / √D) * ε_t ,   ε_t ~ iid N(0, 1)
 3. **Threshold quantile could overshoot the FAR budget** — Taking the empirical alpha-quantile of the per-path minima with a non-strict alarm rule lets the achieved calibration FAR land above alpha when there are ties. Fixed by pairing a strict '<' alarm rule with the floor(alpha*N)-th order statistic, which is conservative by construction, and asserting achieved <= target in the run.
 4. **Censored paths were indistinguishable from day-504 alarms** — Both give min(tau, H) = 504. The first-passage table now stores the alarm flag and a -1 sentinel separately from the truncated time, so a genuine day-504 crossing and a never-crossing path stay distinguishable.
 5. **Median detection time conditional on detection** — Reporting the median only over detected paths flatters detectors that rarely fire. The median is computed over all invalid paths, and reported as 'not reached within the horizon' when fewer than half alarm by H.
-6. **Wilson intervals were the only stated uncertainty** — The pointwise Wilson interval covers Monte-Carlo noise in one rate on one test set and nothing else, so the report had no magnitude for the uncertainty contributed by the calibration draw itself. Added a replication study (module `robustness`, run as part of the pipeline) that repeats simulate -> calibrate -> freeze -> measure under independent root seeds, decomposes the variance and tests the excess over the binomial term. Section 5.4 reports the result; the Wilson widths are now labelled as a lower bound.
-7. **The first version of that replication study was underpowered** — At 20 replications the estimated standard deviations carried a ~16% relative standard error, wide enough that two of the eight combinations returned an inflation factor below 1 -- impossible in expectation, since total variance cannot fall below the binomial term. Raising the default to 100 replications (~7% relative SE) resolved it: all eight combinations now reject 'no calibration excess'. The lesson is recorded because the under-powered version would have supported a wrong sentence in the report.
-8. **The known-volatility control's answer was computed but never stated** — The control exists to separate 'estimating sigma' from the rest of the rolling detectors' handicap, and the numbers showed the two rolling rows are nearly identical. That conclusion -- volatility estimation costs almost nothing at this sample size, the handicap is the 252-day start-up delay -- was missing from the report and has been added.
-9. **Comparison-fairness caveat was incomplete** — The report warned that the Bayesian detectors update from day 1 while the rolling ones wait a year, but omitted the larger advantage: under this DGP the Bayesian likelihood is exactly correct and the true alternative S=1 is literally one of its two hypotheses, while the trailing Sharpe knows neither. Both halves of the caveat are now stated.
-10. **The calibration-FAR column could be read as a result** — With N = 5,000 and alpha in {0.05, 0.15}, floor(alpha*N)/N equals alpha exactly, so that column is a mechanical property of the threshold rule, not evidence that anything works. The report now says so at the point of use.
-11. **Figure 1 drew one model's threshold beside two models' alarms** — The panel plotted only the Gaussian alarm thresholds while marking the first alarm of both Bayesian detectors, each computed against its own threshold, so the Student-t marker sat visibly below the drawn line. Each detector's threshold is now drawn in its own colour.
+6. **Wilson intervals were the only stated uncertainty** — The pointwise Wilson interval answers 'given THIS frozen threshold, how noisy is the rate measured on 5,000 fresh test paths'. That was the only uncertainty reported, so the report said nothing about how much the whole pipeline moves when the calibration sample is redrawn. Stage 1.1 answers the second question exactly -- the threshold is an order statistic, so its true false-alarm probability is Beta(j, N+1-j) with j = floor(alpha*N)+1 -- and the report now keeps the two questions separate instead of treating one as a bound on the other.
+7. **The stopping rule for the replication study was invalid** — The replication count was raised from 20 to 100 with the stated reason that at 20 'two of the eight combinations returned an inflation factor below 1' and at 100 'all eight reject'. Deciding when to stop sampling by looking at significance biases the result towards significance, and an empirical sd landing below a reference value in a small sample is ordinary sampling noise, not evidence that the theory is wrong. Both the rule and the reasoning are withdrawn. Stage 1.1 replaces the study with the exact Beta / Beta-binomial law and keeps the 100 replications only as a one-off cross-check (it agrees, max |z| = 1.57); the replication stage is no longer part of the default run.
+8. **An unverified causal attribution about the rolling detectors** — The report stated that the rolling detectors lag 'because of the one-year start-up delay and the equal weighting inside the window'. No experiment isolated that: establishing it needs a control in which every detector may only alarm from day 252 and each is calibrated independently. The claim is deleted; only what the known-vol control actually shows is kept.
+9. **The Gaussian ranking was stated without its scope** — Gaussian leads only under the matched Gaussian DGP and the decision rules as implemented. Stage 1.1's random-failure-time diagnostic shows the ranking reverses once a strategy is valid first and fails later, so the Stage 1 comparison is now explicitly scoped and cross-references that result.
 
 ## 9. 限制
 
 - The benchmark DGP is fixed-volatility iid Gaussian. Fat tails, time-varying volatility, jumps and valid-then-decaying strategies are out of scope for this stage, so no conclusion here transfers to them.
 - The daily volatility is *known* to every detector. This is an idealised condition that favours all four detectors, and the known-vol rolling control exists precisely to show how much of the rolling detectors' handicap is the volatility estimate.
-- The two Bayesian detectors update from day 1 while the two rolling detectors are silent until day 252. Part of the measured gap is this difference in operating regime, not evidence that the Bayesian recursion is intrinsically better.
+- The two Bayesian detectors update from day 1 while the two rolling detectors are silent until day 252. Part of the measured gap is this difference in operating regime, but no experiment here isolates how much, so the cause is left open rather than attributed.
+- Every Stage 1 result assumes the state is CONSTANT over the whole horizon. Stage 1.1 shows the detector ranking reverses once the strategy is valid first and fails later, so the Stage 1 ranking should not be carried into any decaying-strategy setting.
 - Both Bayesian detectors assume the true Sharpe is exactly 0 or exactly 1, and under this DGP that assumption is exactly right -- the true alternative is literally one of the two hypotheses, and the Gaussian detector's noise law is correct as well. The trailing Sharpe assumes neither. A meaningful part of the measured gap is therefore correct specification, which is not free in practice; a continuous or three-state prior is deferred to a later stage.
-- Thresholds are calibrated on a finite (5,000-path) calibration sample. Empirical control on that sample is not a guarantee about the population false-alarm rate; the independent test FAR can and does land slightly either side of the target. The replication study in section 5.4 quantifies this: the realised FAR scatters with a standard deviation about 1.3-1.6 times the binomial SE of a single measurement.
-- The reported Wilson intervals are pointwise and are therefore a LOWER bound on the real uncertainty. They cover Monte-Carlo noise in one rate at one day -- not the whole time curve simultaneously, and not the calibration draw. Use the inflated standard deviation from section 5.4 when judging whether a realised FAR sits on target.
+- Thresholds are calibrated on a finite (5,000-path) calibration sample, so the frozen threshold's true false-alarm probability is a random variable. Its exact law is Beta(j, N+1-j) with j = floor(alpha*N)+1; see Stage 1.1 section 3. Note E[p_FA] = j/(N+1) sits slightly ABOVE the nominal alpha.
+- The reported Wilson intervals are pointwise and conditional on the frozen threshold: they cover Monte-Carlo noise in one rate at one day, not the whole time curve simultaneously, and not the spread induced by redrawing the calibration sample. That second spread is a different question with its own exact answer (Stage 1.1 section 3); neither bounds the other.
 - The Student-t detector is evaluated only under a Gaussian DGP here, where it is mis-specified by construction. Down-weighting one outlier is not a solution to persistent stochastic volatility, and nothing in this stage tests that claim.
 - The single-shock diagnostic uses one pre-registered path. It explains update behaviour and nothing else; it contributes no detection or false-alarm estimate.
 
@@ -283,8 +265,8 @@ uv pip install --python .venv/bin/python -e .
 | Python | 3.13.13 (CPython) |
 | 平台 | macOS-14.2-arm64-arm-64bit-Mach-O / arm64 |
 | NumPy / SciPy / pandas / Matplotlib | 2.5.2 / 1.18.1 / 3.0.5 / 3.11.1 |
-| 总运行耗时 | 96.7 s |
-| 分阶段耗时 | simulate 0.0s，testtatistics 0.9s，calibration 0.5s，evaluation 0.2s，diagnostic 0.0s，calibration_robustness 93.5s，tables 0.3s，figures 1.3s |
+| 总运行耗时 | 1.8 s |
+| 分阶段耗时 | simulate 0.1s，testtatistics 0.8s，calibration 0.4s，evaluation 0.2s，diagnostic 0.0s，tables 0.2s |
 
 **输出文件**
 
