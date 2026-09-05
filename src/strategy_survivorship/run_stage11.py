@@ -205,7 +205,10 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
             a0 = cfg.far_targets[0]
             tau0 = first_alarm_days(stat, thresholds[(key, a0)], DETECTORS_BY_KEY[key].first_eligible_day(cfg))
             survived = ~((tau0 != NO_ALARM) & (tau0 <= T))
-            beliefs.append(belief_at_failure(-stat, T, survived, key, group))
+            b = belief_at_failure(-stat, T, survived, key, group)
+            # "survived" is threshold-dependent; record which budget defined it
+            b["survival_defined_at_alpha"] = a0
+            beliefs.append(b)
             if keep_traces:
                 traces.append((group, key, np.quantile(-stat, [0.1, 0.5, 0.9], axis=0)))
         return

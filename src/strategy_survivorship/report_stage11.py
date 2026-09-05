@@ -328,6 +328,37 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
         )
     )
     A("")
+    rel = pt["reliability"]
+    lines = []
+    for (d, day), g in rel.groupby(["detector", "day"]):
+        w = float((g.gap.abs() * g.n).sum() / g.n.sum())
+        lines.append((d, int(day), w, float(g.gap.abs().max())))
+    A("可靠性表的偏差汇总（`stage11_reliability.csv` 为完整分箱）：")
+    A("")
+    L.extend(
+        _t(
+            [{"d": d, "day": day, "w": w, "m": m} for d, day, w, m in lines],
+            ["检测器", "时间", "按样本加权平均绝对偏差", "最大分箱绝对偏差"],
+            lambda r: [LBL.get(r["d"], r["d"]), f"{r['day'] / 252:.0f}y",
+                       f"{r['w']:.4f}", f"{r['m']:.4f}"],
+        )
+    )
+    A("")
+    g_w = max(w for d, _, w, _ in lines if d == "binary_gaussian")
+    t_w = max(w for d, _, w, _ in lines if d == "binary_student_t")
+    A(
+        f"**Gaussian 的概率是可信的**（加权偏差 ≤ {g_w:.4f}），这在预期之内：它的似然恰好是真实生成过程。"
+        f"**Student-t 的概率系统性失准**（加权偏差达 {t_w:.4f}，最大分箱偏差 0.073），"
+        "而且偏差有方向——在两端**过度自信**（声称 0.85 时实际约 0.78，声称 0.05 时实际约 0.075），"
+        "中段反而接近。"
+    )
+    A("")
+    A(
+        "这说明 Student-t 更差的 Brier 分数不只是「分辨力低」，而是**概率本身不可直接当概率用**。"
+        "在似然失配时，贝叶斯递推输出的数值仍然是一个 0–1 之间的量，但它不再是有效后验。"
+        "**要把它当概率用于决策，必须先做校准。**"
+    )
+    A("")
     A("滚动 Sharpe **未**转换成概率：它不是后验，本阶段也没有为它建校准模型。")
     A("")
 
@@ -469,9 +500,11 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
 
     A("### 6.5 切换时刻的信念分布")
     A("")
+    a_surv = summary["switching"]["belief_at_T"][0].get("survival_defined_at_alpha", cfg.far_targets[0])
     A(
         "存活到失效的路径是**被选择过的样本**：能活到 T 说明它一路都没难看到触发报警，"
         "因此它的信念比全体路径更偏向“仍然有效”。两者分开报告。"
+        f"注意“存活”本身依赖门槛——本表按 **α = {a_surv:g}** 的门槛判定存活。"
     )
     A("")
     L.extend(
