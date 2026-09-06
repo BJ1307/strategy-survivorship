@@ -215,3 +215,26 @@ def test_true_sigma_is_exposed_only_where_it_exists():
             assert s is not None and s.shape == d.eps.shape and (s > 0).all()
         else:
             assert s is None
+
+
+# --------------------------------------------------------------------------- #
+# generated reports must stay machine-readable
+# --------------------------------------------------------------------------- #
+
+
+def test_every_generated_report_table_is_well_formed():
+    """Absolute-value bars in a header silently destroy a Markdown table.
+
+    This has now happened twice, so it is pinned: within one table block every
+    row must carry the same number of pipes.
+    """
+    import re
+    from pathlib import Path
+
+    for name in ("stage1_report.md", "stage11_report.md", "stage2a_report.md"):
+        f = Path("outputs") / name
+        if not f.exists():
+            continue
+        for block in re.findall(r"(?:^\|.*\n)+", f.read_text(), re.M):
+            counts = {row.count("|") for row in block.strip().split("\n")}
+            assert len(counts) == 1, (name, block.split("\n")[0][:120])

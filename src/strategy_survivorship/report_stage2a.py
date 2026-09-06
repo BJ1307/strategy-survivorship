@@ -105,7 +105,7 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
       "把所有 path-day 当独立样本会严重低估误差）。")
     A("")
     L.extend(_t(diag.to_dict("records"),
-                ["情境", "均值 ± 3SE", "方差 ± 3SE", "P(|ε|>2)", "P(|ε|>4)", "P(|ε|>6)", "|ε| 一阶自相关"],
+                ["情境", "均值 ± 3SE", "方差 ± 3SE", "P(abs ε>2)", "P(abs ε>4)", "P(abs ε>6)", "abs ε 一阶自相关"],
                 lambda r: [SC[r["scenario"]],
                            f"{r['mean']:+.5f} ± {3*r['mean_se_path_level']:.5f}",
                            f"{r['var']:.4f} ± {3*r['var_se_path_level']:.4f}",

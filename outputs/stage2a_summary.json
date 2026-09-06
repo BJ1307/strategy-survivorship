@@ -4280,11 +4280,6 @@
       "scenario": "jump"
     }
   ],
-  "elapsed_s": 10.315126374999636,
-  "figures": [
-    "figures/fig2a1_noise_diagnostics.png",
-    "figures/fig2a2_frozen_far.png",
-    "figures/fig2a3_recalibrated_detection.png",
-    "figures/fig2a4_oracle.png"
-  ]
+  "elapsed_s": 7.600073249999696,
+  "figures": []
 }
