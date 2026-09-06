@@ -48,9 +48,12 @@ def student_t_noise(rng: np.random.Generator, n_paths: int, n_days: int, cfg) ->
     """Standardised Student-t: eps = sqrt((nu-2)/nu) * X, X ~ t_nu.
 
     Var(X) = nu/(nu-2), so the constant gives Var(eps) = 1 exactly.  Requires
-    nu > 2.  At nu = 5 the fourth moment exists but the EIGHTH does not, so the
-    sample kurtosis has infinite sampling variance and is unusable as an
-    acceptance statistic; tail frequencies are checked instead.
+    nu > 2.  At nu = 5 the population kurtosis exists (3 + 6/(nu-4) = 9) but the
+    EIGHTH moment does not, so the sample kurtosis obeys no central limit theorem
+    and is not root-n consistent.  For a FIXED n it is still a bounded statistic
+    (bounded above by a function of n) with finite variance -- the problem is that
+    its distribution keeps drifting with n and it is systematically low, not that
+    its finite-sample variance is infinite.  Tail frequencies are used instead.
     """
     nu = cfg.noise_student_t_df
     if nu <= 2:
@@ -131,7 +134,15 @@ def stoch_vol_abs_eps_autocorr(lag: int, cfg) -> float:
 
     Gives the estimator something to be right about, rather than a plausible
     shape: at a = 1, rho = 0.98 this is 0.27300 at lag 1.
+
+    Defined for ``lag >= 1``.  The derivation divides by the variance of |eps|, so
+    it does not reduce to the lag-0 value; an autocorrelation at lag 0 is 1 by
+    definition and is returned as such rather than through this formula.
     """
+    if lag == 0:
+        return 1.0
+    if lag < 0:
+        raise ValueError("autocorrelation lag must be non-negative")
     a2 = cfg.noise_sv_amplitude ** 2
     rho_h = cfg.noise_sv_rho ** lag
     c = 2.0 / math.pi

@@ -93,6 +93,19 @@
     "n_noise_calibration": 5000,
     "n_noise_test_valid": 5000,
     "n_noise_test_invalid": 5000,
+    "ewma_lambda": 0.94,
+    "ewma_student_t_df": 5.0,
+    "ewma_variance_floor_factor": 1e-08,
+    "n_stage2b_calibration": 5000,
+    "n_stage2b_test_valid": 5000,
+    "n_stage2b_test_invalid": 5000,
+    "sv_control_rho": 0.0,
+    "bootstrap_reps": 2000,
+    "n_info_days": [
+      126,
+      252,
+      504
+    ],
     "root_seed": 20260905,
     "label": "stage1_benchmark",
     "notes": [
@@ -118,7 +131,10 @@
         "switch_matched_cal",
         "switch_random_T",
         "switch_contfa_test",
-        "stage2a"
+        "stage2a",
+        "stage2b",
+        "stage2b_persistence_control",
+        "stage2b_bootstrap"
       ]
     }
   },
@@ -225,6 +241,30 @@
       "entropy": 20260905,
       "spawn_key": [
         11
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b": {
+      "entropy": 20260905,
+      "spawn_key": [
+        12
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b_persistence_control": {
+      "entropy": 20260905,
+      "spawn_key": [
+        13
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        14
       ],
       "n_children_spawned": 0,
       "pool_size": 4
@@ -4292,11 +4332,6 @@
       "scenario": "jump"
     }
   ],
-  "elapsed_s": 10.509051207999619,
-  "figures": [
-    "figures/fig2a1_noise_diagnostics.png",
-    "figures/fig2a2_frozen_far.png",
-    "figures/fig2a3_recalibrated_detection.png",
-    "figures/fig2a4_oracle.png"
-  ]
+  "elapsed_s": 7.759393832999194,
+  "figures": []
 }

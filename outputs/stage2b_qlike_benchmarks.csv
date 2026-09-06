@@ -1,0 +1,4 @@
+forecast,qlike_mean,qlike_se
+ewma_lambda0.94,0.181224053029378,0.0006446426035372219
+constant_sigma0_sq,0.5005572805719483,0.0032938074259873814
+oracle_true_variance,0.0,0.0

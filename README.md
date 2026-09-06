@@ -46,6 +46,7 @@ pip install -r requirements.txt && pip install -e .
 .venv/bin/python -m strategy_survivorship.run_stage1      # 主 benchmark（约 3 秒）
 .venv/bin/python -m strategy_survivorship.run_stage11     # Stage 1.1 诊断（约 35 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2a     # Stage 2A 现实噪声（约 10 秒）
+.venv/bin/python -m strategy_survivorship.run_stage2b     # Stage 2B EWMA 波动率预测（约 26 秒）
 ```
 
 这两条命令重建 `outputs/` 下的**全部**结果：表格、JSON、四张图和研究报告。
@@ -83,6 +84,11 @@ src/strategy_survivorship/
   noise.py                 Stage 2A 四种噪声：高斯 / 厚尾 / 随机波动率 / 跳跃
   stage2a.py               情境构建、oracle 检测器、两类比较
   plots_stage2a.py / report_stage2a.py / run_stage2a.py   Stage 2A 图、报告、流程
+  ewma.py                  Stage 2B 因果 EWMA 方差预测 + 两个检测器 + QLIKE + N_info
+  stage2b.py               两臂比较、持续性对照、信息隔离的检测器分派
+  stage2b_uncertainty.py   同时重采样校准集与测试集的 bootstrap
+  stage2b_vol_diagnostics.py  波动率预测诊断
+  plots_stage2b.py / report_stage2b.py / run_stage2b.py   Stage 2B 图、报告、流程
   plots_stage11.py / report_stage11.py / run_stage11.py   Stage 1.1 图、报告、流程
   report.py       生成 stage1_report.md
   notes.py        写入报告的“已修正问题”与“限制”
@@ -111,6 +117,12 @@ theory.md         公式、符号、单位、推导、参考链接
 | `outputs/stage2a_paired.csv` / `stage2a_probability_calibration.csv` | 配对区间 / Brier |
 | `outputs/stage11_frozen_threshold_validation.csv` | 冻结门槛的独立样本验证 |
 | `outputs/figures/fig2a{1,2,3,4}_*.png` | Stage 2A 四张图 |
+| `outputs/stage2b_report.md` | **Stage 2B 报告**：EWMA 波动率预测能否改善验证 |
+| `outputs/stage2b_metrics.csv` | 情境 × 臂 × α × 检测器的全部指标 |
+| `outputs/stage2b_bootstrap.csv` | 含校准不确定性的 bootstrap 区间（2000 次）|
+| `outputs/stage2b_vol_diagnostics.csv` / `_qlike_benchmarks.csv` / `_information_days.csv` / `_vol_trace.csv` | 波动率诊断 |
+| `outputs/stage2b_probability_calibration.csv` / `_reliability.csv` | 概率校准 |
+| `outputs/figures/fig2b{1,2,3,4}_*.png` | Stage 2B 四张图 |
 | `outputs/stage1_diagnostic_traces.csv` | 冲击诊断逐日收益、增量、log odds、概率 |
 | `outputs/run_metadata.json` | 运行配置、随机流指纹、环境版本、分阶段耗时 |
 | `outputs/figures/fig1_example_paths.png` | 固定示例路径的累计收益与两个贝叶斯概率 |

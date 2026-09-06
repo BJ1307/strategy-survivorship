@@ -56,7 +56,7 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
     A(
         "**按情境重新校准可以把误杀率拉回预算附近，但这是理想化设定。** "
         "它假设噪声情境事先已知；本轮**没有**任何检测器在未知环境下自适应，"
-        "重新校准臂只回答「如果环境已知，性能上限在哪里」。"
+        "重新校准臂只回答「如果环境已知，这些规则能做到什么」。"
     )
     A("")
     if "gaussian_oracle_vol" in set(M.detector):
@@ -65,8 +65,10 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
         A(
             f"**知道当期方差能带来多少帮助（随机波动率情境）**：oracle 两年检出率 {o:.4f}，"
             f"固定波动率 Binary Gaussian {b:.4f}，差 {o - b:+.4f}。"
-            "oracle 使用真实当期条件方差，**任何可部署规则都拿不到这个信息**，"
-            "它只标定一个上界。"
+            "oracle 使用真实当期条件方差，**任何可部署规则都拿不到这个信息**。"
+            "它是一个**理想信息对照**：说明在这一族固定均值假设的更新式里，"
+            "拿到真实当期方差能走到哪里。**它不是已经证明的严格性能上界**——"
+            "别的方法（不同均值假设、不同决策规则、对潜在方差积分的后验）完全可能超过它。"
         )
         A("")
 
@@ -132,7 +134,17 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
           f"（理论 {jp.expected_jumps_per_day.iloc[0]:.5f}），"
           f"含跳跃交易日占比 {jp.frac_days_with_jump.iloc[0]:.4f}。")
     A("")
-    A("Student-t 的样本峰度在 ν=5 下抽样方差不存在，**未**用作验收统计量；改用尾部频率。")
+    A("Student-t 的样本峰度在 ν=5 下**没有中心极限定理**（八阶矩不存在），"
+      "有限样本中它还被 n 的一个函数从上方界住、系统性偏低，且分布随 n 持续变化，"
+      "因此**未**用作验收统计量；改用尾部频率。"
+      "（注意这不同于「有限样本方差不存在」：对固定 n 它是有界统计量。）")
+    A("")
+    A("> **随机波动率与厚尾的关系**：SV 在**给定**潜在方差时是条件高斯的，"
+      "但把未观测的方差积分掉之后，单日边际分布是一个**正态尺度混合**，本身就是重尾的"
+      "（图 2A.1(a) 中它的尾部频率与 Student-t 情境几乎重合）。"
+      "所以不能说「Student-t 检测器在 SV 下的优势与厚尾无关」——"
+      "边际重尾正是它在这里占优的一部分原因；"
+      "另一部分是持续性，本轮未做分离，Stage 2B 的 ρ=0 对照才回答这一点。")
     A("")
 
     for arm in ("frozen_stage1", "recalibrated"):
@@ -146,7 +158,10 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
               "**这是按环境分布进行的理想校准**，不代表检测器能适应未知环境。")
         A("")
         for alpha in cfg.far_targets:
-            A(f"### {n}.{list(cfg.far_targets).index(alpha)+1} 名义预算 α = {alpha:g}")
+            A(f"### {n}.{list(cfg.far_targets).index(alpha)+1} 相同**名义校准预算** α = {alpha:g}")
+            A("")
+            A("各检测器共享的是**名义校准预算**，不是相同的实测误杀率——"
+              "下表第三列即每个检测器在测试集上的实际两年 FAR，读检出率时必须对照它。")
             A("")
             sub = M[(M.arm == arm) & (M.far_target == alpha)]
             L.extend(_t(sub.to_dict("records"),
@@ -161,8 +176,11 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
 
     A("## 6. 配对比较")
     A("")
-    A("同一情境下各模型评价同一批测试路径，因此差值是配对的。"
-      "区间条件于**该臂实际使用的门槛**。")
+    A("同一情境下各模型评价同一批测试路径，因此差值是配对的。")
+    A("")
+    A("> **这些区间条件于该臂实际使用的、已经冻结的校准门槛。** "
+      "它们回答「给定这组门槛，两条规则在新测试数据上差多少」，"
+      "**不包含**重新抽校准集会带来的波动。")
     A("")
     pr = [p for p in summary["paired"] if p["far_target"] == a_main]
     L.extend(_t(pr, ["情境", "臂", "对比（参照 − 对方）", "两年检出率之差", "95% CI", "截断均检时间之差(日)", "95% CI"],

@@ -47,6 +47,11 @@ STREAM_ORDER: tuple[str, ...] = (
     # Stage 2A: one parent, whose children are assigned per scenario in a
     # documented order (see stage2a.scenario_streams).
     "stage2a",
+    # Stage 2B gets its own parent: every method compared this round runs on
+    # new shared test paths, so no Stage 2A draw is reused.
+    "stage2b",
+    "stage2b_persistence_control",
+    "stage2b_bootstrap",
 )
 
 
@@ -139,6 +144,21 @@ class Stage1Config:
     n_noise_calibration: int = 5000
     n_noise_test_valid: int = 5000
     n_noise_test_invalid: int = 5000
+
+    # --- Stage 2B: variance forecast from past returns only -----------------
+    # lambda is a pre-fixed simple baseline (RiskMetrics), NOT searched.
+    ewma_lambda: float = 0.94
+    ewma_student_t_df: float = 5.0
+    # numerical guard only; reported when it fires, never tuned on test results
+    ewma_variance_floor_factor: float = 1e-8
+    n_stage2b_calibration: int = 5000
+    n_stage2b_test_valid: int = 5000
+    n_stage2b_test_invalid: int = 5000
+    # persistence control: same one-day marginal and unconditional variance as the
+    # SV scenario, with the latent persistence removed.
+    sv_control_rho: float = 0.0
+    bootstrap_reps: int = 2000
+    n_info_days: tuple[int, ...] = (126, 252, 504)
 
     # --- reproducibility ----------------------------------------------------
     root_seed: int = 20260905

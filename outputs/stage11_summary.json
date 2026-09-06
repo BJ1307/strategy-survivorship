@@ -79,6 +79,33 @@
     "switch_matched_survival_floor": 0.5,
     "switch_contfa_test_paths": 5000,
     "switch_fixed_continuation_fa": 0.02,
+    "noise_scenarios": [
+      "gaussian",
+      "student_t",
+      "stoch_vol",
+      "jump"
+    ],
+    "noise_student_t_df": 5.0,
+    "noise_sv_rho": 0.98,
+    "noise_sv_amplitude": 1.0,
+    "noise_jump_lambda_annual": 2.0,
+    "noise_jump_kappa": 5.0,
+    "n_noise_calibration": 5000,
+    "n_noise_test_valid": 5000,
+    "n_noise_test_invalid": 5000,
+    "ewma_lambda": 0.94,
+    "ewma_student_t_df": 5.0,
+    "ewma_variance_floor_factor": 1e-08,
+    "n_stage2b_calibration": 5000,
+    "n_stage2b_test_valid": 5000,
+    "n_stage2b_test_invalid": 5000,
+    "sv_control_rho": 0.0,
+    "bootstrap_reps": 2000,
+    "n_info_days": [
+      126,
+      252,
+      504
+    ],
     "root_seed": 20260905,
     "label": "stage1_benchmark",
     "notes": [
@@ -103,7 +130,11 @@
         "switch_random",
         "switch_matched_cal",
         "switch_random_T",
-        "switch_contfa_test"
+        "switch_contfa_test",
+        "stage2a",
+        "stage2b",
+        "stage2b_persistence_control",
+        "stage2b_bootstrap"
       ]
     }
   },
@@ -202,6 +233,38 @@
       "entropy": 20260905,
       "spawn_key": [
         10
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2a": {
+      "entropy": 20260905,
+      "spawn_key": [
+        11
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b": {
+      "entropy": 20260905,
+      "spawn_key": [
+        12
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b_persistence_control": {
+      "entropy": 20260905,
+      "spawn_key": [
+        13
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        14
       ],
       "n_children_spawned": 0,
       "pool_size": 4
@@ -5851,6 +5914,6 @@
       }
     ]
   },
-  "elapsed_s": 36.36411591700016,
+  "elapsed_s": 38.27078862499911,
   "figures": []
 }
