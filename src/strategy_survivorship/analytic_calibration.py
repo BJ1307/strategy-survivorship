@@ -97,6 +97,12 @@ def compare_with_replications(
     """
     if replications is None or replications.empty:
         return None
+    # The on-disk study records neither n_calibration nor n_test_valid, so a stale
+    # file from a different configuration would join silently on far_target alone.
+    # Refuse rather than compare incomparable numbers.
+    expected = set(analytic.far_target)
+    if not set(replications.far_target).issubset(expected):
+        return None
     out = []
     for _, r in replications.iterrows():
         a = analytic[analytic.far_target == r.far_target]

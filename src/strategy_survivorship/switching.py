@@ -78,6 +78,7 @@ def switching_metrics(
     detector: str,
     far_target: float,
     group: str,
+    first_eligible_day: int | None = None,
 ) -> dict:
     """Pre-failure false alarms, post-failure detection, and censoring.
 
@@ -94,11 +95,22 @@ def switching_metrics(
     survived = ~pre_fa
     n_surv = int(survived.sum())
 
+    # How many of the post-failure days the detector can actually act on.  For a
+    # 252-day rolling detector at T = 0 the window is days 1..504 but it is silent
+    # until day 252, so only 253 days are usable -- at every larger T all 504 are.
+    # Without this column the T = 0 row looks comparable to the others and is not.
+    if first_eligible_day is None:
+        usable = post_window
+    else:
+        Tmin = float(np.min(T[np.isfinite(T)])) if np.isfinite(T).any() else 0.0
+        usable = int(max(0, (Tmin + post_window) - max(first_eligible_day, Tmin + 1) + 1))
+
     row = {
         "group": group,
         "detector": detector,
         "far_target": far_target,
         "post_window_days": post_window,
+        "usable_post_failure_days": usable,
         "n_paths": n,
         "mean_T": float(np.mean(T[finite_T])) if finite_T.any() else float("inf"),
         "pre_failure_false_alarm_rate": float(pre_fa.mean()),
@@ -156,6 +168,8 @@ def belief_at_failure(
     survives to the switch if it never looked bad enough to alarm, which biases
     its belief towards 'still valid'.
     """
+    if not np.isfinite(T).all():
+        raise ValueError("belief at the switch is undefined for T = inf (never fails)")
     idx = np.clip(T.astype(int) - 1, 0, log_odds_failure.shape[1] - 1)
     rows = np.arange(log_odds_failure.shape[0])
     U = np.where(T >= 1, log_odds_failure[rows, idx], 0.0)  # T = 0 -> prior, U_0 = 0

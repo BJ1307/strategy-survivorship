@@ -53,7 +53,12 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     A(
         "**校准不确定性不再需要昂贵重复模拟。** 门槛是校准样本的顺序统计量，"
         "其真实误杀概率服从 `Beta(j, N+1-j)`，`j = ⌊αN⌋+1`；测试集报警数服从对应的 Beta-binomial。"
-        "解析结果与已有 100 次重复完全一致，重复实验已从默认流程中移除。"
+        + (
+            f"解析结果与已有 {int(comparison.n_replications.iloc[0])} 次重复一致"
+            f"（最大 |z| = {comparison.z_vs_analytic.abs().max():.2f}），重复实验已从默认流程中移除。"
+            if comparison is not None and len(comparison)
+            else "重复实验已从默认流程中移除（本次运行未找到可比的重复结果文件）。"
+        )
     )
     A("")
     fx = [r for r in summary["switching"]["metrics"]
@@ -65,20 +70,35 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     T0, Tl = cfg.switch_fixed_T[0], cfg.switch_fixed_T[-1]
     g0, gl = _f(T0, "binary_gaussian"), _f(Tl, "binary_gaussian")
     r0, rl = _f(T0, "trailing_sharpe_252"), _f(Tl, "trailing_sharpe_252")
+    Tc = cfg.switch_fixed_T[1]  # first T at which every detector gets a full post-window
+    gc, rc = _f(Tc, "binary_gaussian"), _f(Tc, "trailing_sharpe_252")
     A(
         "**Stage 1 的检测器排序是 `T=0` 这一特例的产物，但两族都会退化。** "
         f"把所有 T 都固定在同一个延续误杀率 {cfg.switch_fixed_continuation_fa:g}（唯一跨 T 可比的做法）后，"
-        f"失效后 504 日条件检出率：Gaussian {g0:.3f} → {gl:.3f}（{(gl / g0 - 1) * 100:+.0f}%），"
-        f"滚动 {r0:.3f} → {rl:.3f}（{(rl / r0 - 1) * 100:+.0f}%）。"
-        f"T=0 时贝叶斯领先（{g0:.3f} vs {r0:.3f}），到 T=756 已被反超，"
+        f"在**各检测器都有完整 {cfg.switch_post_window} 天可报警窗口**的区间 T∈[{Tc}, {Tl}] 上，"
+        f"失效后 504 日条件检出率：Gaussian {gc:.3f} → {gl:.3f}（{(gl / gc - 1) * 100:+.0f}%），"
+        f"滚动 {rc:.3f} → {rl:.3f}（{(rl / rc - 1) * 100:+.0f}%）。"
+        f"T={Tc} 时两者持平（{gc:.3f} vs {rc:.3f}），T=756 起滚动反超，"
         f"T={Tl} 时滚动在检出率与失效前误杀率上**同时**更优。"
+    )
+    A("")
+    A(
+        f"> **T=0 不在这条趋势线上。** 失效后窗口是第 1–{cfg.switch_post_window} 天，"
+        f"而 252 日滚动检测器要到第 {cfg.rolling_window} 天才能发声，"
+        f"因此它在 T=0 只有 253 天可用（其余 T 都是完整 {cfg.switch_post_window} 天）。"
+        f"它在 T=0 落后（{g0:.3f} vs {r0:.3f}）是**可报警资格**效应——"
+        "一个 252 日窗口本来就无法监控策略上线后的第一年——"
+        "这在运营上真实存在，但与「记忆长度」是两回事，不能并入同一条趋势。"
+        "每一行的 `usable_post_failure_days` 列都披露了这个天数。"
     )
     A("")
     A(
         "**两处原始表述已撤回。** (1) 曾写“滚动几乎不受影响（0.556 → 0.638）”——"
         "那是名义预算下、按存活路径为分母算出的，而滚动在 T=1260 的失效前误杀率高达 0.42、"
-        "存活分母被削掉 42%；匹配代价后滚动同样退化 44%。"
-        "(2) 曾写贝叶斯塌陷“0.580 → 0.098”——同样未匹配代价，真实幅度是 60%。"
+        "存活分母被削掉 42%；在可比区间上匹配代价后，滚动同样退化。"
+        "(2) 曾写贝叶斯塌陷“0.580 → 0.098”——同样未匹配代价。"
+        "(3) 上一版给出的 “−60% vs −44%” 也已修正：那是把 T=0 计入趋势算的，"
+        "而滚动在 T=0 只有 253 天可用窗口，基线不可比。"
     )
     A("")
     cont = [r for r in summary["switching"]["metrics"] if r["group"].startswith("matched_contFA_")]
@@ -591,10 +611,11 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     L.extend(
         _t(
             fx,
-            ["T", "检测器", "延续误杀率", "失效前误杀", "存活至失效", "条件检出 h=504", "无条件检出 h=504"],
+            ["T", "检测器", "可用失效后天数", "延续误杀率", "失效前误杀", "存活至失效", "条件检出 h=504", "无条件检出 h=504"],
             lambda r: [
                 r["group"].split("=")[-1],
                 LBL.get(r["detector"], r["detector"]),
+                str(int(r["usable_post_failure_days"])),
                 f"{r['achieved_continuation_fa']:.4f}",
                 f"{r['pre_failure_false_alarm_rate']:.4f}",
                 f"{int(r['n_survived_to_failure'])}",
@@ -605,9 +626,9 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     )
     A("")
     A(
-        "**这是本轮最可靠的一张表。** 读法：两族都随有效期退化，贝叶斯更快"
-        f"（{(gl / g0 - 1) * 100:+.0f}% vs {(rl / r0 - 1) * 100:+.0f}%）；"
-        f"交叉点在 T≈252–756 之间；到 T={Tl} 时贝叶斯为维持同样的窗口内误杀率，"
+        "**这是本轮最可靠的一张表。** 读法：只比较可用天数同为 504 的行——"
+        f"两族都随有效期退化，贝叶斯更快（{(gl / gc - 1) * 100:+.0f}% vs {(rl / rc - 1) * 100:+.0f}%）；"
+        f"交叉点在 T≈{Tc}–756 之间；到 T={Tl} 时贝叶斯为维持同样的窗口内误杀率，"
         f"必须付出 {_f(Tl, 'binary_gaussian', 'pre_failure_false_alarm_rate'):.3f} 的失效前误杀，"
         f"而滚动只要 {_f(Tl, 'trailing_sharpe_252', 'pre_failure_false_alarm_rate'):.3f}——约 8 倍差距。"
     )

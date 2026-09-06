@@ -112,10 +112,10 @@ def block_probability_time(cfg: Stage1Config, status: Status) -> dict:
             q = expit(-fn(r, cfg))  # q_n = expit(U_n) = expit(-L_n)
             q_store[(key, state)] = q
             summaries.append(
-                failure_probability_summary(q, report_days, "stage1.1 diagnostic", key, state)
+                failure_probability_summary(q, report_days, "stage1.1 diagnostic", key, state, cfg)
             )
             thresholds.append(
-                threshold_table(q, cfg, cfg.prob_thresholds, key, state, cfg.prob_coverage_target)
+                threshold_table(q, cfg.prob_thresholds, key, state, cfg.prob_coverage_target)
             )
             for b in cfg.prob_thresholds:
                 hit = first_threshold_hit(q, b)
@@ -196,6 +196,7 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
                     switching_metrics(
                         tau[a], T, cfg, cfg.switch_post_horizons, post,
                         detector=det.key, far_target=a, group=group,
+                        first_eligible_day=det.first_eligible_day(cfg),
                     )
                 )
             if det.key in BAYES:
@@ -249,6 +250,7 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
                 tau, Tarr, cfg, cfg.switch_post_horizons, post,
                 detector=det.key, far_target=cfg.switch_matched_pre_fa,
                 group=f"matched_preFA_T={T}",
+                first_eligible_day=det.first_eligible_day(cfg),
             )
             row["matched_threshold"] = thr_m
             row["matched_target_pre_fa"] = cfg.switch_matched_pre_fa
@@ -286,6 +288,7 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
             row = switching_metrics(
                 tau, Tarr, cfg, cfg.switch_post_horizons, post,
                 detector=det.key, far_target=common, group=f"matched_contFA_T={T}",
+                first_eligible_day=det.first_eligible_day(cfg),
             )
             row.update({
                 "matched_threshold": m["threshold"],
@@ -315,6 +318,7 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
             row = switching_metrics(
                 tau, Tarr, cfg, cfg.switch_post_horizons, post,
                 detector=det.key, far_target=level, group=f"contFA{level:g}_T={T}",
+                first_eligible_day=det.first_eligible_day(cfg),
             )
             row.update({
                 "matched_threshold": m["threshold"],
@@ -350,6 +354,7 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
                     switching_metrics(
                         tau, T_rand[m], cfg, cfg.switch_post_horizons, post,
                         detector=det.key, far_target=a, group=f"random_T[{label}]",
+                        first_eligible_day=det.first_eligible_day(cfg),
                     )
                 )
             del stat

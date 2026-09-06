@@ -221,7 +221,7 @@ def test_threshold_hits_keep_the_unreached_unreached():
     assert list(hit.reached) == [True, False, True]
     assert hit.cumulative[-1] == pytest.approx(2 / 3)
     # under half reached -> median must be reported as not reached
-    tab = threshold_table(np.array([[0.99], [0.1], [0.1]]), CFG, (0.9,), "d", "invalid")
+    tab = threshold_table(np.array([[0.99], [0.1], [0.1]]), (0.9,), "d", "invalid")
     assert tab.median_first_hit_days.iloc[0] == ""
     assert "not reached" in tab.median_first_hit_note.iloc[0]
 
@@ -320,3 +320,47 @@ def test_continuation_ceiling_falls_with_the_valid_history():
     r252, r1260 = ceilings["trailing_sharpe_252"]
     assert g1260 < g252 / 2  # Bayesian sensitivity collapses
     assert r1260 > g1260 * 3  # rolling keeps far more headroom
+
+
+def test_usable_post_failure_days_exposes_the_T0_eligibility_gap():
+    """At T=0 a 252-day detector can act on only 253 of the 504 post-failure days.
+
+    Without this column the T=0 row looks comparable to the larger-T rows and a
+    trend computed across it silently mixes an eligibility effect with the memory
+    effect under study.
+    """
+    rolling = D.DETECTORS_BY_KEY["trailing_sharpe_252"].first_eligible_day(CFG)
+    r0 = _metrics_elig(T=0, first_eligible_day=rolling)
+    r1 = _metrics_elig(T=252, first_eligible_day=rolling)
+    assert r0["usable_post_failure_days"] == 253
+    assert r1["usable_post_failure_days"] == 504
+    # the Bayesian detectors are eligible from day 1, so they never lose days
+    bayes = D.DETECTORS_BY_KEY["binary_gaussian"].first_eligible_day(CFG)
+    assert _metrics_elig(T=0, first_eligible_day=bayes)["usable_post_failure_days"] == 504
+
+
+def _metrics_elig(T, first_eligible_day):
+    n = 4
+    return switching_metrics(
+        np.full(n, NO_ALARM), np.full(n, float(T)), CFG, (126, 252, 504),
+        CFG.switch_post_window, detector="x", far_target=0.15, group="g",
+        first_eligible_day=first_eligible_day,
+    )
+
+
+def test_belief_at_failure_refuses_an_infinite_switch_time():
+    from strategy_survivorship.switching import belief_at_failure
+
+    lo = np.zeros((3, 10))
+    with pytest.raises(ValueError, match="T = inf"):
+        belief_at_failure(lo, np.array([1.0, np.inf, 2.0]), np.ones(3, bool), "d", "g")
+
+
+def test_analytic_threshold_time_degenerate_branch_carries_every_key():
+    """A threshold already below the prior returns 0 days -- and must still carry
+    the *_years keys the report formatter reads."""
+    from strategy_survivorship.probability_time import analytic_threshold_time
+
+    r = analytic_threshold_time(0.5, CFG)  # logit(0.5) == the prior, level a == 0
+    for k in ("mean_days", "median_days", "mean_years", "median_years"):
+        assert k in r

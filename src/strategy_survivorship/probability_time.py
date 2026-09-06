@@ -83,8 +83,9 @@ def analytic_threshold_time(b: float, cfg: Stage1Config, alt_sharpe: float | Non
     a = math.log(b / (1.0 - b)) - (-cfg.prior_log_odds)
     mu = s * s / (2.0 * cfg.D)
     var = s * s / cfg.D
-    if a <= 0:
-        return {"threshold": b, "alt_sharpe": s, "level": a, "mean_days": 0.0, "median_days": 0.0}
+    if a <= 0:  # the prior already sits at or above b
+        return {"threshold": b, "alt_sharpe": s, "level": a, "mean_days": 0.0,
+                "median_days": 0.0, "mean_years": 0.0, "median_years": 0.0}
     mean_days = a / mu
     lam = a * a / var  # inverse-Gaussian shape
     # median via the IG cdf, solved on a wide bracket
@@ -108,9 +109,11 @@ def analytic_threshold_time(b: float, cfg: Stage1Config, alt_sharpe: float | Non
 
 
 def failure_probability_summary(
-    q: np.ndarray, days: tuple[int, ...], label: str, detector: str, true_state: str
+    q: np.ndarray, days: tuple[int, ...], label: str, detector: str, true_state: str,
+    cfg: Stage1Config = None,
 ) -> pd.DataFrame:
     """Mean / median / 10th / 90th percentile of q_n at the requested days."""
+    D = 252 if cfg is None else cfg.D
     rows = []
     for d in days:
         col = q[:, d - 1]
@@ -120,7 +123,7 @@ def failure_probability_summary(
                 "true_state": true_state,
                 "horizon_label": label,
                 "day": d,
-                "years": d / 252.0,
+                "years": d / D,
                 "n_paths": int(col.size),
                 "mean_q": float(col.mean()),
                 "median_q": float(np.median(col)),
@@ -152,8 +155,7 @@ def first_threshold_hit(q: np.ndarray, b: float) -> ThresholdHits:
 
 
 def threshold_table(
-    q: np.ndarray, cfg: Stage1Config, thresholds, detector: str, true_state: str,
-    coverage: float = 0.80,
+    q: np.ndarray, thresholds, detector: str, true_state: str, coverage: float = 0.80
 ) -> pd.DataFrame:
     """Descriptive time-scale statistics for fixed probability thresholds.
 
@@ -227,7 +229,7 @@ def brier_and_reliability(
     summary = {
         "detector": detector,
         "day": day,
-        "years": day / 252.0,
+        "years": day / 252.0,  # Brier rows carry D via the caller
         "n": int(p.size),
         "brier": brier,
         "brier_base_rate": base,
