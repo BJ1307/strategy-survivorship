@@ -48,8 +48,9 @@ def student_t_noise(rng: np.random.Generator, n_paths: int, n_days: int, cfg) ->
     """Standardised Student-t: eps = sqrt((nu-2)/nu) * X, X ~ t_nu.
 
     Var(X) = nu/(nu-2), so the constant gives Var(eps) = 1 exactly.  Requires
-    nu > 2; the fourth moment exists only for nu > 4, so sample kurtosis is a
-    very noisy statistic here and is not used as an acceptance test.
+    nu > 2.  At nu = 5 the fourth moment exists but the EIGHTH does not, so the
+    sample kurtosis has infinite sampling variance and is unusable as an
+    acceptance statistic; tail frequencies are checked instead.
     """
     nu = cfg.noise_student_t_df
     if nu <= 2:
@@ -64,8 +65,12 @@ def stoch_vol_noise(rng: np.random.Generator, n_paths: int, n_days: int, cfg) ->
         a_t = rho a_{t-1} + sqrt(1-rho^2) xi_t,   a_0 ~ N(0,1)
         v_t = exp(a_t - 1/2),   eps_t = sqrt(v_t) z_t
 
-    a_t is marginally N(0,1) for every t, so E[v_t] = exp(-1/2)E[exp(a_t)] =
-    exp(-1/2)exp(1/2) = 1 and Var(eps_t) = E[v_t]E[z_t^2] = 1 unconditionally.
+    The recursion gives a_t ~ N(0,1) marginally for every t (a_0 is drawn from
+    that stationary law), and the code then scales it by `amp`, so the process
+    used is N(0, amp^2).  With v_t = exp(a_t - amp^2/2) the log-normal mean is
+    E[v_t] = exp(-amp^2/2) exp(amp^2/2) = 1 for ANY amp, hence
+    Var(eps_t) = E[v_t] E[z_t^2] = 1 unconditionally.  amp = 1 is the configured
+    setting, not a requirement of the construction.
     The true daily volatility is sigma_0*sqrt(v_t); the drift is NOT scaled by
     v_t, so the long-run Sharpe stays S while the conditional Sharpe moves.
     """
@@ -133,7 +138,12 @@ def returns_from_noise(eps: np.ndarray, sharpe_annual: float, cfg) -> np.ndarray
 def true_daily_sigma(draw: NoiseDraw, cfg) -> np.ndarray | None:
     """The realised conditional daily volatility, for the ORACLE detector only.
 
-    Returns ``None`` for scenarios whose conditional scale is constant.
+    Defined only for ``stoch_vol``, where the conditional scale is a persistent
+    latent state an adaptive rule could in principle track.  The jump model also
+    has a non-constant conditional scale given K_t, but that scale is an
+    unpredictable one-day event rather than a state, so a "known current
+    variance" oracle is not the right idealisation for it; that scenario is out
+    of scope for the oracle this round rather than constant-scale.
     """
     if draw.scenario != "stoch_vol":
         return None

@@ -27,6 +27,22 @@ from .simulate import stream_fingerprint, make_streams
 from .stage2a import LABEL_2A, run_scenario, scenario_streams
 
 
+def pooled_autocorr(x: np.ndarray, lag: int) -> float:
+    """Lag-`lag` autocorrelation pooled over paths, demeaned by the GLOBAL mean.
+
+    Demeaning each path by its own sample mean removes the persistent level that
+    creates the autocorrelation being measured: at rho = 0.98 the log-variance
+    half-life is ~34 days inside a 504-day path, so the path mean absorbs most of
+    it. Measured here, per-path demeaning understates the |eps| autocorrelation by
+    about 21% at lag 1 and 47% at lag 40, and drags the AR(1) estimate 23 standard
+    errors below the configured rho. The paths are iid, so pooling is valid.
+    """
+    mu = x.mean()
+    num = ((x[:, :-lag] - mu) * (x[:, lag:] - mu)).mean()
+    den = ((x - mu) ** 2).mean()
+    return float(num / den)
+
+
 def noise_diagnostics(cfg: Stage1Config, n_paths: int = 4000) -> pd.DataFrame:
     """Moments, tails and structure of each noise model, with path-level errors."""
     import math
@@ -51,15 +67,9 @@ def noise_diagnostics(cfg: Stage1Config, n_paths: int = 4000) -> pd.DataFrame:
             f = (np.abs(e) > c).mean(axis=1)
             row[f"p_abs_gt_{c:g}"] = float(f.mean())
             row[f"p_abs_gt_{c:g}_se"] = float(f.std(ddof=1) / math.sqrt(n_paths))
-        ae = np.abs(e[:500])
-        row["abs_eps_lag1_autocorr"] = float(
-            np.mean([np.corrcoef(ae[i, :-1], ae[i, 1:])[0, 1] for i in range(ae.shape[0])])
-        )
+        row["abs_eps_lag1_autocorr"] = pooled_autocorr(np.abs(e), 1)
         if sc == "stoch_vol":
-            a = d.latent["log_var"]
-            num = ((a[:, :-1] - a.mean()) * (a[:, 1:] - a.mean())).mean(axis=1)
-            den = ((a - a.mean()) ** 2).mean(axis=1)
-            row["log_var_lag1_autocorr"] = float((num / den).mean())
+            row["log_var_lag1_autocorr"] = pooled_autocorr(d.latent["log_var"], 1)
             row["true_sigma_ratio_p90_p10"] = float(
                 np.quantile(np.sqrt(d.latent["variance_multiplier"]), 0.9)
                 / np.quantile(np.sqrt(d.latent["variance_multiplier"]), 0.1)

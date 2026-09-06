@@ -104,6 +104,10 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
     A("误差为**路径级**（路径之间独立，路径内的交易日不独立——ρ=0.98 时对数方差半衰期约 34 天，"
       "把所有 path-day 当独立样本会严重低估误差）。")
     A("")
+    A("自相关一律**跨路径池化、用全局均值去心**。按每条路径自己的样本均值去心会把携带持续性的"
+      "低频成分一起减掉：实测下它把 |ε| 的一阶自相关低估约 21%、四十阶低估约 47%，"
+      "并把 AR(1) 估计拉到设定 ρ 以下约 23 个标准误。池化估计与设定值一致。")
+    A("")
     L.extend(_t(diag.to_dict("records"),
                 ["情境", "均值 ± 3SE", "方差 ± 3SE", "P(abs ε>2)", "P(abs ε>4)", "P(abs ε>6)", "abs ε 一阶自相关"],
                 lambda r: [SC[r["scenario"]],

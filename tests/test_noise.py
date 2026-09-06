@@ -99,15 +99,26 @@ def test_stochastic_volatility_persistence_and_stationarity():
     for t in (0, 1, 50, ND - 1):
         lo, hi = _path_level_ci(a[:, t] ** 2)
         assert lo <= amp2 <= hi, (t, lo, hi)
-    # lag-1 autocorrelation of the log-variance recovers rho
-    num = ((a[:, :-1] - a.mean()) * (a[:, 1:] - a.mean())).mean(axis=1)
-    den = ((a - a.mean()) ** 2).mean(axis=1)
-    rho_hat = (num / den).mean()
-    assert abs(rho_hat - CFG.noise_sv_rho) < 0.02
-    # volatility clustering is visible in |eps|
-    e = np.abs(d.eps)
-    ac1 = np.mean([np.corrcoef(e[i, :-1], e[i, 1:])[0, 1] for i in range(200)])
-    assert ac1 > 0.15
+    # the other three models must show no clustering at all
+    from strategy_survivorship.run_stage2a import pooled_autocorr
+
+    for other in ("gaussian", "student_t", "jump"):
+        assert abs(pooled_autocorr(np.abs(_draw(other).eps), 1)) < 0.01
+    # lag-1 autocorrelation must be POOLED: demeaning each path by its own mean
+    # removes the persistent level and biases the estimate ~23 SE low.
+    from strategy_survivorship.run_stage2a import pooled_autocorr
+
+    rho_hat = pooled_autocorr(a, 1)
+    # path-level SE of the per-path estimate, used as the tolerance scale
+    num = (a[:, :-1] * a[:, 1:]).mean(axis=1)
+    den = (a ** 2).mean(axis=1)
+    se = (num / den).std(ddof=1) / math.sqrt(a.shape[0])
+    assert abs(rho_hat - CFG.noise_sv_rho) < 6 * se, (rho_hat, se)
+    # and the per-path estimator is demonstrably the biased one
+    biased = (num / den).mean()
+    assert biased < CFG.noise_sv_rho - 2 * se
+    # volatility clustering is visible in |eps|, and only here
+    assert pooled_autocorr(np.abs(d.eps), 1) > 0.2
 
 
 def test_jump_frequency_matches_the_annual_intensity():
@@ -127,14 +138,21 @@ def test_jump_frequency_matches_the_annual_intensity():
 # --------------------------------------------------------------------------- #
 
 
-def test_zero_sv_amplitude_reproduces_gaussian_exactly():
-    """amp = 0 must give v_t == 1 and eps == z, i.e. the Gaussian model."""
+def test_zero_sv_amplitude_degenerates_to_the_gaussian_law():
+    """amp = 0 gives v_t == 1 exactly, so eps is the bare z stream.
+
+    It is NOT bit-identical to the gaussian generator: stoch_vol draws xi before
+    z, so the two consume the stream differently. What must hold is that the
+    variance multiplier collapses to exactly 1 and the resulting eps is standard
+    normal.
+    """
     cfg0 = replace(CFG, noise_sv_amplitude=0.0)
-    d = _draw("stoch_vol", cfg=cfg0, n_paths=200, n_days=100)
-    assert np.allclose(d.latent["variance_multiplier"], 1.0)
-    # eps is then exactly the z stream; check it is standard normal, not merely close
+    d = _draw("stoch_vol", cfg=cfg0, n_paths=400, n_days=200)
+    assert np.array_equal(d.latent["variance_multiplier"], np.ones_like(d.eps))
     lo, hi = _path_level_ci((d.eps ** 2).mean(axis=1))
     assert lo <= 1.0 <= hi
+    lo, hi = _path_level_ci(d.eps.mean(axis=1))
+    assert lo <= 0.0 <= hi
 
 
 @pytest.mark.parametrize("field,value", [("noise_jump_kappa", 0.0),
@@ -155,16 +173,28 @@ def test_zero_jump_amplitude_or_intensity_reproduces_gaussian_exactly(field, val
 
 
 @pytest.mark.parametrize("scenario", N.SCENARIOS)
-def test_a_longer_draw_shares_its_prefix(scenario):
-    """Generating more days must not change the earlier ones for a given stream.
+def test_same_stream_and_shape_reproduces_the_draw(scenario):
+    ss = np.random.SeedSequence(21)
+    a = N.draw_noise(scenario, ss, 50, 100, CFG).eps
+    b = N.draw_noise(scenario, ss, 50, 100, CFG).eps
+    assert np.array_equal(a, b)
 
-    Where it does, the reason must be structural (a differently-shaped draw from
-    the same generator), not a dependence on future data.
+
+@pytest.mark.parametrize("scenario", N.SCENARIOS)
+def test_a_longer_draw_does_NOT_share_its_prefix(scenario):
+    """Documents the real behaviour: a different n_days is a different draw.
+
+    A (n_paths, n_days) draw is filled row-major, so asking for more days shifts
+    every element. This is not a causality violation -- eps_t still depends only
+    on shocks up to t within a given draw -- but it does mean no experiment may
+    rely on truncating a longer draw to reproduce a shorter one. Nothing in the
+    codebase does: each scenario fixes n_days once and every group in the
+    switching experiment uses the same switch_max_days.
     """
     ss = np.random.SeedSequence(21)
-    short = N.draw_noise(scenario, ss, 50, 100, CFG).eps
-    long = N.draw_noise(scenario, ss, 50, 100, CFG).eps
-    assert np.array_equal(short, long)  # same shape, same stream -> identical
+    short = N.draw_noise(scenario, ss, 10, 100, CFG).eps
+    long = N.draw_noise(scenario, ss, 10, 200, CFG).eps
+    assert not np.array_equal(short, long[:, :100])
 
 
 def test_stochastic_volatility_is_causal_in_its_own_shocks():
@@ -191,20 +221,23 @@ def test_stochastic_volatility_is_causal_in_its_own_shocks():
 
 
 def test_no_sample_moment_of_the_path_is_used_in_the_construction():
-    """Scaling one path must not change any other path's eps.
+    """A per-path standardisation would leave every path with mean 0 and sd 1.
 
-    A sample-based standardisation (de-meaning or dividing by a sample sd) would
-    couple days within a path to that path's whole history including its future;
-    this checks the weaker, testable consequence that paths stay independent.
+    That is the observable signature of the leak this rule forbids: if the code
+    divided by a path's own sample sd, the per-path sample variances would be
+    pinned at exactly 1 with no scatter, and the per-path means at exactly 0.
+    Both must scatter at the size sampling theory predicts.
     """
-    ss = np.random.SeedSequence(31)
+    n_days = 400
     for scenario in N.SCENARIOS:
-        a = N.draw_noise(scenario, ss, 100, 200, CFG).eps
-        b = N.draw_noise(scenario, ss, 100, 200, CFG).eps
-        assert np.array_equal(a, b)
-        # a path's own mean is not removed: per-path means scatter around 0
-        pm = a.mean(axis=1)
-        assert pm.std(ddof=1) > 0.5 * (1.0 / math.sqrt(200))
+        eps = _draw(scenario, seed=31, n_paths=600, n_days=n_days).eps
+        pm, pv = eps.mean(axis=1), eps.var(axis=1, ddof=1)
+        # a de-meaned path would give pm identically 0
+        assert pm.std(ddof=1) > 0.5 / math.sqrt(n_days), scenario
+        assert np.abs(pm).max() > 1e-8, scenario
+        # a sample-sd-standardised path would give pv identically 1
+        assert pv.std(ddof=1) > 1e-3, scenario
+        assert not np.allclose(pv, 1.0, atol=1e-6), scenario
 
 
 def test_true_sigma_is_exposed_only_where_it_exists():

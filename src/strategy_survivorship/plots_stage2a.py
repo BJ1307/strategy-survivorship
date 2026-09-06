@@ -44,13 +44,15 @@ def figure_noise_diagnostics(cfg: Stage1Config, per_scenario: dict, diag, out: P
     for c, sc in zip(cols, scs):
         eps = (per_scenario[sc]["block"]["test_valid"]["returns"]
                - cfg.daily_drift(cfg.sharpe_valid)) / cfg.sigma_daily
-        a = np.abs(eps[:400])
+        from .run_stage2a import pooled_autocorr
+
+        a = np.abs(eps)
         lags = np.arange(1, 41)
-        ac = [np.mean([np.corrcoef(a[i, :-l], a[i, l:])[0, 1] for i in range(a.shape[0])]) for l in lags]
-        ax.plot(lags, ac, color=c, lw=1.7, label=SC_LABEL[sc])
+        ax.plot(lags, [pooled_autocorr(a, int(l)) for l in lags], color=c, lw=1.7,
+                label=SC_LABEL[sc])
     ax.axhline(0, color="0.5", lw=0.8)
     ax.set_xlabel("lag (trading days)"); ax.set_ylabel("autocorrelation of $|\\varepsilon_t|$")
-    ax.set_title("(b) Volatility clustering", fontsize=10)
+    ax.set_title("(b) Volatility clustering\npooled over paths, global mean", fontsize=10)
     ax.legend(fontsize=7.6); ax.grid(alpha=0.3)
 
     ax = axes[2]
