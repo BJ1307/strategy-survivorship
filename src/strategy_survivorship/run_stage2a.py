@@ -27,7 +27,7 @@ from .simulate import stream_fingerprint, make_streams
 from .stage2a import LABEL_2A, run_scenario, scenario_streams
 
 
-def pooled_autocorr(x: np.ndarray, lag: int) -> float:
+def pooled_autocorr(x: np.ndarray, lag: int, with_se: bool = False):
     """Lag-`lag` autocorrelation pooled over paths, demeaned by the GLOBAL mean.
 
     Demeaning each path by its own sample mean removes the persistent level that
@@ -37,10 +37,17 @@ def pooled_autocorr(x: np.ndarray, lag: int) -> float:
     about 21% at lag 1 and 47% at lag 40, and drags the AR(1) estimate 23 standard
     errors below the configured rho. The paths are iid, so pooling is valid.
     """
+    import math as _m
+
     mu = x.mean()
-    num = ((x[:, :-lag] - mu) * (x[:, lag:] - mu)).mean()
-    den = ((x - mu) ** 2).mean()
-    return float(num / den)
+    num_i = ((x[:, :-lag] - mu) * (x[:, lag:] - mu)).mean(axis=1)
+    den_i = ((x - mu) ** 2).mean(axis=1)
+    r = float(num_i.mean() / den_i.mean())
+    if not with_se:
+        return r
+    # delta-method SE of a ratio of two path-level means
+    se = float((num_i - r * den_i).std(ddof=1) / (_m.sqrt(x.shape[0]) * den_i.mean()))
+    return r, se
 
 
 def noise_diagnostics(cfg: Stage1Config, n_paths: int = 4000) -> pd.DataFrame:
@@ -67,9 +74,13 @@ def noise_diagnostics(cfg: Stage1Config, n_paths: int = 4000) -> pd.DataFrame:
             f = (np.abs(e) > c).mean(axis=1)
             row[f"p_abs_gt_{c:g}"] = float(f.mean())
             row[f"p_abs_gt_{c:g}_se"] = float(f.std(ddof=1) / math.sqrt(n_paths))
-        row["abs_eps_lag1_autocorr"] = pooled_autocorr(np.abs(e), 1)
+        row["abs_eps_lag1_autocorr"], row["abs_eps_lag1_autocorr_se"] = pooled_autocorr(
+            np.abs(e), 1, with_se=True)
         if sc == "stoch_vol":
-            row["log_var_lag1_autocorr"] = pooled_autocorr(d.latent["log_var"], 1)
+            row["log_var_lag1_autocorr"], row["log_var_lag1_autocorr_se"] = pooled_autocorr(
+                d.latent["log_var"], 1, with_se=True)
+            from .noise import stoch_vol_abs_eps_autocorr
+            row["abs_eps_lag1_autocorr_theory"] = stoch_vol_abs_eps_autocorr(1, cfg)
             row["true_sigma_ratio_p90_p10"] = float(
                 np.quantile(np.sqrt(d.latent["variance_multiplier"]), 0.9)
                 / np.quantile(np.sqrt(d.latent["variance_multiplier"]), 0.1)

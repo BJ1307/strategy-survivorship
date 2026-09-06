@@ -116,6 +116,30 @@ def jump_noise(rng: np.random.Generator, n_paths: int, n_days: int, cfg) -> Nois
                                            "kappa": kappa})
 
 
+def stoch_vol_abs_eps_autocorr(lag: int, cfg) -> float:
+    """Exact population autocorrelation of |eps| under the stochastic-vol model.
+
+    With |eps_t| = sqrt(v_t)|z_t|, v_t = exp(a_t - a^2/2) and a_t ~ N(0, a^2)
+    with Corr(a_t, a_{t+h}) = rho^h:
+
+        E|eps|      = sqrt(2/pi) exp(-a^2/8)
+        E|eps|^2    = 1
+        E|e_t e_t+h| = (2/pi) exp( a^2 (1+rho^h)/4 - a^2/2 )
+
+    so ACF(h) = [ (2/pi) exp(a^2(1+rho^h)/4 - a^2/2) - (2/pi) exp(-a^2/4) ]
+                / [ 1 - (2/pi) exp(-a^2/4) ].
+
+    Gives the estimator something to be right about, rather than a plausible
+    shape: at a = 1, rho = 0.98 this is 0.27300 at lag 1.
+    """
+    a2 = cfg.noise_sv_amplitude ** 2
+    rho_h = cfg.noise_sv_rho ** lag
+    c = 2.0 / math.pi
+    num = c * math.exp(a2 * (1.0 + rho_h) / 4.0 - a2 / 2.0) - c * math.exp(-a2 / 4.0)
+    den = 1.0 - c * math.exp(-a2 / 4.0)
+    return num / den
+
+
 GENERATORS = {
     "gaussian": gaussian_noise,
     "student_t": student_t_noise,

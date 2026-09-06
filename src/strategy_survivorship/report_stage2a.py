@@ -119,9 +119,14 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
     sv = diag[diag.scenario == "stoch_vol"]
     jp = diag[diag.scenario == "jump"]
     if len(sv):
-        A(f"随机波动率：对数方差一阶自相关 {sv.log_var_lag1_autocorr.iloc[0]:.4f}"
-          f"（设定 ρ = {cfg.noise_sv_rho:g}）；真实日波动率的 90/10 分位比 "
-          f"{sv.true_sigma_ratio_p90_p10.iloc[0]:.2f}。")
+        r = sv.iloc[0]
+        A(f"随机波动率：对数方差一阶自相关 **{r.log_var_lag1_autocorr:.5f} ± {r.log_var_lag1_autocorr_se:.5f}**"
+          f"（设定 ρ = {cfg.noise_sv_rho:g}，相差 "
+          f"{abs(r.log_var_lag1_autocorr - cfg.noise_sv_rho)/r.log_var_lag1_autocorr_se:.1f} 个标准误）；"
+          f"|ε| 一阶自相关 **{r.abs_eps_lag1_autocorr:.5f} ± {r.abs_eps_lag1_autocorr_se:.5f}**，"
+          f"对应的**解析总体值为 {r.abs_eps_lag1_autocorr_theory:.5f}**"
+          f"（相差 {abs(r.abs_eps_lag1_autocorr - r.abs_eps_lag1_autocorr_theory)/r.abs_eps_lag1_autocorr_se:.2f} 个标准误）；"
+          f"真实日波动率的 90/10 分位比 {r.true_sigma_ratio_p90_p10:.2f}。")
     if len(jp):
         A(f"跳跃：实测日均跳跃数 {jp.mean_jumps_per_day.iloc[0]:.5f}"
           f"（理论 {jp.expected_jumps_per_day.iloc[0]:.5f}），"

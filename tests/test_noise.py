@@ -271,3 +271,24 @@ def test_every_generated_report_table_is_well_formed():
         for block in re.findall(r"(?:^\|.*\n)+", f.read_text(), re.M):
             counts = {row.count("|") for row in block.strip().split("\n")}
             assert len(counts) == 1, (name, block.split("\n")[0][:120])
+
+
+def test_pooled_abs_eps_autocorr_matches_the_analytic_population_value():
+    """The estimator is checked against an exact formula, not a plausible shape.
+
+    |eps_t| = sqrt(v_t)|z_t| with v_t = exp(a_t - a^2/2), a_t ~ N(0, a^2) and
+    Corr(a_t, a_{t+h}) = rho^h gives a closed-form ACF; at a = 1, rho = 0.98 it is
+    0.27300 at lag 1. The per-path estimator this replaced returned 0.216.
+    """
+    from strategy_survivorship.noise import stoch_vol_abs_eps_autocorr
+    from strategy_survivorship.run_stage2a import pooled_autocorr
+
+    d = _draw("stoch_vol", seed=77, n_paths=6000)
+    for lag in (1, 10, 40):
+        theory = stoch_vol_abs_eps_autocorr(lag, CFG)
+        hat, se = pooled_autocorr(np.abs(d.eps), lag, with_se=True)
+        assert abs(hat - theory) < 4 * se, (lag, hat, theory, se)
+    # and the discarded per-path estimator is demonstrably biased low at lag 1
+    a = np.abs(d.eps)
+    per_path = np.mean([np.corrcoef(a[i, :-1], a[i, 1:])[0, 1] for i in range(500)])
+    assert per_path < stoch_vol_abs_eps_autocorr(1, CFG) - 0.03
