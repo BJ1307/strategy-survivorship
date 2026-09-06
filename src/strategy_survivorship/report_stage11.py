@@ -47,7 +47,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
         f"（{t90_1['mean_years']:.1f} 年）、中位约 {t90_1['median_days']:.0f} 日"
         f"（{t90_1['median_years']:.1f} 年）**。把备择 Sharpe 降到 0.6，均值升到约 "
         f"{t90_06['mean_years']:.1f} 年。这解释了为什么 Stage 1 在 504 日期限内检出率只有三到六成："
-        "**不是规则不好，而是这个信噪比下两年根本不够积累到高置信度。**"
+        "在这个信噪比下，**本轮实现的这些规则**在两年内很难把 q 推到 0.9 以上；这是对当前模型与门槛的陈述，不是对所有可能方法的下界。"
     )
     A("")
     A(
@@ -73,7 +73,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     Tc = cfg.switch_fixed_T[1]  # first T at which every detector gets a full post-window
     gc, rc = _f(Tc, "binary_gaussian"), _f(Tc, "trailing_sharpe_252")
     A(
-        "**Stage 1 的检测器排序是 `T=0` 这一特例的产物，但两族都会退化。** "
+        "**Stage 1 的排序是在 `T=0`（从第一天起无效）这一情境下得到的，换成先有效后失效的情境会改变；两族都会退化。** `T=0` 仍是主 benchmark 的正当情境，本节不否定它，只说明它的结论不能外推到衰减场景。"
         f"把所有 T 都固定在同一个延续误杀率 {cfg.switch_fixed_continuation_fa:g}（唯一跨 T 可比的做法）后，"
         f"在**各检测器都有完整 {cfg.switch_post_window} 天可报警窗口**的区间 T∈[{Tc}, {Tl}] 上，"
         f"失效后 504 日条件检出率：Gaussian {gc:.3f} → {gl:.3f}（{(gl / gc - 1) * 100:+.0f}%），"
@@ -108,7 +108,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     A(
         "**但原始的倍数是误导性的，必须修正。** 只匹配「失效前累计误杀率」并不匹配"
         "**评估窗口内**还剩多少报警倾向：贝叶斯 log-odds 在有效期内以 n·s²/(2D) 向上漂移，"
-        "报警风险率随时间衰减、预算早早花完；滚动统计量是平稳的，风险率恒定。"
+        "报警风险率随时间下降、预算早早花完；滚动统计量不含这种累积漂移，在本轮模拟中其报警风险率没有表现出同样的衰减。"
         "到失效时刻，滚动检测器带进评估窗口的报警倾向比贝叶斯高约 4 倍"
         f"（T={Tl}、失效前误杀同为 0.15 时，延续误杀率 0.0176 vs 0.0744）。"
     )
@@ -124,19 +124,19 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     A("")
     A(
         "**结论方向仍然成立，但理由不同，幅度也更小。** 贝叶斯要达到那个操作点，"
-        f"必须付出 {_c(Tl,'binary_gaussian','pre_failure_false_alarm_rate'):.1%} 的失效前误杀"
+        f"在本次门槛扫描的这个操作点上付出了 {_c(Tl,'binary_gaussian','pre_failure_false_alarm_rate'):.1%} 的失效前误杀"
         f"（T={Tl}），而滚动只需 {_c(Tl,'trailing_sharpe_252','pre_failure_false_alarm_rate'):.1%}——"
         "即为了在晚期还能反应，贝叶斯必须把门槛设到早期就杀掉三分之一以上仍然有效的策略。"
         "在**无条件**及时识别率上（同时包含两种代价）滚动仍领先约 "
         f"{_c(Tl,'trailing_sharpe_252','uncond_detect_h504')/_c(Tl,'binary_gaussian','uncond_detect_h504'):.1f} 倍，"
-        "且在延续误杀率、失效前误杀率、条件检出率、无条件检出率**四个指标上同时占优**。"
+        "在**被比较的这些操作点上**，延续误杀率、失效前误杀率、条件检出率、无条件检出率四项均不劣于贝叶斯。这是有限门槛网格上的经验观察，不是对全部门槛的支配性证明。"
     )
     A("")
     A(
         "**更根本的限制：固定门槛在长有效期后会失去反应能力。** "
         "在保住一半有效策略的前提下，贝叶斯检测器能达到的延续误杀率上限随 T 塌陷："
         "T=252 时约 0.18，T=1260 时只剩约 0.025；滚动检测器同期是 0.75 与 0.29。"
-        "也就是说**不存在**一个能让贝叶斯在长有效期后恢复灵敏度的固定门槛——"
+        "也就是说在**本次扫描的门槛网格与「存活率 ≥ 50%」约束下**，没有找到能让贝叶斯在长有效期后恢复该灵敏度的固定门槛（未做全门槛空间的证明）——"
         "这不是可以控制掉的混淆，而正是晚期失效逃脱检测的机制本身。"
     )
     A("")
@@ -200,7 +200,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     A(
         f"两点值得记下：**(1)** `E[p_FA] = j/(N+1)` 略**高于**名义 α（{analytic.p_fa_mean.iloc[0]:.5f} vs "
         f"{analytic.far_target.iloc[0]:g}），因为 ⌊αN⌋+1 的取整方向；这与“校准集经验误杀率恰好等于 α”"
-        "是两件事，后者是规则的机械结果。**(2)** 当 `n_test = N` 时比值恰好趋于 √2 ≈ 1.414，"
+        "是两件事，后者是规则的机械结果。**(2)** 当 `n_test = N` 时该比值**接近** √2 ≈ 1.414（有限样本下不精确相等），"
         "本例两个预算下分别是 "
         f"{analytic.sd_ratio_total_over_binomial.iloc[0]:.3f} 与 {analytic.sd_ratio_total_over_binomial.iloc[1]:.3f}。"
     )
@@ -368,7 +368,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     )
     A("")
     A(
-        "> **连续 vs 每日观察**：上表是布朗运动的连续时间首次通过（逆高斯分布）。"
+        "> **连续 vs 每日观察，以及适用范围**：上表是**同一个 Gaussian 模型、同一组固定门槛**下连续观察的首次通过（逆高斯分布），它只约束这一族离散观察规则，**不是**所有检测方法的普遍下界。"
         "真实检测器每天只观察一次，只能在整数日停下、也抓不到日内穿越，"
         "所以实际首达时间**不短于**解析值；把它当作时间尺度参照与下界，不是对模拟数字的预测。"
     )
@@ -417,14 +417,14 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     t_w = max(w for d, _, w, _ in lines if d == "binary_student_t")
     A(
         f"**Gaussian 的概率是可信的**（加权偏差 ≤ {g_w:.4f}），这在预期之内：它的似然恰好是真实生成过程。"
-        f"**Student-t 的概率系统性失准**（加权偏差达 {t_w:.4f}，最大分箱偏差 0.073），"
+        f"**在本轮的真实高斯 DGP 下，Student-t 的概率系统性失准**（加权偏差达 {t_w:.4f}，最大分箱偏差 0.073）——它的输出仍是**其自身模型假设下的后验**，只是该假设与本轮 DGP 不符，"
         "而且偏差有方向——在两端**过度自信**（声称 0.85 时实际约 0.78，声称 0.05 时实际约 0.075），"
         "中段反而接近。"
     )
     A("")
     A(
         "这说明 Student-t 更差的 Brier 分数不只是「分辨力低」，而是**概率本身不可直接当概率用**。"
-        "在似然失配时，贝叶斯递推输出的数值仍然是一个 0–1 之间的量，但它不再是有效后验。"
+        "在似然失配时，该数值仍是模型自身假设下的后验，但**相对于真实 DGP** 已不再校准。"
         "**要把它当概率用于决策，必须先做校准。**"
     )
     A("")
@@ -469,8 +469,8 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
         L.extend(
             _t(
                 rows,
-                ["情境", "检测器", "n", "失效前误杀", "存活至失效", "条件检出 h=126", "h=252", "h=504",
-                 "全体及时识别 h=252", "截断失效后延迟 (日)", "期末未检出"],
+                ["情境", "检测器", "n", "失效前误杀", "存活至失效", "条件检出 h=126d", "条件检出 h=252d", "条件检出 h=504d",
+                 "全体及时识别(无条件) h=252d", "截断失效后延迟 (日)", "期末未检出"],
                 lambda r: [
                     r["group"],
                     LBL.get(r["detector"], r["detector"]),
@@ -508,8 +508,8 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     L.extend(
         _t(
             matched,
-            ["情境", "检测器", "实测失效前误杀", "存活至失效", "条件检出 h=252", "h=504",
-             "全体及时识别 h=252", "截断失效后延迟 (日)", "中位延迟"],
+            ["情境", "检测器", "实测失效前误杀", "存活至失效", "条件检出 h=252d", "条件检出 h=504d",
+             "全体及时识别(无条件) h=252d", "截断失效后延迟 (日)", "中位延迟"],
             lambda r: [
                 r["group"].replace("matched_preFA_", ""),
                 LBL.get(r["detector"], r["detector"]),
@@ -541,7 +541,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     A(
         "6.3 匹配的是 `[1, T]` 的**累计**失效前误杀率。这回答了「失效前杀掉多少仍然有效的策略」，"
         "但**没有**匹配检测器带进评估窗口的报警倾向。两族的报警风险率形状不同："
-        "贝叶斯 log-odds 在有效期内向上漂移，风险率衰减；滚动统计量平稳，风险率恒定。"
+        "贝叶斯 log-odds 在有效期内向上漂移，报警风险率随之下降；滚动统计量不含这种累积漂移，其报警风险率在本轮模拟中没有表现出同样的衰减（未验证它是否严格恒定）。"
         "因此 6.3 的比较仍然偏向滚动。"
     )
     A("")
@@ -572,7 +572,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
         A("")
         A(
             "贝叶斯的上限随 T 塌陷（T=252 约 0.18 → T=1260 约 0.025），"
-            "而滚动同期是 0.75 → 0.29。**在长有效期后，不存在能让贝叶斯恢复灵敏度的固定门槛。**"
+            "而滚动同期是 0.75 → 0.29。**在本次网格与存活率约束下没有找到**能让贝叶斯在长有效期后恢复该灵敏度的固定门槛；这是经验搜索结果，不是不存在性证明。"
             "共同水平只能取双方都能达到的最高值，即由贝叶斯的上限决定。"
         )
         A("")
@@ -581,7 +581,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     L.extend(
         _t(
             cont,
-            ["情境", "检测器", "延续误杀率", "失效前误杀", "存活至失效", "条件检出 h=504", "无条件检出 h=504"],
+            ["情境", "检测器", "延续误杀率", "失效前误杀", "存活至失效", "条件检出 h=504d", "无条件检出 h=504d"],
             lambda r: [
                 r["group"].replace("matched_contFA_", ""),
                 LBL.get(r["detector"], r["detector"]),
@@ -598,7 +598,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
         "**读法**：条件检出率此时几乎持平（1.07–1.20 倍），"
         "所以 6.3 里 2.8–3.8 倍的差距**主要来自未匹配的报警倾向，已撤回**。"
         "但滚动是在**十分之一的失效前误杀代价**下达到同样的条件检出率的，"
-        "因此在无条件检出率上仍领先约 2 倍，并且在四个指标上同时占优（Pareto 占优）。"
+        "因此在无条件检出率上仍领先，且在**被比较的这些操作点上**四项指标均不劣于贝叶斯；这是有限网格上的经验观察，不是支配性证明。"
     )
     A("")
     A("")
@@ -611,7 +611,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     L.extend(
         _t(
             fx,
-            ["T", "检测器", "可用失效后天数", "延续误杀率", "失效前误杀", "存活至失效", "条件检出 h=504", "无条件检出 h=504"],
+            ["T", "检测器", "可用失效后天数", "延续误杀率", "失效前误杀", "存活至失效", "条件检出 h=504d", "无条件检出 h=504d"],
             lambda r: [
                 r["group"].split("=")[-1],
                 LBL.get(r["detector"], r["detector"]),
@@ -629,10 +629,57 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
         "**这是本轮最可靠的一张表。** 读法：只比较可用天数同为 504 的行——"
         f"两族都随有效期退化，贝叶斯更快（{(gl / gc - 1) * 100:+.0f}% vs {(rl / rc - 1) * 100:+.0f}%）；"
         f"交叉点在 T≈{Tc}–756 之间；到 T={Tl} 时贝叶斯为维持同样的窗口内误杀率，"
-        f"必须付出 {_f(Tl, 'binary_gaussian', 'pre_failure_false_alarm_rate'):.3f} 的失效前误杀，"
+        f"在该操作点上付出了 {_f(Tl, 'binary_gaussian', 'pre_failure_false_alarm_rate'):.3f} 的失效前误杀，"
         f"而滚动只要 {_f(Tl, 'trailing_sharpe_252', 'pre_failure_false_alarm_rate'):.3f}——约 8 倍差距。"
     )
     A("")
+    val = summary["switching"].get("frozen_threshold_validation") or []
+    if val:
+        A("")
+        A("#### 6.4.1 冻结门槛的独立样本验证")
+        A("")
+        A(
+            f"上面的门槛全部在校准块上选出。校准块给出的是**达到值**，不是泛化证据。"
+            f"本节把这些门槛**完全冻结**，在另外 {int(val[0]['n_test_paths'])} 条"
+            "独立的、一直有效的路径上重新测量，不做任何回调。"
+        )
+        A("")
+        sub = [r for r in val if r["source_block"].startswith("contFA")]
+        L.extend(
+            _t(
+                sub,
+                ["T", "检测器", "校准 失效前误杀", "测试 失效前误杀 [95%]", "存活",
+                 "校准 延续误杀", "测试 延续误杀 [95%]"],
+                lambda r: [
+                    str(int(r["T"])),
+                    LBL.get(r["detector"], r["detector"]),
+                    f"{r['calibration_pre_failure_fa']:.4f}",
+                    f"{r['test_pre_failure_fa']:.4f} [{r['test_pre_failure_fa_lo']:.4f}, {r['test_pre_failure_fa_hi']:.4f}]",
+                    str(int(r["n_survived"])),
+                    f"{r['calibration_continuation_fa']:.4f}",
+                    f"{r['test_continuation_fa']:.4f} [{r['test_continuation_fa_lo']:.4f}, {r['test_continuation_fa_hi']:.4f}]",
+                ],
+            )
+        )
+        A("")
+        inside = sum(
+            1 for r in sub
+            if r["test_continuation_fa_lo"] <= r["calibration_continuation_fa"] <= r["test_continuation_fa_hi"]
+        )
+        A(
+            f"**匹配并不完全。** {len(sub)} 个冻结门槛里有 **{inside} 个**的校准值落在独立测试的 95% 区间内，"
+            f"其余 {len(sub) - inside} 个没有落进去——最大偏差 "
+            f"{max(abs(r['test_continuation_fa'] - r['calibration_continuation_fa']) for r in sub):.4f}。"
+            "失效前误杀率在测试集上也系统性略高于校准值，方向与第 3 节顺序统计量的 "
+            "`E[p_FA] = j/(N+1) > α` 一致。**这些偏差如实报告，没有用测试结果回调任何门槛。**"
+        )
+        A("")
+        A(
+            "> **这一整块是「依赖 T 的辅助诊断」。** 每个门槛都是在**已知 T** 的前提下选出的，"
+            "因此它**不构成**一套可用于未知失效日期的统一部署规则。"
+            "本轮到此停止门槛优化。"
+        )
+        A("")
     A("### 6.5 随机组按预先声明的 T 区间分组")
     A("")
     A(
@@ -647,7 +694,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     L.extend(
         _t(
             binned,
-            ["T 区间", "检测器", "n", "失效前误杀", "存活至失效", "条件检出 h=252", "h=504", "期末未检出"],
+            ["T 区间", "检测器", "n", "失效前误杀", "存活至失效", "条件检出 h=252d", "条件检出 h=504d", "期末未检出"],
             lambda r: [
                 r["group"].replace("random_T[", "").replace("]", ""),
                 LBL.get(r["detector"], r["detector"]),

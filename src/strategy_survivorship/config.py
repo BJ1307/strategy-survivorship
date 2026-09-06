@@ -38,6 +38,15 @@ STREAM_ORDER: tuple[str, ...] = (
     "switch_fixed",
     "switch_random",
     "switch_matched_cal",
+    # Stage 2A fix: T must not be drawn from the same SeedSequence that
+    # generates the return noise.
+    "switch_random_T",
+    # Stage 2A item 4: independent always-valid paths for validating the
+    # frozen continuation-false-alarm thresholds out of sample.
+    "switch_contfa_test",
+    # Stage 2A: one parent, whose children are assigned per scenario in a
+    # documented order (see stage2a.scenario_streams).
+    "stage2a",
 )
 
 
@@ -111,10 +120,25 @@ class Stage1Config:
     # detector family can actually reach, which for the Bayesian detectors
     # shrinks sharply with T.
     switch_matched_survival_floor: float = 0.5
+    switch_contfa_test_paths: int = 5000
     # A per-T common level makes each T internally fair but not comparable
     # ACROSS T. This fixed level is feasible for every T, so the T-trend it
     # produces is apples-to-apples.
     switch_fixed_continuation_fa: float = 0.02
+
+    # --- Stage 2A: realistic-noise stress scenarios -------------------------
+    # A research stress setting, fixed before any test result was seen. Not
+    # fitted to a market and not claimed to reproduce one. One feature at a
+    # time; no full combination grid this round.
+    noise_scenarios: tuple[str, ...] = ("gaussian", "student_t", "stoch_vol", "jump")
+    noise_student_t_df: float = 5.0        # nu
+    noise_sv_rho: float = 0.98             # log-variance AR(1) persistence
+    noise_sv_amplitude: float = 1.0        # 0 collapses to Gaussian
+    noise_jump_lambda_annual: float = 2.0  # expected jumps per YEAR
+    noise_jump_kappa: float = 5.0          # sd of ONE jump, in daily-shock units
+    n_noise_calibration: int = 5000
+    n_noise_test_valid: int = 5000
+    n_noise_test_invalid: int = 5000
 
     # --- reproducibility ----------------------------------------------------
     root_seed: int = 20260905

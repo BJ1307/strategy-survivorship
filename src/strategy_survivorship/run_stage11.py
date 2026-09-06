@@ -40,6 +40,7 @@ from .probability_time import (
 )
 from .report_stage11 import write_stage11_report
 from .run_stage1 import environment_info
+from .contfa_validation import bootstrap_conditional_difference, validate_frozen_thresholds
 from .paired import paired_table
 from .simulate import build_pathsets, make_streams, simulate_returns, stream_fingerprint
 from .switching import (
@@ -181,7 +182,7 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
     streams = make_streams(cfg)
     n_days = cfg.switch_max_days
     post = cfg.switch_post_window
-    rows, beliefs, traces = [], [], []
+    rows, beliefs, traces, frozen = [], [], [], []
 
     def evaluate(returns, T, group, keep_traces=False):
         stats_cache = {}
@@ -212,7 +213,22 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
             b["survival_defined_at_alpha"] = a0
             beliefs.append(b)
             if keep_traces:
-                traces.append((group, key, np.quantile(-stat, [0.1, 0.5, 0.9], axis=0)))
+                U = -stat
+                # Per-path increment first, THEN the cross-path summary. A
+                # difference of two time-point medians is not the median of the
+                # per-path difference and would misstate the recovery curve.
+                base = U[:, int(T[0]) - 1 : int(T[0])] if T[0] >= 1 else np.zeros((U.shape[0], 1))
+                delta = U - base
+                traces.append(
+                    (
+                        group,
+                        key,
+                        np.quantile(U, [0.1, 0.5, 0.9], axis=0),
+                        np.quantile(delta, [0.1, 0.5, 0.9], axis=0),
+                        delta.mean(axis=0),
+                        int(U.shape[0]),
+                    )
+                )
         return
 
     # --- fixed T: common random numbers across T, so differences are the drift --
@@ -255,6 +271,9 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
             row["matched_threshold"] = thr_m
             row["matched_target_pre_fa"] = cfg.switch_matched_pre_fa
             matched_rows.append(row)
+            frozen.append({"source": "matched_preFA", "T": T, "detector": det.key,
+                           "threshold": thr_m, "cal_pre_fa": cfg.switch_matched_pre_fa,
+                           "cal_cont_fa": float("nan")})
             del stat
         status(f"switching: matched pre-FA T={T}", target=cfg.switch_matched_pre_fa)
     rows.extend(matched_rows)
@@ -298,6 +317,10 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
             })
             cont_rows.append(row)
             cont_meta.append({"T": T, "detector": det.key, **m})
+            frozen.append({"source": "matched_contFA", "T": T, "detector": det.key,
+                           "threshold": m["threshold"],
+                           "cal_pre_fa": m["pre_failure_fa_incurred"],
+                           "cal_cont_fa": m["achieved_continuation_fa"]})
             del stat
         status(f"switching: matched continuation-FA T={T}", level=round(common, 4))
     rows.extend(cont_rows)
@@ -327,11 +350,33 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
                 "max_reachable_continuation_fa": m["max_reachable_continuation_fa"],
             })
             rows.append(row)
+            frozen.append({"source": f"contFA{level:g}", "T": T, "detector": det.key,
+                           "threshold": m["threshold"],
+                           "cal_pre_fa": m["pre_failure_fa_incurred"],
+                           "cal_cont_fa": m["achieved_continuation_fa"]})
             del stat
     status(f"switching: fixed continuation-FA {level:g} across all T", n=len(cfg.switch_fixed_T))
 
+    # --- item 4: re-measure every frozen threshold out of sample --------------
+    val_returns, _ = simulate_switching_returns(
+        streams["switch_contfa_test"], cfg.switch_contfa_test_paths, n_days, np.inf, cfg
+    )
+    validation = [
+        validate_frozen_thresholds(
+            val_returns, DETECTORS_BY_KEY[f["detector"]], cfg, f["T"], post, f["threshold"],
+            calibration_pre_fa=f["cal_pre_fa"], calibration_cont_fa=f["cal_cont_fa"],
+            source=f["source"],
+        )
+        for f in frozen
+    ]
+    status("switching: frozen thresholds validated out of sample",
+           thresholds=len(validation), test_paths=cfg.switch_contfa_test_paths)
+
     # --- random T ------------------------------------------------------------
-    rng = np.random.default_rng(streams["switch_random"])
+    # T and the return noise must come from independent streams. Previously both
+    # were built from streams["switch_random"], so the noise generator restarted
+    # from the same words that had produced T.
+    rng = np.random.default_rng(streams["switch_random_T"])
     T_rand = rng.integers(0, cfg.switch_random_T_max + 1, size=cfg.switch_random_paths).astype(float)
     r, _ = simulate_switching_returns(
         streams["switch_random"], cfg.switch_random_paths, n_days, T_rand, cfg
@@ -366,6 +411,7 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
         "T_random": T_rand,
         # alarm level used by the trace figure, in U space
         "continuation_meta": pd.DataFrame(cont_meta),
+        "validation": pd.DataFrame(validation),
         "threshold_for_trace": thresholds[("binary_gaussian", cfg.far_targets[-1])],
         "trace_alpha": cfg.far_targets[-1],
     }
@@ -435,6 +481,9 @@ def main(argv: list[str] | None = None) -> int:
     sw["continuation_meta"].to_csv(
         out_dir / "stage11_continuation_fa_frontier.csv", index=False
     )
+    sw["validation"].to_csv(
+        out_dir / "stage11_frozen_threshold_validation.csv", index=False
+    )
 
     # 4 ---- figures ---------------------------------------------------------- #
     figures = []
@@ -485,6 +534,7 @@ def main(argv: list[str] | None = None) -> int:
             "metrics": json.loads(sw["metrics"].to_json(orient="records")),
             "belief_at_T": json.loads(sw["beliefs"].to_json(orient="records")),
             "continuation_fa": json.loads(sw["continuation_meta"].to_json(orient="records")),
+            "frozen_threshold_validation": json.loads(sw["validation"].to_json(orient="records")),
         },
         "elapsed_s": elapsed,
         "figures": figures,

@@ -197,53 +197,63 @@ def figure_switching_detection(cfg: Stage1Config, sw: dict, out: Path, alpha: fl
 
 def figure_evidence_recovery(cfg: Stage1Config, sw: dict, out: Path,
                              detector: str = "binary_gaussian") -> Path:
+    """Log-evidence around the switch, on ALL paths (no survivor conditioning).
+
+    The right panel aggregates the PER-PATH increment U_t - U_T and only then
+    takes the mean and the 10-90% band: a difference of two time-point medians is
+    a different quantity and would misstate the recovery.
+    """
     traces = [t for t in sw["traces"] if t[1] == detector]
     fig, axes = plt.subplots(1, 2, figsize=(12.6, 5.0))
     post = cfg.switch_post_window
     lead = 252
 
     ax = axes[0]
-    for i, (group, _, q) in enumerate(traces):
+    for i, (group, _, qU, _qd, _m, _n) in enumerate(traces):
         T = int(group.split("=")[1])
-        lo, med, hi = q
-        n = med.size
-        rel = np.arange(1, n + 1) - T
+        lo, med, hi = qU
+        rel = np.arange(1, med.size + 1) - T
         m = (rel >= -lead) & (rel <= post)
         col = T_COLOURS[i % len(T_COLOURS)]
         ax.plot(rel[m], med[m], color=col, lw=1.7, label=f"T = {T}d")
         ax.fill_between(rel[m], lo[m], hi[m], color=col, alpha=0.13, lw=0)
-    thr = -sw["threshold_for_trace"]
-    ax.axhline(thr, color="k", ls="--", lw=1.1,
-               label=f"alarm level in $U$ (= $-$Stage 1 threshold)")
+    ax.axhline(-sw["threshold_for_trace"], color="k", ls="--", lw=1.1,
+               label="alarm level in $U$ (= $-$Stage 1 threshold)")
     ax.axvline(0, color="0.4", lw=1.1)
     ax.set_xlabel("trading days relative to failure ($t - T$)")
     ax.set_ylabel("failure log-odds  $U_t = \\mathrm{logit}\\, q_t = -L_t$")
-    ax.set_title("Evidence must first be paid back\nmedian and 10–90% of paths", fontsize=10.5)
+    ax.set_title("Level: evidence accumulated before the switch\nmedian and 10-90% of paths",
+                 fontsize=10.5)
     ax.legend(fontsize=8, loc="upper left")
 
     ax = axes[1]
-    for i, (group, _, q) in enumerate(traces):
+    for i, (group, _, _qU, qd, mean_d, _n) in enumerate(traces):
         T = int(group.split("=")[1])
-        med = q[1]
-        n = med.size
-        rel = np.arange(1, n + 1) - T
-        base = med[T - 1] if T >= 1 else med[0] * 0.0
+        lo, med, hi = qd
+        rel = np.arange(1, med.size + 1) - T
         m = (rel >= 0) & (rel <= post)
-        ax.plot(rel[m], med[m] - base, color=T_COLOURS[i % len(T_COLOURS)], lw=1.7, label=f"T = {T}d")
+        col = T_COLOURS[i % len(T_COLOURS)]
+        ax.plot(rel[m], mean_d[m], color=col, lw=1.7, label=f"T = {T}d (mean)")
+        ax.fill_between(rel[m], lo[m], hi[m], color=col, alpha=0.10, lw=0)
+    h = np.arange(0, post + 1)
+    ax.plot(h, h / (2.0 * cfg.D), color="k", ls=":", lw=1.4,
+            label="theory: $h\\,s^2/(2D)$, $S_{true}=0$")
     ax.axvline(0, color="0.4", lw=1.1)
     ax.axhline(0, color="0.6", lw=0.8)
-    ax.set_xlabel("trading days after failure")
-    ax.set_ylabel("$U_t - U_T$   (evidence gained since failure)")
-    ax.set_title("Post-failure accumulation rate is the same for every $T$\n"
-                 "so the whole difference is the starting level", fontsize=10.5)
+    ax.set_xlabel("trading days after failure ($h$)")
+    ax.set_ylabel("$U_{T+h} - U_T$  per path, then averaged")
+    ax.set_title("Increment: per-path $U_{T+h}-U_T$\nmean and 10-90% of paths",
+                 fontsize=10.5)
     ax.legend(fontsize=8, loc="upper left")
     for a in axes:
         a.grid(alpha=0.3)
 
+    n = traces[0][5] if traces else 0
     fig.suptitle(
-        f"Fig 1.4  Why late failures take longer: {detector.replace('_', ' ')} log-evidence around the switch\n"
-        f"n = {cfg.switch_fixed_paths} paths per $T$, common random numbers; bands are the 10th–90th "
-        "percentile ACROSS PATHS, not a confidence interval.",
+        f"Fig 1.4  {detector.replace('_', ' ')} log-evidence around the switch — ALL paths, "
+        f"n = {n} per $T$\n"
+        "Groups share calendar-time noise across $T$, which does NOT make their noise identical in "
+        "time-since-failure; bands are 10-90% ACROSS PATHS, not confidence intervals.",
         fontsize=10,
     )
     fig.tight_layout(rect=(0, 0, 1, 0.87))

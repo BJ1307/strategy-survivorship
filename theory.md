@@ -359,7 +359,62 @@ post-failure 窗口长度对所有 `T` 相同。
 
 ---
 
-## 11. 参考资料
+## 11. Stage 2A：四种噪声
+
+收益始终是 `r_t = mu_S + sigma_0 * eps_t`，`mu_S = S*sigma_ann/D`，`sigma_0 = sigma_ann/sqrt(D)`。
+四种 `eps` 全部**零均值、单位无条件方差**，归一化只用理论常数。
+
+**厚尾**：`eps = sqrt((nu-2)/nu) * X`，`X ~ t_nu`。`Var(X) = nu/(nu-2)`，故 `Var(eps) = 1`。
+`nu = 5` 时二阶矩存在、四阶矩存在但其抽样方差不存在，因此**样本峰度不可作为验收统计量**，
+改用尾部频率。
+
+**随机波动率**：`a_t = rho a_{t-1} + sqrt(1-rho^2) xi_t`，`a_0 ~ N(0,1)`，故 `a_t ~ N(0,1)`
+对每个 `t` 成立（无 burn-in）。取 `v_t = exp(a_t - 1/2)`，则
+
+```
+E[v_t] = exp(-1/2) E[exp(a_t)] = exp(-1/2) exp(1/2) = 1
+Var(eps_t) = E[v_t] E[z_t^2] = 1        （无条件）
+```
+
+真实日波动率为 `sigma_0 sqrt(v_t)`。**漂移不随 v_t 缩放**——否则条件 Sharpe 会被强行固定，
+那是另一个问题。有效状态只要求**长期** Sharpe 为 1。
+
+**跳跃**：`K_t ~ Poisson(lambda/D)`，`w_t ~ N(0,1)`，
+
+```
+eps_t = (z_t + kappa sqrt(K_t) w_t) / sqrt(1 + kappa^2 lambda/D)
+```
+
+给定 `K_t`，`kappa sqrt(K_t) w_t ~ N(0, kappa^2 K_t)`，与 `K_t` 个独立 `N(0, kappa^2)` 跳跃之和同分布。
+由全方差公式 `Var(kappa sqrt(K) w) = E[kappa^2 K] = kappa^2 lambda/D`，均值为 0。
+分子方差 `1 + kappa^2 lambda/D`，故 `Var(eps) = 1`。
+**单位**：`lambda` 是**年度**跳跃强度（每年期望次数），日强度 `lambda/D`；
+`kappa` 是**单次跳跃**的标准差，以日高斯冲击为单位。
+
+**退化情形**：随机波动率振幅为 0、或 `kappa = 0`、或 `lambda = 0`，都必须逐位回到高斯模型。
+
+**误差评估**：`rho = 0.98` 时对数方差半衰期约 `log(0.5)/log(0.98) ~ 34` 天，
+路径内交易日强相关。所有标准误按**路径级**计算，不把 path-day 当独立样本。
+
+---
+
+## 12. Stage 2A：真实波动率 oracle
+
+只在随机波动率情境下加入，使用真实当期方差但保留两个**固定均值**假设：
+
+```
+dL_t = (mu1 - mu0) [ r_t - (mu1+mu0)/2 ] / sigma_t^2,    mu0 = 0, mu1 = sigma_ann/D
+```
+
+推导：`log N(r; mu1, sig^2) - log N(r; mu0, sig^2) = [(r-mu0)^2 - (r-mu1)^2]/(2 sig^2)`
+`= (mu1-mu0)[r - (mu0+mu1)/2]/sig^2`。
+
+注意这**不是**「把收益除以当期波动率再沿用固定条件 Sharpe 的更新式」——后者检验的是另一对假设。
+该 oracle 使用任何可部署规则都拿不到的信息，只用于标定上界。
+
+---
+
+## 13. 参考资料
 
 - Lo, A. W. (2002). *The Statistics of Sharpe Ratios.* Financial Analysts Journal 58(4), 36–52.
   <https://alo.mit.edu/wp-content/uploads/2017/06/The-Statistics-of-Sharpe-Ratios.pdf>

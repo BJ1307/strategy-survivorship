@@ -44,7 +44,8 @@ pip install -r requirements.txt && pip install -e .
 ```bash
 .venv/bin/python -m pytest                                # 验证
 .venv/bin/python -m strategy_survivorship.run_stage1      # 主 benchmark（约 3 秒）
-.venv/bin/python -m strategy_survivorship.run_stage11     # Stage 1.1 诊断（约 20 秒）
+.venv/bin/python -m strategy_survivorship.run_stage11     # Stage 1.1 诊断（约 35 秒）
+.venv/bin/python -m strategy_survivorship.run_stage2a     # Stage 2A 现实噪声（约 10 秒）
 ```
 
 这两条命令重建 `outputs/` 下的**全部**结果：表格、JSON、四张图和研究报告。
@@ -78,6 +79,10 @@ src/strategy_survivorship/
   probability_time.py      失效概率 q_n、概率门槛首达时间、Brier 与可靠性
   switching.py             随机失效时间 T 的 DGP 与指标（含匹配失效前误杀对照）
   paired.py                检测器之间的配对差异与区间
+  contfa_validation.py     冻结门槛的独立样本验证
+  noise.py                 Stage 2A 四种噪声：高斯 / 厚尾 / 随机波动率 / 跳跃
+  stage2a.py               情境构建、oracle 检测器、两类比较
+  plots_stage2a.py / report_stage2a.py / run_stage2a.py   Stage 2A 图、报告、流程
   plots_stage11.py / report_stage11.py / run_stage11.py   Stage 1.1 图、报告、流程
   report.py       生成 stage1_report.md
   notes.py        写入报告的“已修正问题”与“限制”
@@ -100,6 +105,12 @@ theory.md         公式、符号、单位、推导、参考链接
 | `outputs/stage11_report.md` | **Stage 1.1 报告**：解释修正、概率-时间、随机失效时间 |
 | `outputs/stage11_*.csv` | Stage 1.1 各项结果（解析校准、配对比较、概率门槛、失效时间指标等）|
 | `outputs/figures/fig1{1,2,3,4}_*.png` | Stage 1.1 四张图 |
+| `outputs/stage2a_report.md` | **Stage 2A 报告**：现实噪声下的基线压力测试 |
+| `outputs/stage2a_metrics.csv` | 情境 × 臂 × α × 检测器的全部指标 |
+| `outputs/stage2a_noise_diagnostics.csv` | 四种噪声的矩、尾频率与结构诊断 |
+| `outputs/stage2a_paired.csv` / `stage2a_probability_calibration.csv` | 配对区间 / Brier |
+| `outputs/stage11_frozen_threshold_validation.csv` | 冻结门槛的独立样本验证 |
+| `outputs/figures/fig2a{1,2,3,4}_*.png` | Stage 2A 四张图 |
 | `outputs/stage1_diagnostic_traces.csv` | 冲击诊断逐日收益、增量、log odds、概率 |
 | `outputs/run_metadata.json` | 运行配置、随机流指纹、环境版本、分阶段耗时 |
 | `outputs/figures/fig1_example_paths.png` | 固定示例路径的累计收益与两个贝叶斯概率 |

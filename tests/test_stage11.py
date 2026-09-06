@@ -364,3 +364,59 @@ def test_analytic_threshold_time_degenerate_branch_carries_every_key():
     r = analytic_threshold_time(0.5, CFG)  # logit(0.5) == the prior, level a == 0
     for k in ("mean_days", "median_days", "mean_years", "median_years"):
         assert k in r
+
+
+# --------------------------------------------------------------------------- #
+# reporting identities (Stage 2A item 3)
+# --------------------------------------------------------------------------- #
+
+
+def test_unconditional_equals_survival_times_conditional_in_integer_counts():
+    """uncond = (survivors / all) * cond, checked on counts rather than rounded rates.
+
+    A denominator mistake anywhere in switching_metrics shows up here immediately,
+    and the counts make it independent of float formatting.
+    """
+    m = pd.read_csv("outputs/stage11_switching_metrics.csv")
+    checked = 0
+    for _, r in m.iterrows():
+        n, surv = int(r.n_paths), int(r.n_survived_to_failure)
+        if surv == 0:
+            continue
+        for h in (126, 252, 504):
+            k = int(r[f"n_cond_detect_h{h}"])  # detections among survivors
+            assert r[f"cond_detect_h{h}"] == pytest.approx(k / surv, abs=1e-12)
+            assert r[f"uncond_detect_h{h}"] == pytest.approx(k / n, abs=1e-12)
+            assert r[f"uncond_detect_h{h}"] == pytest.approx(
+                (surv / n) * r[f"cond_detect_h{h}"], abs=1e-12
+            )
+            checked += 1
+    assert checked > 100
+
+
+def test_median_is_present_exactly_when_at_least_half_are_detected():
+    """No row may say 'not reached' while over half the survivors were detected,
+    and none may report a median while under half were."""
+    m = pd.read_csv("outputs/stage11_switching_metrics.csv")
+    for _, r in m.iterrows():
+        if int(r.n_survived_to_failure) == 0:
+            continue
+        has_median = not pd.isna(r.median_post_failure_delay_days)
+        assert has_median == (r.cond_detect_h504 >= 0.5), (
+            r.group, r.detector, r.far_target, r.cond_detect_h504, r.median_post_failure_delay_days
+        )
+
+
+def test_stage1_median_detection_matches_its_own_detection_rate():
+    m = pd.read_csv("outputs/stage1_metrics.csv")
+    m = m[m.detector != "random_closure"]
+    for _, r in m.iterrows():
+        has_median = not pd.isna(r.median_detect_days)
+        assert has_median == (r.detect_d504 >= 0.5), (r.detector, r.far_target, r.detect_d504)
+
+
+def test_probability_threshold_median_matches_its_reached_fraction():
+    t = pd.read_csv("outputs/stage11_probability_thresholds.csv")
+    for _, r in t.iterrows():
+        has_median = not pd.isna(r.median_first_hit_days)
+        assert has_median == (r.frac_reached >= 0.5), (r.detector, r.true_state, r.threshold_b)
