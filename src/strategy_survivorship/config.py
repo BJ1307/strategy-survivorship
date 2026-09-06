@@ -104,7 +104,13 @@ class Stage1Config:
     # not a common realised pre-failure alarm rate, so each detector is
     # re-calibrated on independent valid-only paths to hit this rate.
     switch_matched_pre_fa: float = 0.15
-    switch_matched_cal_paths: int = 2000
+    switch_matched_cal_paths: int = 4000
+    # Second control: match the false-alarm rate INSIDE the evaluation window
+    # rather than the cumulative pre-failure one. A scalar threshold cannot do
+    # both, so both are reported. The common level is set to the highest any
+    # detector family can actually reach, which for the Bayesian detectors
+    # shrinks sharply with T.
+    switch_matched_survival_floor: float = 0.5
 
     # --- reproducibility ----------------------------------------------------
     root_seed: int = 20260905

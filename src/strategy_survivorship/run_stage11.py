@@ -44,6 +44,7 @@ from .paired import paired_table
 from .simulate import build_pathsets, make_streams, simulate_returns, stream_fingerprint
 from .switching import (
     NO_ALARM,
+    matched_continuation_thresholds,
     matched_pre_failure_thresholds,
     belief_at_failure,
     bin_random_T,
@@ -256,6 +257,48 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
         status(f"switching: matched pre-FA T={T}", target=cfg.switch_matched_pre_fa)
     rows.extend(matched_rows)
 
+    # --- matched false-alarm rate INSIDE the evaluation window ----------------
+    # Matching the cumulative pre-failure rate does not equalise how trigger-happy
+    # a detector still is during the 504 days where detection is measured. Hold
+    # every detector to the same continuation false-alarm rate instead, at the
+    # highest level the least-capable family can actually reach.
+    cont_rows, cont_meta = [], []
+    for T in cfg.switch_fixed_T:
+        if T == 0:
+            continue
+        probe = {
+            det.key: matched_continuation_thresholds(
+                cal_valid, det, cfg, T, post, 1.0, cfg.switch_matched_survival_floor
+            )
+            for det in DETECTORS
+        }
+        common = min(v["max_reachable_continuation_fa"] for v in probe.values()) * 0.98
+        r, Tarr = simulate_switching_returns(
+            streams["switch_fixed"], cfg.switch_fixed_paths, n_days, T, cfg
+        )
+        keep = min(T + post, n_days)
+        for det in DETECTORS:
+            m = matched_continuation_thresholds(
+                cal_valid, det, cfg, T, post, common, cfg.switch_matched_survival_floor
+            )
+            stat = det.compute(r[:, :keep], cfg)
+            tau = first_alarm_days(stat, m["threshold"], det.first_eligible_day(cfg))
+            row = switching_metrics(
+                tau, Tarr, cfg, cfg.switch_post_horizons, post,
+                detector=det.key, far_target=common, group=f"matched_contFA_T={T}",
+            )
+            row.update({
+                "matched_threshold": m["threshold"],
+                "target_continuation_fa": common,
+                "achieved_continuation_fa": m["achieved_continuation_fa"],
+                "max_reachable_continuation_fa": m["max_reachable_continuation_fa"],
+            })
+            cont_rows.append(row)
+            cont_meta.append({"T": T, "detector": det.key, **m})
+            del stat
+        status(f"switching: matched continuation-FA T={T}", level=round(common, 4))
+    rows.extend(cont_rows)
+
     # --- random T ------------------------------------------------------------
     rng = np.random.default_rng(streams["switch_random"])
     T_rand = rng.integers(0, cfg.switch_random_T_max + 1, size=cfg.switch_random_paths).astype(float)
@@ -290,6 +333,7 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
         "traces": traces,
         "T_random": T_rand,
         # alarm level used by the trace figure, in U space
+        "continuation_meta": pd.DataFrame(cont_meta),
         "threshold_for_trace": thresholds[("binary_gaussian", cfg.far_targets[-1])],
         "trace_alpha": cfg.far_targets[-1],
     }
@@ -356,6 +400,9 @@ def main(argv: list[str] | None = None) -> int:
     sw = block_switching(cfg, thr, status)
     sw["metrics"].to_csv(out_dir / "stage11_switching_metrics.csv", index=False)
     sw["beliefs"].to_csv(out_dir / "stage11_switching_belief_at_T.csv", index=False)
+    sw["continuation_meta"].to_csv(
+        out_dir / "stage11_continuation_fa_frontier.csv", index=False
+    )
 
     # 4 ---- figures ---------------------------------------------------------- #
     figures = []
@@ -405,6 +452,7 @@ def main(argv: list[str] | None = None) -> int:
             "T_bin_edges": list(cfg.switch_T_bin_edges),
             "metrics": json.loads(sw["metrics"].to_json(orient="records")),
             "belief_at_T": json.loads(sw["beliefs"].to_json(orient="records")),
+            "continuation_fa": json.loads(sw["continuation_meta"].to_json(orient="records")),
         },
         "elapsed_s": elapsed,
         "figures": figures,

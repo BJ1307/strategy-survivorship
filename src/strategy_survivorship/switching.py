@@ -217,3 +217,77 @@ def matched_pre_failure_thresholds(
     n = minima.size
     k = min(int(np.floor(target_pre_fa * n)), n - 1)
     return float(minima[k])
+
+
+def matched_continuation_thresholds(
+    cal_returns: np.ndarray,
+    detector,
+    cfg: Stage1Config,
+    T: int,
+    post_window: int,
+    target_continuation_fa: float,
+    survival_floor: float = 0.5,
+) -> dict:
+    """Threshold matched on the false-alarm rate *inside the evaluation window*.
+
+    ``matched_pre_failure_thresholds`` equalises the cumulative alarm probability
+    over ``[1, T]``.  That is the right control for "how many still-valid
+    strategies were killed before the failure", but it does NOT equalise how
+    trigger-happy a detector still is during the following ``post_window`` days,
+    and the two families have very different alarm hazards under validity: the
+    Bayesian log-odds drifts up at ``n s^2 / (2D)`` so its hazard decays, while a
+    trailing Sharpe is stationary so its hazard does not.  Matching only the
+    cumulative pre-failure cost therefore hands the rolling detectors a much
+    larger residual alarm propensity exactly where detection is measured.
+
+    This matches instead
+
+        continuation FA = P( alarm in (T, T+post] | no alarm in [start, T] )
+
+    on purely valid data -- the false-alarm cost concurrent with the detection
+    opportunity.  A single scalar threshold cannot match both, so the two
+    controls answer different questions and both are reported.
+
+    ``survival_floor`` is essential: as the threshold rises the survivor set
+    collapses to a handful of extreme paths whose continuation minimum is also
+    high, so the continuation rate turns back down and a naive "largest threshold
+    under target" search lands in that degenerate region.  Candidates that leave
+    fewer than ``survival_floor`` of valid paths alive are rejected.
+
+    Returns a dict with the threshold, what it achieved, and ``feasible``: for
+    large ``T`` the Bayesian detectors cannot reach a high continuation FA at all,
+    which is itself a finding rather than a search failure.
+    """
+    start_day = detector.first_eligible_day(cfg)
+    stat = detector.compute(cal_returns[:, : T + post_window], cfg)
+    if T >= start_day:
+        pre_min = stat[:, start_day - 1 : T].min(axis=1)
+    else:  # nothing eligible before the switch: every path survives
+        pre_min = np.full(stat.shape[0], np.inf)
+    post_min = stat[:, max(start_day, T + 1) - 1 : T + post_window].min(axis=1)
+    if not np.isfinite(post_min).all():
+        raise ValueError("non-finite statistic in the continuation window")
+
+    grid = np.quantile(np.concatenate([pre_min, post_min]), np.linspace(0.0005, 0.6, 3000))
+    best = None
+    reachable = 0.0
+    for c in grid:
+        surv = pre_min >= c
+        if surv.mean() < survival_floor:
+            continue
+        rate = float((post_min[surv] < c).mean())
+        reachable = max(reachable, rate)
+        if rate <= target_continuation_fa and (best is None or rate > best["achieved_continuation_fa"]):
+            best = {
+                "threshold": float(c),
+                "achieved_continuation_fa": rate,
+                "pre_failure_fa_incurred": float((~surv).mean()),
+            }
+    if best is None:
+        best = {"threshold": float(grid[0]), "achieved_continuation_fa": 0.0,
+                "pre_failure_fa_incurred": 0.0}
+    best["target_continuation_fa"] = float(target_continuation_fa)
+    best["max_reachable_continuation_fa"] = float(reachable)
+    best["feasible"] = bool(reachable >= target_continuation_fa)
+    best["survival_floor"] = float(survival_floor)
+    return best

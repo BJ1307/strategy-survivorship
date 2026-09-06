@@ -272,3 +272,51 @@ def test_paired_difference_equals_the_discordant_pair_balance():
         expected = (r.discordant_ref_only - r.discordant_other_only) / r.n_paired_paths
         assert r.detect_diff == pytest.approx(expected)
         assert r.detect_diff == pytest.approx(r.detect_rate_reference - r.detect_rate_other)
+
+
+# --------------------------------------------------------------------------- #
+# continuation false-alarm matching
+# --------------------------------------------------------------------------- #
+
+
+def test_continuation_matching_rejects_the_degenerate_high_threshold_region():
+    """Without a survival floor the search lands where almost nothing survives.
+
+    As the threshold rises the survivor set collapses to a few extreme paths
+    whose continuation minimum is also high, so the continuation rate turns back
+    DOWN and a naive 'largest threshold under target' search picks a threshold
+    that kills essentially every valid strategy before the switch.
+    """
+    from strategy_survivorship.switching import matched_continuation_thresholds
+
+    ss = np.random.SeedSequence(31)
+    cal, _ = simulate_switching_returns(ss, 800, 1764, np.inf, CFG)
+    gauss = D.DETECTORS_BY_KEY["binary_gaussian"]
+    r = matched_continuation_thresholds(cal, gauss, CFG, T=1260, post_window=504,
+                                        target_continuation_fa=0.15, survival_floor=0.5)
+    assert r["pre_failure_fa_incurred"] <= 0.5
+    # the Bayesian detector simply cannot reach 0.15 here -- that is a finding,
+    # and it must be reported as infeasible rather than as a satisfied match
+    assert r["feasible"] is False
+    assert r["max_reachable_continuation_fa"] < 0.15
+
+
+def test_continuation_ceiling_falls_with_the_valid_history():
+    """The Bayesian ceiling collapses with T; the rolling one stays usable."""
+    from strategy_survivorship.switching import matched_continuation_thresholds
+
+    ss = np.random.SeedSequence(32)
+    cal, _ = simulate_switching_returns(ss, 800, 1764, np.inf, CFG)
+    ceilings = {}
+    for key in ("binary_gaussian", "trailing_sharpe_252"):
+        det = D.DETECTORS_BY_KEY[key]
+        ceilings[key] = [
+            matched_continuation_thresholds(cal, det, CFG, T, 504, 1.0, 0.5)[
+                "max_reachable_continuation_fa"
+            ]
+            for T in (252, 1260)
+        ]
+    g252, g1260 = ceilings["binary_gaussian"]
+    r252, r1260 = ceilings["trailing_sharpe_252"]
+    assert g1260 < g252 / 2  # Bayesian sensitivity collapses
+    assert r1260 > g1260 * 3  # rolling keeps far more headroom

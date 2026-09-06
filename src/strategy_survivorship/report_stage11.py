@@ -62,13 +62,47 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
         "（α=0.15、h=504：T=0 时 0.580 → T=1260 时 0.098），"
         "而 252 日滚动检测器几乎不受影响（0.556 → 0.638）。"
         "在 T ≥ 252 的所有情境下，滚动检测器都反超贝叶斯。"
+        "**注意这一段是名义预算下的原始观测，两族的误杀代价并未匹配**——"
+        "滚动在 T=1260 时的失效前误杀率高达 0.42，下面两段给出匹配后的正确倍数。"
+    )
+    A("")
+    cont = [r for r in summary["switching"]["metrics"] if r["group"].startswith("matched_contFA_")]
+    def _c(T, key, field="cond_detect_h504"):
+        return next(r[field] for r in cont if r["group"] == f"matched_contFA_T={T}" and r["detector"] == key)
+    Tl = cfg.switch_fixed_T[-1]
+    A(
+        "**但原始的倍数是误导性的，必须修正。** 只匹配「失效前累计误杀率」并不匹配"
+        "**评估窗口内**还剩多少报警倾向：贝叶斯 log-odds 在有效期内以 n·s²/(2D) 向上漂移，"
+        "报警风险率随时间衰减、预算早早花完；滚动统计量是平稳的，风险率恒定。"
+        "到失效时刻，滚动检测器带进评估窗口的报警倾向比贝叶斯高约 4 倍"
+        f"（T={Tl}、失效前误杀同为 0.15 时，延续误杀率 0.0176 vs 0.0744）。"
     )
     A("")
     A(
-        "**这不是「滚动只是报警更多」造成的假象。** "
-        "把每个检测器在独立的纯有效路径上重新校准到**相同的实测失效前误杀率 0.15** 之后，"
-        "差距依然存在且更大：T=1260 时失效后 504 日条件检出率 "
-        "Gaussian 0.097 vs 滚动 0.370（3.8 倍）；T=756 为 0.182 vs 0.506。"
+        "把两者压到**相同的延续误杀率**（即「活到 T 之后、若策略没失效、在随后 504 天误杀的概率」）后，"
+        "条件检出率几乎持平："
+        f"T=252 为 {_c(252,'binary_gaussian'):.3f} vs {_c(252,'trailing_sharpe_252'):.3f}（{_c(252,'trailing_sharpe_252')/_c(252,'binary_gaussian'):.2f}×）、"
+        f"T=756 为 {_c(756,'binary_gaussian'):.3f} vs {_c(756,'trailing_sharpe_252'):.3f}（{_c(756,'trailing_sharpe_252')/_c(756,'binary_gaussian'):.2f}×）、"
+        f"T={Tl} 为 {_c(Tl,'binary_gaussian'):.3f} vs {_c(Tl,'trailing_sharpe_252'):.3f}（{_c(Tl,'trailing_sharpe_252')/_c(Tl,'binary_gaussian'):.2f}×）。"
+        "**原先报告的 2.8–3.8 倍主要是评估窗口报警倾向未匹配造成的，现予撤回。**"
+    )
+    A("")
+    A(
+        "**结论方向仍然成立，但理由不同。** 贝叶斯要达到那个操作点，"
+        f"必须付出 {_c(Tl,'binary_gaussian','pre_failure_false_alarm_rate'):.1%} 的失效前误杀"
+        f"（T={Tl}），而滚动只需 {_c(Tl,'trailing_sharpe_252','pre_failure_false_alarm_rate'):.1%}——"
+        "即为了在晚期还能反应，贝叶斯必须把门槛设到早期就杀掉三分之一以上仍然有效的策略。"
+        "在**无条件**及时识别率上（同时包含两种代价）滚动仍领先约 "
+        f"{_c(Tl,'trailing_sharpe_252','uncond_detect_h504')/_c(Tl,'binary_gaussian','uncond_detect_h504'):.1f} 倍，"
+        "且在延续误杀率、失效前误杀率、条件检出率、无条件检出率**四个指标上同时占优**。"
+    )
+    A("")
+    A(
+        "**更根本的限制：固定门槛在长有效期后会失去反应能力。** "
+        "在保住一半有效策略的前提下，贝叶斯检测器能达到的延续误杀率上限随 T 塌陷："
+        "T=252 时约 0.18，T=1260 时只剩约 0.025；滚动检测器同期是 0.75 与 0.29。"
+        "也就是说**不存在**一个能让贝叶斯在长有效期后恢复灵敏度的固定门槛——"
+        "这不是可以控制掉的混淆，而正是晚期失效逃脱检测的机制本身。"
     )
     A("")
     A(
@@ -467,7 +501,72 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
         "结论在这两组上依然成立，因此不是该混淆造成的。"
     )
     A("")
-    A("### 6.4 随机组按预先声明的 T 区间分组")
+    A("### 6.4 匹配评估窗口内误杀率的对照（更严格的控制）")
+    A("")
+    A(
+        "6.3 匹配的是 `[1, T]` 的**累计**失效前误杀率。这回答了「失效前杀掉多少仍然有效的策略」，"
+        "但**没有**匹配检测器带进评估窗口的报警倾向。两族的报警风险率形状不同："
+        "贝叶斯 log-odds 在有效期内向上漂移，风险率衰减；滚动统计量平稳，风险率恒定。"
+        "因此 6.3 的比较仍然偏向滚动。"
+    )
+    A("")
+    A(
+        "本节改为匹配**延续误杀率** `P(在 (T, T+504] 内报警 | 活到 T)`，"
+        "即与检测机会**同期**发生的误杀代价。单个标量门槛无法同时匹配两者，"
+        "所以两个对照回答两个不同问题，都保留。"
+    )
+    A("")
+    cm = summary["switching"].get("continuation_fa") or []
+    if cm:
+        A("先看可行域——在存活率 ≥ 50% 的约束下各检测器能达到的**最高**延续误杀率：")
+        A("")
+        L.extend(
+            _t(
+                cm,
+                ["T", "检测器", "可达上限", "本节采用的共同水平", "实际达到", "为此付出的失效前误杀"],
+                lambda r: [
+                    str(int(r["T"])),
+                    LBL.get(r["detector"], r["detector"]),
+                    f"{r['max_reachable_continuation_fa']:.4f}",
+                    f"{r['target_continuation_fa']:.4f}",
+                    f"{r['achieved_continuation_fa']:.4f}",
+                    f"{r['pre_failure_fa_incurred']:.4f}",
+                ],
+            )
+        )
+        A("")
+        A(
+            "贝叶斯的上限随 T 塌陷（T=252 约 0.18 → T=1260 约 0.025），"
+            "而滚动同期是 0.75 → 0.29。**在长有效期后，不存在能让贝叶斯恢复灵敏度的固定门槛。**"
+            "共同水平只能取双方都能达到的最高值，即由贝叶斯的上限决定。"
+        )
+        A("")
+    A("在该共同水平下的检出表现：")
+    A("")
+    L.extend(
+        _t(
+            cont,
+            ["情境", "检测器", "延续误杀率", "失效前误杀", "存活至失效", "条件检出 h=504", "无条件检出 h=504"],
+            lambda r: [
+                r["group"].replace("matched_contFA_", ""),
+                LBL.get(r["detector"], r["detector"]),
+                f"{r['achieved_continuation_fa']:.4f}",
+                f"{r['pre_failure_false_alarm_rate']:.4f}",
+                f"{int(r['n_survived_to_failure'])}",
+                f"{r['cond_detect_h504']:.4f}",
+                f"{r['uncond_detect_h504']:.4f}",
+            ],
+        )
+    )
+    A("")
+    A(
+        "**读法**：条件检出率此时几乎持平（1.07–1.20 倍），"
+        "所以 6.3 里 2.8–3.8 倍的差距**主要来自未匹配的报警倾向，已撤回**。"
+        "但滚动是在**十分之一的失效前误杀代价**下达到同样的条件检出率的，"
+        "因此在无条件检出率上仍领先约 2 倍，并且在四个指标上同时占优（Pareto 占优）。"
+    )
+    A("")
+    A("### 6.5 随机组按预先声明的 T 区间分组")
     A("")
     A(
         f"区间边界在运行前写死在配置里（`switch_T_bin_edges = {list(cfg.switch_T_bin_edges)}`），"
@@ -498,7 +597,7 @@ def write_stage11_report(cfg, summary, pt, sw, analytic, comparison, paired, pat
     A(f"（上表为 α = {cfg.far_targets[-1]:g}；完整结果见 `stage11_switching_metrics.csv`。）")
     A("")
 
-    A("### 6.5 切换时刻的信念分布")
+    A("### 6.6 切换时刻的信念分布")
     A("")
     a_surv = summary["switching"]["belief_at_T"][0].get("survival_defined_at_alpha", cfg.far_targets[0])
     A(

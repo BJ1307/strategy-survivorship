@@ -75,7 +75,8 @@
       1261
     ],
     "switch_matched_pre_fa": 0.15,
-    "switch_matched_cal_paths": 2000,
+    "switch_matched_cal_paths": 4000,
+    "switch_matched_survival_floor": 0.5,
     "root_seed": 20260905,
     "label": "stage1_benchmark",
     "notes": [
@@ -1125,7 +1126,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 38.3% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=0",
@@ -1152,7 +1156,10 @@
         "median_post_failure_delay_days": 404,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=0",
@@ -1179,7 +1186,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 35.9% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=0",
@@ -1206,7 +1216,10 @@
         "median_post_failure_delay_days": 418,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=0",
@@ -1233,7 +1246,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 32.2% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=0",
@@ -1260,7 +1276,10 @@
         "median_post_failure_delay_days": 449,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=0",
@@ -1287,7 +1306,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 32.6% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=0",
@@ -1314,7 +1336,10 @@
         "median_post_failure_delay_days": 446,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=252",
@@ -1341,7 +1366,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 28.7% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=252",
@@ -1368,7 +1396,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 40.5% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=252",
@@ -1395,7 +1426,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 27.6% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=252",
@@ -1422,7 +1456,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 39.8% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=252",
@@ -1449,7 +1486,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 38.0% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=252",
@@ -1476,7 +1516,10 @@
         "median_post_failure_delay_days": 362,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=252",
@@ -1503,7 +1546,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 38.6% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=252",
@@ -1530,7 +1576,10 @@
         "median_post_failure_delay_days": 362,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=756",
@@ -1557,7 +1606,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 14.5% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=756",
@@ -1584,7 +1636,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 18.8% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=756",
@@ -1611,7 +1666,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 15.1% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=756",
@@ -1638,7 +1696,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 19.1% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=756",
@@ -1665,7 +1726,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 37.4% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=756",
@@ -1692,7 +1756,10 @@
         "median_post_failure_delay_days": 365,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=756",
@@ -1719,7 +1786,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 37.4% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=756",
@@ -1746,7 +1816,10 @@
         "median_post_failure_delay_days": 376,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=1260",
@@ -1773,7 +1846,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 8.3% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=1260",
@@ -1800,7 +1876,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 9.8% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=1260",
@@ -1827,7 +1906,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 9.2% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=1260",
@@ -1854,7 +1936,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 9.5% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=1260",
@@ -1881,7 +1966,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 37.5% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=1260",
@@ -1908,7 +1996,10 @@
         "median_post_failure_delay_days": 372,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=1260",
@@ -1935,7 +2026,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 38.2% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "fixed_T=1260",
@@ -1962,7 +2056,10 @@
         "median_post_failure_delay_days": 371,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=252",
@@ -1971,25 +2068,28 @@
         "post_window_days": 504,
         "n_paths": 2000,
         "mean_T": 252.0,
-        "pre_failure_false_alarm_rate": 0.1535,
-        "n_survived_to_failure": 1693,
-        "frac_survived_to_failure": 0.8465,
-        "cond_detect_h126": 0.1334908447,
+        "pre_failure_false_alarm_rate": 0.1595,
+        "n_survived_to_failure": 1681,
+        "frac_survived_to_failure": 0.8405,
+        "cond_detect_h126": 0.1344437835,
         "uncond_detect_h126": 0.113,
         "n_cond_detect_h126": 226,
-        "cond_detect_h252": 0.2593030124,
-        "uncond_detect_h252": 0.2195,
-        "n_cond_detect_h252": 439,
-        "cond_detect_h504": 0.4554046072,
-        "uncond_detect_h504": 0.3855,
-        "n_cond_detect_h504": 771,
-        "trunc_post_failure_delay_days": 379.2752510337,
-        "trunc_post_failure_delay_se": 4.0312477188,
-        "undetected_at_end_given_survived": 0.5445953928,
+        "cond_detect_h252": 0.261748959,
+        "uncond_detect_h252": 0.22,
+        "n_cond_detect_h252": 440,
+        "cond_detect_h504": 0.4556811422,
+        "uncond_detect_h504": 0.383,
+        "n_cond_detect_h504": 766,
+        "trunc_post_failure_delay_days": 378.4842355741,
+        "trunc_post_failure_delay_se": 4.0550131767,
+        "undetected_at_end_given_survived": 0.5443188578,
         "median_post_failure_delay_days": "",
-        "median_post_failure_delay_note": "not reached: only 45.5% of survivors detected within 504d after failure",
-        "matched_threshold": -1.0417864011,
-        "matched_target_pre_fa": 0.15
+        "median_post_failure_delay_note": "not reached: only 45.6% of survivors detected within 504d after failure",
+        "matched_threshold": -1.023346124,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=252",
@@ -1998,25 +2098,28 @@
         "post_window_days": 504,
         "n_paths": 2000,
         "mean_T": 252.0,
-        "pre_failure_false_alarm_rate": 0.1615,
-        "n_survived_to_failure": 1677,
-        "frac_survived_to_failure": 0.8385,
-        "cond_detect_h126": 0.1198568873,
-        "uncond_detect_h126": 0.1005,
-        "n_cond_detect_h126": 201,
-        "cond_detect_h252": 0.2558139535,
-        "uncond_detect_h252": 0.2145,
-        "n_cond_detect_h252": 429,
-        "cond_detect_h504": 0.450208706,
-        "uncond_detect_h504": 0.3775,
-        "n_cond_detect_h504": 755,
-        "trunc_post_failure_delay_days": 381.8485390578,
-        "trunc_post_failure_delay_se": 3.9982472436,
-        "undetected_at_end_given_survived": 0.549791294,
+        "pre_failure_false_alarm_rate": 0.1685,
+        "n_survived_to_failure": 1663,
+        "frac_survived_to_failure": 0.8315,
+        "cond_detect_h126": 0.1214672279,
+        "uncond_detect_h126": 0.101,
+        "n_cond_detect_h126": 202,
+        "cond_detect_h252": 0.2561635598,
+        "uncond_detect_h252": 0.213,
+        "n_cond_detect_h252": 426,
+        "cond_detect_h504": 0.4546001203,
+        "uncond_detect_h504": 0.378,
+        "n_cond_detect_h504": 756,
+        "trunc_post_failure_delay_days": 381.1118460613,
+        "trunc_post_failure_delay_se": 4.0191514048,
+        "undetected_at_end_given_survived": 0.5453998797,
         "median_post_failure_delay_days": "",
-        "median_post_failure_delay_note": "not reached: only 45.0% of survivors detected within 504d after failure",
-        "matched_threshold": -1.2718326693,
-        "matched_target_pre_fa": 0.15
+        "median_post_failure_delay_note": "not reached: only 45.5% of survivors detected within 504d after failure",
+        "matched_threshold": -1.2433406613,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=252",
@@ -2028,22 +2131,25 @@
         "pre_failure_false_alarm_rate": 0.1615,
         "n_survived_to_failure": 1677,
         "frac_survived_to_failure": 0.8385,
-        "cond_detect_h126": 0.4329159213,
-        "uncond_detect_h126": 0.363,
-        "n_cond_detect_h126": 726,
-        "cond_detect_h252": 0.7388193202,
-        "uncond_detect_h252": 0.6195,
-        "n_cond_detect_h252": 1239,
+        "cond_detect_h126": 0.4358974359,
+        "uncond_detect_h126": 0.3655,
+        "n_cond_detect_h126": 731,
+        "cond_detect_h252": 0.740608229,
+        "uncond_detect_h252": 0.621,
+        "n_cond_detect_h252": 1242,
         "cond_detect_h504": 0.9409660107,
         "uncond_detect_h504": 0.789,
         "n_cond_detect_h504": 1578,
-        "trunc_post_failure_delay_days": 181.1669648181,
-        "trunc_post_failure_delay_se": 3.5002445839,
+        "trunc_post_failure_delay_days": 180.6678592725,
+        "trunc_post_failure_delay_se": 3.4998497011,
         "undetected_at_end_given_survived": 0.0590339893,
-        "median_post_failure_delay_days": 150,
+        "median_post_failure_delay_days": 149,
         "median_post_failure_delay_note": "",
-        "matched_threshold": -0.0020217759,
-        "matched_target_pre_fa": 0.15
+        "matched_threshold": 0.0016346758,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=252",
@@ -2055,22 +2161,25 @@
         "pre_failure_false_alarm_rate": 0.1615,
         "n_survived_to_failure": 1677,
         "frac_survived_to_failure": 0.8385,
-        "cond_detect_h126": 0.4329159213,
-        "uncond_detect_h126": 0.363,
-        "n_cond_detect_h126": 726,
-        "cond_detect_h252": 0.7388193202,
-        "uncond_detect_h252": 0.6195,
-        "n_cond_detect_h252": 1239,
+        "cond_detect_h126": 0.4358974359,
+        "uncond_detect_h126": 0.3655,
+        "n_cond_detect_h126": 731,
+        "cond_detect_h252": 0.740608229,
+        "uncond_detect_h252": 0.621,
+        "n_cond_detect_h252": 1242,
         "cond_detect_h504": 0.9409660107,
         "uncond_detect_h504": 0.789,
         "n_cond_detect_h504": 1578,
-        "trunc_post_failure_delay_days": 181.1860465116,
-        "trunc_post_failure_delay_se": 3.4999852069,
+        "trunc_post_failure_delay_days": 180.6577221228,
+        "trunc_post_failure_delay_se": 3.5000612223,
         "undetected_at_end_given_survived": 0.0590339893,
-        "median_post_failure_delay_days": 150,
+        "median_post_failure_delay_days": 149,
         "median_post_failure_delay_note": "",
-        "matched_threshold": -0.0021409398,
-        "matched_target_pre_fa": 0.15
+        "matched_threshold": 0.0018059043,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=756",
@@ -2079,25 +2188,28 @@
         "post_window_days": 504,
         "n_paths": 2000,
         "mean_T": 756.0,
-        "pre_failure_false_alarm_rate": 0.169,
-        "n_survived_to_failure": 1662,
-        "frac_survived_to_failure": 0.831,
-        "cond_detect_h126": 0.0270758123,
-        "uncond_detect_h126": 0.0225,
-        "n_cond_detect_h126": 45,
-        "cond_detect_h252": 0.0734055355,
-        "uncond_detect_h252": 0.061,
-        "n_cond_detect_h252": 122,
-        "cond_detect_h504": 0.1817087846,
-        "uncond_detect_h504": 0.151,
-        "n_cond_detect_h504": 302,
-        "trunc_post_failure_delay_days": 464.614921781,
-        "trunc_post_failure_delay_se": 2.5193754581,
-        "undetected_at_end_given_survived": 0.8182912154,
+        "pre_failure_false_alarm_rate": 0.164,
+        "n_survived_to_failure": 1672,
+        "frac_survived_to_failure": 0.836,
+        "cond_detect_h126": 0.0257177033,
+        "uncond_detect_h126": 0.0215,
+        "n_cond_detect_h126": 43,
+        "cond_detect_h252": 0.0723684211,
+        "uncond_detect_h252": 0.0605,
+        "n_cond_detect_h252": 121,
+        "cond_detect_h504": 0.1776315789,
+        "uncond_detect_h504": 0.1485,
+        "n_cond_detect_h504": 297,
+        "trunc_post_failure_delay_days": 465.4826555024,
+        "trunc_post_failure_delay_se": 2.47755231,
+        "undetected_at_end_given_survived": 0.8223684211,
         "median_post_failure_delay_days": "",
-        "median_post_failure_delay_note": "not reached: only 18.2% of survivors detected within 504d after failure",
-        "matched_threshold": -1.3885027084,
-        "matched_target_pre_fa": 0.15
+        "median_post_failure_delay_note": "not reached: only 17.8% of survivors detected within 504d after failure",
+        "matched_threshold": -1.4110207009,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=756",
@@ -2109,22 +2221,25 @@
         "pre_failure_false_alarm_rate": 0.1635,
         "n_survived_to_failure": 1673,
         "frac_survived_to_failure": 0.8365,
-        "cond_detect_h126": 0.0268977884,
-        "uncond_detect_h126": 0.0225,
-        "n_cond_detect_h126": 45,
-        "cond_detect_h252": 0.0765092648,
-        "uncond_detect_h252": 0.064,
-        "n_cond_detect_h252": 128,
+        "cond_detect_h126": 0.0263000598,
+        "uncond_detect_h126": 0.022,
+        "n_cond_detect_h126": 44,
+        "cond_detect_h252": 0.0759115362,
+        "uncond_detect_h252": 0.0635,
+        "n_cond_detect_h252": 127,
         "cond_detect_h504": 0.1858936043,
         "uncond_detect_h504": 0.1555,
         "n_cond_detect_h504": 311,
-        "trunc_post_failure_delay_days": 462.6317991632,
-        "trunc_post_failure_delay_se": 2.5224838279,
+        "trunc_post_failure_delay_days": 462.7112970711,
+        "trunc_post_failure_delay_se": 2.517602169,
         "undetected_at_end_given_survived": 0.8141063957,
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 18.6% of survivors detected within 504d after failure",
-        "matched_threshold": -1.7559767532,
-        "matched_target_pre_fa": 0.15
+        "matched_threshold": -1.7574329241,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=756",
@@ -2133,25 +2248,28 @@
         "post_window_days": 504,
         "n_paths": 2000,
         "mean_T": 756.0,
-        "pre_failure_false_alarm_rate": 0.163,
-        "n_survived_to_failure": 1674,
-        "frac_survived_to_failure": 0.837,
-        "cond_detect_h126": 0.0758661888,
-        "uncond_detect_h126": 0.0635,
-        "n_cond_detect_h126": 127,
-        "cond_detect_h252": 0.2580645161,
-        "uncond_detect_h252": 0.216,
-        "n_cond_detect_h252": 432,
-        "cond_detect_h504": 0.5059737157,
-        "uncond_detect_h504": 0.4235,
-        "n_cond_detect_h504": 847,
-        "trunc_post_failure_delay_days": 381.8948626045,
-        "trunc_post_failure_delay_se": 3.6875066914,
-        "undetected_at_end_given_survived": 0.4940262843,
-        "median_post_failure_delay_days": 496,
-        "median_post_failure_delay_note": "",
-        "matched_threshold": -1.1992767323,
-        "matched_target_pre_fa": 0.15
+        "pre_failure_false_alarm_rate": 0.159,
+        "n_survived_to_failure": 1682,
+        "frac_survived_to_failure": 0.841,
+        "cond_detect_h126": 0.0743162901,
+        "uncond_detect_h126": 0.0625,
+        "n_cond_detect_h126": 125,
+        "cond_detect_h252": 0.2502972652,
+        "uncond_detect_h252": 0.2105,
+        "n_cond_detect_h252": 421,
+        "cond_detect_h504": 0.4994054697,
+        "uncond_detect_h504": 0.42,
+        "n_cond_detect_h504": 840,
+        "trunc_post_failure_delay_days": 384.1087990488,
+        "trunc_post_failure_delay_se": 3.6568562932,
+        "undetected_at_end_given_survived": 0.5005945303,
+        "median_post_failure_delay_days": "",
+        "median_post_failure_delay_note": "not reached: only 49.9% of survivors detected within 504d after failure",
+        "matched_threshold": -1.2130877689,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=756",
@@ -2160,25 +2278,28 @@
         "post_window_days": 504,
         "n_paths": 2000,
         "mean_T": 756.0,
-        "pre_failure_false_alarm_rate": 0.1635,
-        "n_survived_to_failure": 1673,
-        "frac_survived_to_failure": 0.8365,
-        "cond_detect_h126": 0.0765092648,
-        "uncond_detect_h126": 0.064,
-        "n_cond_detect_h126": 128,
-        "cond_detect_h252": 0.2564255828,
-        "uncond_detect_h252": 0.2145,
-        "n_cond_detect_h252": 429,
-        "cond_detect_h504": 0.5002988643,
-        "uncond_detect_h504": 0.4185,
-        "n_cond_detect_h504": 837,
-        "trunc_post_failure_delay_days": 382.4429169157,
-        "trunc_post_failure_delay_se": 3.6893638871,
-        "undetected_at_end_given_survived": 0.4997011357,
-        "median_post_failure_delay_days": 504,
-        "median_post_failure_delay_note": "",
-        "matched_threshold": -1.1948546826,
-        "matched_target_pre_fa": 0.15
+        "pre_failure_false_alarm_rate": 0.159,
+        "n_survived_to_failure": 1682,
+        "frac_survived_to_failure": 0.841,
+        "cond_detect_h126": 0.0737217598,
+        "uncond_detect_h126": 0.062,
+        "n_cond_detect_h126": 124,
+        "cond_detect_h252": 0.2485136742,
+        "uncond_detect_h252": 0.209,
+        "n_cond_detect_h252": 418,
+        "cond_detect_h504": 0.4898929845,
+        "uncond_detect_h504": 0.412,
+        "n_cond_detect_h504": 824,
+        "trunc_post_failure_delay_days": 385.4577883472,
+        "trunc_post_failure_delay_se": 3.6540908336,
+        "undetected_at_end_given_survived": 0.5101070155,
+        "median_post_failure_delay_days": "",
+        "median_post_failure_delay_note": "not reached: only 49.0% of survivors detected within 504d after failure",
+        "matched_threshold": -1.2162183306,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=1260",
@@ -2187,25 +2308,28 @@
         "post_window_days": 504,
         "n_paths": 2000,
         "mean_T": 1260.0,
-        "pre_failure_false_alarm_rate": 0.1575,
-        "n_survived_to_failure": 1685,
-        "frac_survived_to_failure": 0.8425,
-        "cond_detect_h126": 0.0154302671,
-        "uncond_detect_h126": 0.013,
-        "n_cond_detect_h126": 26,
-        "cond_detect_h252": 0.0391691395,
-        "uncond_detect_h252": 0.033,
-        "n_cond_detect_h252": 66,
-        "cond_detect_h504": 0.0973293769,
-        "uncond_detect_h504": 0.082,
-        "n_cond_detect_h504": 164,
-        "trunc_post_failure_delay_days": 482.9851632047,
-        "trunc_post_failure_delay_se": 1.8718460794,
-        "undetected_at_end_given_survived": 0.9026706231,
+        "pre_failure_false_alarm_rate": 0.152,
+        "n_survived_to_failure": 1696,
+        "frac_survived_to_failure": 0.848,
+        "cond_detect_h126": 0.0135613208,
+        "uncond_detect_h126": 0.0115,
+        "n_cond_detect_h126": 23,
+        "cond_detect_h252": 0.0377358491,
+        "uncond_detect_h252": 0.032,
+        "n_cond_detect_h252": 64,
+        "cond_detect_h504": 0.0949292453,
+        "uncond_detect_h504": 0.0805,
+        "n_cond_detect_h504": 161,
+        "trunc_post_failure_delay_days": 483.6886792453,
+        "trunc_post_failure_delay_se": 1.8240487432,
+        "undetected_at_end_given_survived": 0.9050707547,
         "median_post_failure_delay_days": "",
-        "median_post_failure_delay_note": "not reached: only 9.7% of survivors detected within 504d after failure",
-        "matched_threshold": -1.569357477,
-        "matched_target_pre_fa": 0.15
+        "median_post_failure_delay_note": "not reached: only 9.5% of survivors detected within 504d after failure",
+        "matched_threshold": -1.5885553624,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=1260",
@@ -2214,25 +2338,28 @@
         "post_window_days": 504,
         "n_paths": 2000,
         "mean_T": 1260.0,
-        "pre_failure_false_alarm_rate": 0.165,
-        "n_survived_to_failure": 1670,
-        "frac_survived_to_failure": 0.835,
-        "cond_detect_h126": 0.0155688623,
-        "uncond_detect_h126": 0.013,
-        "n_cond_detect_h126": 26,
-        "cond_detect_h252": 0.0383233533,
-        "uncond_detect_h252": 0.032,
-        "n_cond_detect_h252": 64,
-        "cond_detect_h504": 0.0922155689,
-        "uncond_detect_h504": 0.077,
-        "n_cond_detect_h504": 154,
-        "trunc_post_failure_delay_days": 482.9904191617,
-        "trunc_post_failure_delay_se": 1.8984393823,
-        "undetected_at_end_given_survived": 0.9077844311,
+        "pre_failure_false_alarm_rate": 0.157,
+        "n_survived_to_failure": 1686,
+        "frac_survived_to_failure": 0.843,
+        "cond_detect_h126": 0.0160142349,
+        "uncond_detect_h126": 0.0135,
+        "n_cond_detect_h126": 27,
+        "cond_detect_h252": 0.037366548,
+        "uncond_detect_h252": 0.0315,
+        "n_cond_detect_h252": 63,
+        "cond_detect_h504": 0.0931198102,
+        "uncond_detect_h504": 0.0785,
+        "n_cond_detect_h504": 157,
+        "trunc_post_failure_delay_days": 482.8244365362,
+        "trunc_post_failure_delay_se": 1.8993865813,
+        "undetected_at_end_given_survived": 0.9068801898,
         "median_post_failure_delay_days": "",
-        "median_post_failure_delay_note": "not reached: only 9.2% of survivors detected within 504d after failure",
-        "matched_threshold": -1.9499731631,
-        "matched_target_pre_fa": 0.15
+        "median_post_failure_delay_note": "not reached: only 9.3% of survivors detected within 504d after failure",
+        "matched_threshold": -1.995536783,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=1260",
@@ -2241,25 +2368,28 @@
         "post_window_days": 504,
         "n_paths": 2000,
         "mean_T": 1260.0,
-        "pre_failure_false_alarm_rate": 0.1595,
-        "n_survived_to_failure": 1681,
-        "frac_survived_to_failure": 0.8405,
-        "cond_detect_h126": 0.0464009518,
+        "pre_failure_false_alarm_rate": 0.143,
+        "n_survived_to_failure": 1714,
+        "frac_survived_to_failure": 0.857,
+        "cond_detect_h126": 0.0455075846,
         "uncond_detect_h126": 0.039,
         "n_cond_detect_h126": 78,
-        "cond_detect_h252": 0.1564544914,
-        "uncond_detect_h252": 0.1315,
-        "n_cond_detect_h252": 263,
-        "cond_detect_h504": 0.3700178465,
-        "uncond_detect_h504": 0.311,
-        "n_cond_detect_h504": 622,
-        "trunc_post_failure_delay_days": 421.2795954789,
-        "trunc_post_failure_delay_se": 3.2175785529,
-        "undetected_at_end_given_survived": 0.6299821535,
+        "cond_detect_h252": 0.1528588098,
+        "uncond_detect_h252": 0.131,
+        "n_cond_detect_h252": 262,
+        "cond_detect_h504": 0.3558926488,
+        "uncond_detect_h504": 0.305,
+        "n_cond_detect_h504": 610,
+        "trunc_post_failure_delay_days": 424.1196032672,
+        "trunc_post_failure_delay_se": 3.1633561577,
+        "undetected_at_end_given_survived": 0.6441073512,
         "median_post_failure_delay_days": "",
-        "median_post_failure_delay_note": "not reached: only 37.0% of survivors detected within 504d after failure",
-        "matched_threshold": -1.5010313461,
-        "matched_target_pre_fa": 0.15
+        "median_post_failure_delay_note": "not reached: only 35.6% of survivors detected within 504d after failure",
+        "matched_threshold": -1.5372211747,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "matched_preFA_T=1260",
@@ -2268,25 +2398,388 @@
         "post_window_days": 504,
         "n_paths": 2000,
         "mean_T": 1260.0,
-        "pre_failure_false_alarm_rate": 0.1595,
-        "n_survived_to_failure": 1681,
-        "frac_survived_to_failure": 0.8405,
-        "cond_detect_h126": 0.0469958358,
-        "uncond_detect_h126": 0.0395,
-        "n_cond_detect_h126": 79,
-        "cond_detect_h252": 0.1624033314,
-        "uncond_detect_h252": 0.1365,
-        "n_cond_detect_h252": 273,
-        "cond_detect_h504": 0.3753718025,
-        "uncond_detect_h504": 0.3155,
-        "n_cond_detect_h504": 631,
-        "trunc_post_failure_delay_days": 419.8358120167,
-        "trunc_post_failure_delay_se": 3.2469224524,
-        "undetected_at_end_given_survived": 0.6246281975,
+        "pre_failure_false_alarm_rate": 0.1495,
+        "n_survived_to_failure": 1701,
+        "frac_survived_to_failure": 0.8505,
+        "cond_detect_h126": 0.0452674897,
+        "uncond_detect_h126": 0.0385,
+        "n_cond_detect_h126": 77,
+        "cond_detect_h252": 0.1546149324,
+        "uncond_detect_h252": 0.1315,
+        "n_cond_detect_h252": 263,
+        "cond_detect_h504": 0.3615520282,
+        "uncond_detect_h504": 0.3075,
+        "n_cond_detect_h504": 615,
+        "trunc_post_failure_delay_days": 423.4456202234,
+        "trunc_post_failure_delay_se": 3.176874534,
+        "undetected_at_end_given_survived": 0.6384479718,
         "median_post_failure_delay_days": "",
-        "median_post_failure_delay_note": "not reached: only 37.5% of survivors detected within 504d after failure",
-        "matched_threshold": -1.4869410695,
-        "matched_target_pre_fa": 0.15
+        "median_post_failure_delay_note": "not reached: only 36.2% of survivors detected within 504d after failure",
+        "matched_threshold": -1.5204516059,
+        "matched_target_pre_fa": 0.15,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
+      },
+      {
+        "group": "matched_contFA_T=252",
+        "detector": "binary_gaussian",
+        "far_target": 0.1771604938,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 252.0,
+        "pre_failure_false_alarm_rate": 0.467,
+        "n_survived_to_failure": 1066,
+        "frac_survived_to_failure": 0.533,
+        "cond_detect_h126": 0.1754221388,
+        "uncond_detect_h126": 0.0935,
+        "n_cond_detect_h126": 187,
+        "cond_detect_h252": 0.3123827392,
+        "uncond_detect_h252": 0.1665,
+        "n_cond_detect_h252": 333,
+        "cond_detect_h504": 0.5365853659,
+        "uncond_detect_h504": 0.286,
+        "n_cond_detect_h504": 572,
+        "trunc_post_failure_delay_days": 353.5731707317,
+        "trunc_post_failure_delay_se": 5.3762008405,
+        "undetected_at_end_given_survived": 0.4634146341,
+        "median_post_failure_delay_days": 461,
+        "median_post_failure_delay_note": "",
+        "matched_threshold": -0.4749547014,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.1771604938,
+        "achieved_continuation_fa": 0.1771530567,
+        "max_reachable_continuation_fa": 0.1807760141
+      },
+      {
+        "group": "matched_contFA_T=252",
+        "detector": "binary_student_t",
+        "far_target": 0.1771604938,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 252.0,
+        "pre_failure_false_alarm_rate": 0.4265,
+        "n_survived_to_failure": 1147,
+        "frac_survived_to_failure": 0.5735,
+        "cond_detect_h126": 0.1621621622,
+        "uncond_detect_h126": 0.093,
+        "n_cond_detect_h126": 186,
+        "cond_detect_h252": 0.3077593723,
+        "uncond_detect_h252": 0.1765,
+        "n_cond_detect_h252": 353,
+        "cond_detect_h504": 0.5178727114,
+        "uncond_detect_h504": 0.297,
+        "n_cond_detect_h504": 594,
+        "trunc_post_failure_delay_days": 358.4298169137,
+        "trunc_post_failure_delay_se": 5.1433371797,
+        "undetected_at_end_given_survived": 0.4821272886,
+        "median_post_failure_delay_days": 482,
+        "median_post_failure_delay_note": "",
+        "matched_threshold": -0.6329526388,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.1771604938,
+        "achieved_continuation_fa": 0.1771501926,
+        "max_reachable_continuation_fa": 0.1883148238
+      },
+      {
+        "group": "matched_contFA_T=252",
+        "detector": "trailing_sharpe_252",
+        "far_target": 0.1771604938,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 252.0,
+        "pre_failure_false_alarm_rate": 0.0205,
+        "n_survived_to_failure": 1959,
+        "frac_survived_to_failure": 0.9795,
+        "cond_detect_h126": 0.12302195,
+        "uncond_detect_h126": 0.1205,
+        "n_cond_detect_h126": 241,
+        "cond_detect_h252": 0.303726391,
+        "uncond_detect_h252": 0.2975,
+        "n_cond_detect_h252": 595,
+        "cond_detect_h504": 0.5717202654,
+        "uncond_detect_h504": 0.56,
+        "n_cond_detect_h504": 1120,
+        "trunc_post_failure_delay_days": 357.4002041858,
+        "trunc_post_failure_delay_se": 3.6586495807,
+        "undetected_at_end_given_survived": 0.4282797346,
+        "median_post_failure_delay_days": 423,
+        "median_post_failure_delay_note": "",
+        "matched_threshold": -1.083283135,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.1771604938,
+        "achieved_continuation_fa": 0.1771151886,
+        "max_reachable_continuation_fa": 0.8653437279
+      },
+      {
+        "group": "matched_contFA_T=252",
+        "detector": "known_vol_rolling_252",
+        "far_target": 0.1771604938,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 252.0,
+        "pre_failure_false_alarm_rate": 0.021,
+        "n_survived_to_failure": 1958,
+        "frac_survived_to_failure": 0.979,
+        "cond_detect_h126": 0.1246169561,
+        "uncond_detect_h126": 0.122,
+        "n_cond_detect_h126": 244,
+        "cond_detect_h252": 0.304392237,
+        "uncond_detect_h252": 0.298,
+        "n_cond_detect_h252": 596,
+        "cond_detect_h504": 0.575587334,
+        "uncond_detect_h504": 0.5635,
+        "n_cond_detect_h504": 1127,
+        "trunc_post_failure_delay_days": 356.2895812053,
+        "trunc_post_failure_delay_se": 3.6572870927,
+        "undetected_at_end_given_survived": 0.424412666,
+        "median_post_failure_delay_days": 418,
+        "median_post_failure_delay_note": "",
+        "matched_threshold": -1.0675295823,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.1771604938,
+        "achieved_continuation_fa": 0.1770249618,
+        "max_reachable_continuation_fa": 0.8652004257
+      },
+      {
+        "group": "matched_contFA_T=756",
+        "detector": "binary_gaussian",
+        "far_target": 0.0526842105,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 756.0,
+        "pre_failure_false_alarm_rate": 0.487,
+        "n_survived_to_failure": 1026,
+        "frac_survived_to_failure": 0.513,
+        "cond_detect_h126": 0.0545808967,
+        "uncond_detect_h126": 0.028,
+        "n_cond_detect_h126": 56,
+        "cond_detect_h252": 0.1140350877,
+        "uncond_detect_h252": 0.0585,
+        "n_cond_detect_h252": 117,
+        "cond_detect_h504": 0.2553606238,
+        "uncond_detect_h504": 0.131,
+        "n_cond_detect_h504": 262,
+        "trunc_post_failure_delay_days": 445.2641325536,
+        "trunc_post_failure_delay_se": 3.9025966313,
+        "undetected_at_end_given_survived": 0.7446393762,
+        "median_post_failure_delay_days": "",
+        "median_post_failure_delay_note": "not reached: only 25.5% of survivors detected within 504d after failure",
+        "matched_threshold": -0.5806461563,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.0526842105,
+        "achieved_continuation_fa": 0.0526810913,
+        "max_reachable_continuation_fa": 0.0537593985
+      },
+      {
+        "group": "matched_contFA_T=756",
+        "detector": "binary_student_t",
+        "far_target": 0.0526842105,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 756.0,
+        "pre_failure_false_alarm_rate": 0.4995,
+        "n_survived_to_failure": 1001,
+        "frac_survived_to_failure": 0.5005,
+        "cond_detect_h126": 0.042957043,
+        "uncond_detect_h126": 0.0215,
+        "n_cond_detect_h126": 43,
+        "cond_detect_h252": 0.1028971029,
+        "uncond_detect_h252": 0.0515,
+        "n_cond_detect_h252": 103,
+        "cond_detect_h504": 0.2317682318,
+        "uncond_detect_h504": 0.116,
+        "n_cond_detect_h504": 232,
+        "trunc_post_failure_delay_days": 452.0619380619,
+        "trunc_post_failure_delay_se": 3.6771161223,
+        "undetected_at_end_given_survived": 0.7682317682,
+        "median_post_failure_delay_days": "",
+        "median_post_failure_delay_note": "not reached: only 23.2% of survivors detected within 504d after failure",
+        "matched_threshold": -0.7061165534,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.0526842105,
+        "achieved_continuation_fa": 0.0526824553,
+        "max_reachable_continuation_fa": 0.0562316408
+      },
+      {
+        "group": "matched_contFA_T=756",
+        "detector": "trailing_sharpe_252",
+        "far_target": 0.0526842105,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 756.0,
+        "pre_failure_false_alarm_rate": 0.0585,
+        "n_survived_to_failure": 1883,
+        "frac_survived_to_failure": 0.9415,
+        "cond_detect_h126": 0.0308019118,
+        "uncond_detect_h126": 0.029,
+        "n_cond_detect_h126": 58,
+        "cond_detect_h252": 0.1210833776,
+        "uncond_detect_h252": 0.114,
+        "n_cond_detect_h252": 228,
+        "cond_detect_h504": 0.2873074881,
+        "uncond_detect_h504": 0.2705,
+        "n_cond_detect_h504": 541,
+        "trunc_post_failure_delay_days": 440.6346255975,
+        "trunc_post_failure_delay_se": 2.7616471085,
+        "undetected_at_end_given_survived": 0.7126925119,
+        "median_post_failure_delay_days": "",
+        "median_post_failure_delay_note": "not reached: only 28.7% of survivors detected within 504d after failure",
+        "matched_threshold": -1.6946516724,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.0526842105,
+        "achieved_continuation_fa": 0.0526315789,
+        "max_reachable_continuation_fa": 0.4572713643
+      },
+      {
+        "group": "matched_contFA_T=756",
+        "detector": "known_vol_rolling_252",
+        "far_target": 0.0526842105,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 756.0,
+        "pre_failure_false_alarm_rate": 0.0605,
+        "n_survived_to_failure": 1879,
+        "frac_survived_to_failure": 0.9395,
+        "cond_detect_h126": 0.0271420969,
+        "uncond_detect_h126": 0.0255,
+        "n_cond_detect_h126": 51,
+        "cond_detect_h252": 0.1133581692,
+        "uncond_detect_h252": 0.1065,
+        "n_cond_detect_h252": 213,
+        "cond_detect_h504": 0.2810005322,
+        "uncond_detect_h504": 0.264,
+        "n_cond_detect_h504": 528,
+        "trunc_post_failure_delay_days": 443.428419372,
+        "trunc_post_failure_delay_se": 2.6979016671,
+        "undetected_at_end_given_survived": 0.7189994678,
+        "median_post_failure_delay_days": "",
+        "median_post_failure_delay_note": "not reached: only 28.1% of survivors detected within 504d after failure",
+        "matched_threshold": -1.6833095732,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.0526842105,
+        "achieved_continuation_fa": 0.0525620708,
+        "max_reachable_continuation_fa": 0.4577711144
+      },
+      {
+        "group": "matched_contFA_T=1260",
+        "detector": "binary_gaussian",
+        "far_target": 0.0245479452,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 1260.0,
+        "pre_failure_false_alarm_rate": 0.3735,
+        "n_survived_to_failure": 1253,
+        "frac_survived_to_failure": 0.6265,
+        "cond_detect_h126": 0.0151636073,
+        "uncond_detect_h126": 0.0095,
+        "n_cond_detect_h126": 19,
+        "cond_detect_h252": 0.0438946528,
+        "uncond_detect_h252": 0.0275,
+        "n_cond_detect_h252": 55,
+        "cond_detect_h504": 0.1237031125,
+        "uncond_detect_h504": 0.0775,
+        "n_cond_detect_h504": 155,
+        "trunc_post_failure_delay_days": 479.8818834796,
+        "trunc_post_failure_delay_se": 2.2678928787,
+        "undetected_at_end_given_survived": 0.8762968875,
+        "median_post_failure_delay_days": "",
+        "median_post_failure_delay_note": "not reached: only 12.4% of survivors detected within 504d after failure",
+        "matched_threshold": -0.8592900925,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.0245479452,
+        "achieved_continuation_fa": 0.0245136187,
+        "max_reachable_continuation_fa": 0.0250489237
+      },
+      {
+        "group": "matched_contFA_T=1260",
+        "detector": "binary_student_t",
+        "far_target": 0.0245479452,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 1260.0,
+        "pre_failure_false_alarm_rate": 0.2455,
+        "n_survived_to_failure": 1509,
+        "frac_survived_to_failure": 0.7545,
+        "cond_detect_h126": 0.0178926441,
+        "uncond_detect_h126": 0.0135,
+        "n_cond_detect_h126": 27,
+        "cond_detect_h252": 0.0390987409,
+        "uncond_detect_h252": 0.0295,
+        "n_cond_detect_h252": 59,
+        "cond_detect_h504": 0.0947647449,
+        "uncond_detect_h504": 0.0715,
+        "n_cond_detect_h504": 143,
+        "trunc_post_failure_delay_days": 482.4042412194,
+        "trunc_post_failure_delay_se": 2.0486636455,
+        "undetected_at_end_given_survived": 0.9052352551,
+        "median_post_failure_delay_days": "",
+        "median_post_failure_delay_note": "not reached: only 9.5% of survivors detected within 504d after failure",
+        "matched_threshold": -1.5674865112,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.0245479452,
+        "achieved_continuation_fa": 0.024382419,
+        "max_reachable_continuation_fa": 0.031984008
+      },
+      {
+        "group": "matched_contFA_T=1260",
+        "detector": "trailing_sharpe_252",
+        "far_target": 0.0245479452,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 1260.0,
+        "pre_failure_false_alarm_rate": 0.038,
+        "n_survived_to_failure": 1924,
+        "frac_survived_to_failure": 0.962,
+        "cond_detect_h126": 0.0155925156,
+        "uncond_detect_h126": 0.015,
+        "n_cond_detect_h126": 30,
+        "cond_detect_h252": 0.0514553015,
+        "uncond_detect_h252": 0.0495,
+        "n_cond_detect_h252": 99,
+        "cond_detect_h504": 0.1481288981,
+        "uncond_detect_h504": 0.1425,
+        "n_cond_detect_h504": 285,
+        "trunc_post_failure_delay_days": 473.1148648649,
+        "trunc_post_failure_delay_se": 1.98436336,
+        "undetected_at_end_given_survived": 0.8518711019,
+        "median_post_failure_delay_days": "",
+        "median_post_failure_delay_note": "not reached: only 14.8% of survivors detected within 504d after failure",
+        "matched_threshold": -2.0725348948,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.0245479452,
+        "achieved_continuation_fa": 0.0241746816,
+        "max_reachable_continuation_fa": 0.2909815645
+      },
+      {
+        "group": "matched_contFA_T=1260",
+        "detector": "known_vol_rolling_252",
+        "far_target": 0.0245479452,
+        "post_window_days": 504,
+        "n_paths": 2000,
+        "mean_T": 1260.0,
+        "pre_failure_false_alarm_rate": 0.038,
+        "n_survived_to_failure": 1924,
+        "frac_survived_to_failure": 0.962,
+        "cond_detect_h126": 0.0155925156,
+        "uncond_detect_h126": 0.015,
+        "n_cond_detect_h126": 30,
+        "cond_detect_h252": 0.0498960499,
+        "uncond_detect_h252": 0.048,
+        "n_cond_detect_h252": 96,
+        "cond_detect_h504": 0.146049896,
+        "uncond_detect_h504": 0.1405,
+        "n_cond_detect_h504": 281,
+        "trunc_post_failure_delay_days": 473.5608108108,
+        "trunc_post_failure_delay_se": 1.9680464398,
+        "undetected_at_end_given_survived": 0.853950104,
+        "median_post_failure_delay_days": "",
+        "median_post_failure_delay_note": "not reached: only 14.6% of survivors detected within 504d after failure",
+        "matched_threshold": -2.0507495264,
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": 0.0245479452,
+        "achieved_continuation_fa": 0.0244219278,
+        "max_reachable_continuation_fa": 0.2850723914
       },
       {
         "group": "random_T",
@@ -2313,7 +2806,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 19.2% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T",
@@ -2340,7 +2836,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 28.5% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T",
@@ -2367,7 +2866,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 18.2% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T",
@@ -2394,7 +2896,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 27.1% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T",
@@ -2421,7 +2926,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 37.9% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T",
@@ -2448,7 +2956,10 @@
         "median_post_failure_delay_days": 364,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T",
@@ -2475,7 +2986,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 37.9% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T",
@@ -2502,7 +3016,10 @@
         "median_post_failure_delay_days": 363,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[0-251]",
@@ -2529,7 +3046,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 32.0% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[0-251]",
@@ -2556,7 +3076,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 49.4% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[0-251]",
@@ -2583,7 +3106,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 29.4% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[0-251]",
@@ -2610,7 +3136,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 48.4% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[0-251]",
@@ -2637,7 +3166,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 37.0% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[0-251]",
@@ -2664,7 +3196,10 @@
         "median_post_failure_delay_days": 383,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[0-251]",
@@ -2691,7 +3226,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 36.9% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[0-251]",
@@ -2718,7 +3256,10 @@
         "median_post_failure_delay_days": 383,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[252-503]",
@@ -2745,7 +3286,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 23.9% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[252-503]",
@@ -2772,7 +3316,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 34.1% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[252-503]",
@@ -2799,7 +3346,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 22.8% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[252-503]",
@@ -2826,7 +3376,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 31.1% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[252-503]",
@@ -2853,7 +3406,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 38.8% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[252-503]",
@@ -2880,7 +3436,10 @@
         "median_post_failure_delay_days": 345,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[252-503]",
@@ -2907,7 +3466,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 39.2% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[252-503]",
@@ -2934,7 +3496,10 @@
         "median_post_failure_delay_days": 348,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[504-755]",
@@ -2961,7 +3526,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 18.0% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[504-755]",
@@ -2988,7 +3556,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 25.4% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[504-755]",
@@ -3015,7 +3586,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 17.0% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[504-755]",
@@ -3042,7 +3616,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 24.4% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[504-755]",
@@ -3069,7 +3646,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 37.6% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[504-755]",
@@ -3096,7 +3676,10 @@
         "median_post_failure_delay_days": 348,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[504-755]",
@@ -3123,7 +3706,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 37.3% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[504-755]",
@@ -3150,7 +3736,10 @@
         "median_post_failure_delay_days": 350,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[756-1007]",
@@ -3177,7 +3766,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 12.1% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[756-1007]",
@@ -3204,7 +3796,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 17.5% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[756-1007]",
@@ -3231,7 +3826,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 11.6% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[756-1007]",
@@ -3258,7 +3856,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 14.0% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[756-1007]",
@@ -3285,7 +3886,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 36.2% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[756-1007]",
@@ -3312,7 +3916,10 @@
         "median_post_failure_delay_days": 377,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[756-1007]",
@@ -3339,7 +3946,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 35.7% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[756-1007]",
@@ -3366,7 +3976,10 @@
         "median_post_failure_delay_days": 375,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[1008-1260]",
@@ -3393,7 +4006,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 9.5% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[1008-1260]",
@@ -3420,7 +4036,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 12.3% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[1008-1260]",
@@ -3447,7 +4066,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 9.4% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[1008-1260]",
@@ -3474,7 +4096,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 13.4% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[1008-1260]",
@@ -3501,7 +4126,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 39.9% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[1008-1260]",
@@ -3528,7 +4156,10 @@
         "median_post_failure_delay_days": 359,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[1008-1260]",
@@ -3555,7 +4186,10 @@
         "median_post_failure_delay_days": "",
         "median_post_failure_delay_note": "not reached: only 40.2% of survivors detected within 504d after failure",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       },
       {
         "group": "random_T[1008-1260]",
@@ -3582,7 +4216,10 @@
         "median_post_failure_delay_days": 351,
         "median_post_failure_delay_note": "",
         "matched_threshold": null,
-        "matched_target_pre_fa": null
+        "matched_target_pre_fa": null,
+        "target_continuation_fa": null,
+        "achieved_continuation_fa": null,
+        "max_reachable_continuation_fa": null
       }
     ],
     "belief_at_T": [
@@ -3776,8 +4413,147 @@
         "q_at_T_median_survived": 0.220148842,
         "survival_defined_at_alpha": 0.05
       }
+    ],
+    "continuation_fa": [
+      {
+        "T": 252,
+        "detector": "binary_gaussian",
+        "threshold": -0.4749547014,
+        "achieved_continuation_fa": 0.1771530567,
+        "pre_failure_fa_incurred": 0.43975,
+        "target_continuation_fa": 0.1771604938,
+        "max_reachable_continuation_fa": 0.1807760141,
+        "feasible": true,
+        "survival_floor": 0.5
+      },
+      {
+        "T": 252,
+        "detector": "binary_student_t",
+        "threshold": -0.6329526388,
+        "achieved_continuation_fa": 0.1771501926,
+        "pre_failure_fa_incurred": 0.41575,
+        "target_continuation_fa": 0.1771604938,
+        "max_reachable_continuation_fa": 0.1883148238,
+        "feasible": true,
+        "survival_floor": 0.5
+      },
+      {
+        "T": 252,
+        "detector": "trailing_sharpe_252",
+        "threshold": -1.083283135,
+        "achieved_continuation_fa": 0.1771151886,
+        "pre_failure_fa_incurred": 0.019,
+        "target_continuation_fa": 0.1771604938,
+        "max_reachable_continuation_fa": 0.8653437279,
+        "feasible": true,
+        "survival_floor": 0.5
+      },
+      {
+        "T": 252,
+        "detector": "known_vol_rolling_252",
+        "threshold": -1.0675295823,
+        "achieved_continuation_fa": 0.1770249618,
+        "pre_failure_fa_incurred": 0.0185,
+        "target_continuation_fa": 0.1771604938,
+        "max_reachable_continuation_fa": 0.8652004257,
+        "feasible": true,
+        "survival_floor": 0.5
+      },
+      {
+        "T": 756,
+        "detector": "binary_gaussian",
+        "threshold": -0.5806461563,
+        "achieved_continuation_fa": 0.0526810913,
+        "pre_failure_fa_incurred": 0.4685,
+        "target_continuation_fa": 0.0526842105,
+        "max_reachable_continuation_fa": 0.0537593985,
+        "feasible": true,
+        "survival_floor": 0.5
+      },
+      {
+        "T": 756,
+        "detector": "binary_student_t",
+        "threshold": -0.7061165534,
+        "achieved_continuation_fa": 0.0526824553,
+        "pre_failure_fa_incurred": 0.48275,
+        "target_continuation_fa": 0.0526842105,
+        "max_reachable_continuation_fa": 0.0562316408,
+        "feasible": true,
+        "survival_floor": 0.5
+      },
+      {
+        "T": 756,
+        "detector": "trailing_sharpe_252",
+        "threshold": -1.6946516724,
+        "achieved_continuation_fa": 0.0526315789,
+        "pre_failure_fa_incurred": 0.05475,
+        "target_continuation_fa": 0.0526842105,
+        "max_reachable_continuation_fa": 0.4572713643,
+        "feasible": true,
+        "survival_floor": 0.5
+      },
+      {
+        "T": 756,
+        "detector": "known_vol_rolling_252",
+        "threshold": -1.6833095732,
+        "achieved_continuation_fa": 0.0525620708,
+        "pre_failure_fa_incurred": 0.0535,
+        "target_continuation_fa": 0.0526842105,
+        "max_reachable_continuation_fa": 0.4577711144,
+        "feasible": true,
+        "survival_floor": 0.5
+      },
+      {
+        "T": 1260,
+        "detector": "binary_gaussian",
+        "threshold": -0.8592900925,
+        "achieved_continuation_fa": 0.0245136187,
+        "pre_failure_fa_incurred": 0.3575,
+        "target_continuation_fa": 0.0245479452,
+        "max_reachable_continuation_fa": 0.0250489237,
+        "feasible": true,
+        "survival_floor": 0.5
+      },
+      {
+        "T": 1260,
+        "detector": "binary_student_t",
+        "threshold": -1.5674865112,
+        "achieved_continuation_fa": 0.024382419,
+        "pre_failure_fa_incurred": 0.22075,
+        "target_continuation_fa": 0.0245479452,
+        "max_reachable_continuation_fa": 0.031984008,
+        "feasible": true,
+        "survival_floor": 0.5
+      },
+      {
+        "T": 1260,
+        "detector": "trailing_sharpe_252",
+        "threshold": -2.0725348948,
+        "achieved_continuation_fa": 0.0241746816,
+        "pre_failure_fa_incurred": 0.03825,
+        "target_continuation_fa": 0.0245479452,
+        "max_reachable_continuation_fa": 0.2909815645,
+        "feasible": true,
+        "survival_floor": 0.5
+      },
+      {
+        "T": 1260,
+        "detector": "known_vol_rolling_252",
+        "threshold": -2.0507495264,
+        "achieved_continuation_fa": 0.0244219278,
+        "pre_failure_fa_incurred": 0.03775,
+        "target_continuation_fa": 0.0245479452,
+        "max_reachable_continuation_fa": 0.2850723914,
+        "feasible": true,
+        "survival_floor": 0.5
+      }
     ]
   },
-  "elapsed_s": 14.018168124999875,
-  "figures": []
+  "elapsed_s": 35.4897773749999,
+  "figures": [
+    "figures/fig11_failure_probability.png",
+    "figures/fig12_threshold_hits.png",
+    "figures/fig13_switching_detection.png",
+    "figures/fig14_evidence_recovery.png"
+  ]
 }

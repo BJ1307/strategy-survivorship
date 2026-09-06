@@ -265,8 +265,8 @@ uv pip install --python .venv/bin/python -e .
 | Python | 3.13.13 (CPython) |
 | 平台 | macOS-14.2-arm64-arm-64bit-Mach-O / arm64 |
 | NumPy / SciPy / pandas / Matplotlib | 2.5.2 / 1.18.1 / 3.0.5 / 3.11.1 |
-| 总运行耗时 | 1.8 s |
-| 分阶段耗时 | simulate 0.1s，testtatistics 0.8s，calibration 0.4s，evaluation 0.2s，diagnostic 0.0s，tables 0.2s |
+| 总运行耗时 | 2.5 s |
+| 分阶段耗时 | simulate 0.1s，testtatistics 1.2s，calibration 0.5s，evaluation 0.3s，diagnostic 0.0s，tables 0.4s |
 
 **输出文件**
 
