@@ -124,71 +124,72 @@ def figure_threshold_hits(cfg: Stage1Config, pt: dict, out: Path) -> Path:
 
 
 def figure_switching_detection(cfg: Stage1Config, sw: dict, out: Path, alpha: float | None = None) -> Path:
+    """Pre-failure cost, and post-failure detection at a MATCHED false-alarm cost.
+
+    The nominal-budget comparison is not cost-matched: the rolling detectors buy a
+    flatter post-failure curve with many more pre-failure alarms.  The middle
+    panel therefore uses the fixed continuation false-alarm level, which is the
+    only setting comparable across T.
+    """
     alpha = cfg.far_targets[-1] if alpha is None else alpha
     m = sw["metrics"]
-    fixed = m[m.group.str.startswith("fixed_T=") & (m.far_target == alpha)].copy()
-    fixed["T"] = fixed.group.str.extract(r"=(\d+)").astype(int)
-    fixed = fixed.sort_values("T")
-
-    fig, axes = plt.subplots(1, 3, figsize=(14.4, 4.6))
+    lvl = cfg.switch_fixed_continuation_fa
     keys = list(COLOURS)[:4]
+
+    def _grp(prefix, far=None):
+        d = m[m.group.str.startswith(prefix)].copy()
+        if far is not None:
+            d = d[d.far_target == far]
+        d["T"] = d.group.str.extract(r"=(\d+)").astype(int)
+        return d.sort_values("T")
+
+    nominal = _grp("fixed_T=", alpha)
+    matched = _grp(f"contFA{lvl:g}_T=")
+
+    fig, axes = plt.subplots(1, 3, figsize=(14.4, 4.8))
 
     ax = axes[0]
     for key in keys:
-        s = fixed[fixed.detector == key]
-        ax.plot(s["T"], s.pre_failure_false_alarm_rate, "o-", color=COLOURS[key], lw=1.5,
-                ms=5, label=key.replace("_", " "))
-    ax.set_title("Alarms raised BEFORE the strategy fails\n$P(\\tau \\leq T)$ — these are false", fontsize=10)
+        s_ = nominal[nominal.detector == key]
+        ax.plot(s_["T"], s_.pre_failure_false_alarm_rate, "o-", color=COLOURS[key], lw=1.5, ms=5,
+                label=key.replace("_", " "))
+    ax.set_title(f"(a) Alarms raised BEFORE the failure\nnominal budget $\\alpha$={alpha:g}, "
+                 "$P(\\tau \\leq T)$ — all false", fontsize=9.5)
     ax.set_ylabel("pre-failure false-alarm rate")
-    ax.legend(fontsize=7.6, loc="upper left")
+    ax.legend(fontsize=7.4, loc="upper left")
 
     ax = axes[1]
-    from matplotlib.lines import Line2D
-
     for key in keys:
-        s = fixed[fixed.detector == key]
-        for h, ls, mk in ((252, "-", "o"), (504, "--", "s")):
-            ax.plot(s["T"], s[f"cond_detect_h{h}"], marker=mk, color=COLOURS[key],
-                    lw=1.5, ls=ls, ms=4.5)
-    ax.set_title("Detection AFTER failure, given the path survived to $T$\n"
-                 "$P(T < \\tau \\leq T+h \\mid \\tau > T)$", fontsize=10)
+        s_ = matched[matched.detector == key]
+        ax.plot(s_["T"], s_.cond_detect_h504, "o-", color=COLOURS[key], lw=1.8, ms=5,
+                label=key.replace("_", " "))
+    ax.set_title(f"(b) Detection after failure at MATCHED cost\ncontinuation FA fixed at {lvl:g} "
+                 "for every $T$, $h$=504d", fontsize=9.5)
     ax.set_ylabel("conditional post-failure detection rate")
-    # colour encodes the detector, line style encodes the horizon: two legends so
-    # every drawn line is actually accounted for.
-    leg_h = ax.legend(
-        handles=[Line2D([], [], color="0.3", ls="-", marker="o", ms=4.5, label="h = 252d"),
-                 Line2D([], [], color="0.3", ls="--", marker="s", ms=4.5, label="h = 504d")],
-        fontsize=7.4, loc="upper right", title="horizon", title_fontsize=7.4, framealpha=0.93)
-    ax.add_artist(leg_h)
-    ax.legend(
-        handles=[Line2D([], [], color=COLOURS[k], lw=1.6, label=k.replace("_", " ")) for k in keys],
-        fontsize=7.0, loc="lower left", framealpha=0.93)
+    ax.legend(fontsize=7.4, loc="upper right")
 
     ax = axes[2]
     for key in keys:
-        s = fixed[fixed.detector == key]
-        ax.plot(s["T"], s.trunc_post_failure_delay_days, "o-", color=COLOURS[key], lw=1.5, ms=5,
+        s_ = matched[matched.detector == key]
+        ax.plot(s_["T"], s_.pre_failure_false_alarm_rate, "o-", color=COLOURS[key], lw=1.5, ms=5,
                 label=key.replace("_", " "))
-    ax.axhline(cfg.switch_post_window, color="k", ls="--", lw=1.0,
-               label=f"ceiling = {cfg.switch_post_window}d")
-    ax.set_title("Truncated delay after failure, given survival to $T$\n"
-                 f"$E[\\min(\\tau - T,\\ {cfg.switch_post_window})]$", fontsize=10)
-    ax.set_ylabel("trading days after failure")
-    ax.legend(fontsize=7.2, loc="center right", framealpha=0.93)
+    ax.set_title(f"(c) What that matched cost is bought with\npre-failure alarms at continuation "
+                 f"FA = {lvl:g}", fontsize=9.5)
+    ax.set_ylabel("pre-failure false-alarm rate")
+    ax.legend(fontsize=7.4, loc="upper left")
 
     for ax in axes:
-        ax.set_xlabel("$T$ = length of the valid history before failure (trading days)")
+        ax.set_xlabel("$T$ = valid history before failure (trading days)")
         ax.set_xticks(list(cfg.switch_fixed_T))
         ax.grid(alpha=0.3)
 
     fig.suptitle(
-        "Fig 1.3  A longer valid history makes the same failure harder to catch\n"
-        f"Fixed-$T$ groups, n = {cfg.switch_fixed_paths} paths each, common random numbers across $T$; "
-        f"nominal budget $\\alpha$ = {alpha:g}. Stage 1 thresholds were calibrated on 504d and carry no "
-        "cumulative budget over these longer windows.",
+        "Fig 1.3  A longer valid history makes the same failure harder to catch — for BOTH families\n"
+        f"n = {cfg.switch_fixed_paths} paths per $T$, common random numbers across $T$. Panel (b) is the "
+        "cost-matched comparison; panel (c) shows the price each family pays for it.",
         fontsize=10,
     )
-    fig.tight_layout(rect=(0, 0, 1, 0.86))
+    fig.tight_layout(rect=(0, 0, 1, 0.88))
     fig.savefig(out)
     plt.close(fig)
     return out

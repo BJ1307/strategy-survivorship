@@ -78,6 +78,7 @@
     "switch_matched_pre_fa": 0.15,
     "switch_matched_cal_paths": 4000,
     "switch_matched_survival_floor": 0.5,
+    "switch_fixed_continuation_fa": 0.02,
     "root_seed": 20260905,
     "label": "stage1_benchmark",
     "notes": [
@@ -740,13 +741,13 @@
   },
   "calibration_robustness": null,
   "timings_seconds": {
-    "simulate_s": 0.05209137500014549,
-    "test_statistics_s": 1.216280375000224,
-    "calibration_s": 0.534990375000234,
-    "evaluation_s": 0.29483650000020134,
-    "diagnostic_s": 0.005751042000156303,
-    "tables_s": 0.4027420840002378,
-    "total_s": 2.506740540999999
+    "simulate_s": 0.07710008399999424,
+    "test_statistics_s": 1.0436997909996535,
+    "calibration_s": 0.5522386659999938,
+    "evaluation_s": 0.2685193329998583,
+    "diagnostic_s": 0.0034087079998244008,
+    "tables_s": 0.405327208000017,
+    "total_s": 2.350526875000014
   },
   "figures": [],
   "outputs": [

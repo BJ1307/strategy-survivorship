@@ -111,6 +111,10 @@ class Stage1Config:
     # detector family can actually reach, which for the Bayesian detectors
     # shrinks sharply with T.
     switch_matched_survival_floor: float = 0.5
+    # A per-T common level makes each T internally fair but not comparable
+    # ACROSS T. This fixed level is feasible for every T, so the T-trend it
+    # produces is apples-to-apples.
+    switch_fixed_continuation_fa: float = 0.02
 
     # --- reproducibility ----------------------------------------------------
     root_seed: int = 20260905

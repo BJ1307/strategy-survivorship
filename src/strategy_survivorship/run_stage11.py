@@ -299,6 +299,33 @@ def block_switching(cfg: Stage1Config, thresholds: dict, status: Status) -> dict
         status(f"switching: matched continuation-FA T={T}", level=round(common, 4))
     rows.extend(cont_rows)
 
+    # --- same continuation FA level for EVERY T, so the trend is comparable ---
+    level = cfg.switch_fixed_continuation_fa
+    for T in cfg.switch_fixed_T:
+        r, Tarr = simulate_switching_returns(
+            streams["switch_fixed"], cfg.switch_fixed_paths, n_days, T, cfg
+        )
+        keep = min(T + post, n_days)
+        for det in DETECTORS:
+            m = matched_continuation_thresholds(
+                cal_valid, det, cfg, T, post, level, cfg.switch_matched_survival_floor
+            )
+            stat = det.compute(r[:, :keep], cfg)
+            tau = first_alarm_days(stat, m["threshold"], det.first_eligible_day(cfg))
+            row = switching_metrics(
+                tau, Tarr, cfg, cfg.switch_post_horizons, post,
+                detector=det.key, far_target=level, group=f"contFA{level:g}_T={T}",
+            )
+            row.update({
+                "matched_threshold": m["threshold"],
+                "target_continuation_fa": level,
+                "achieved_continuation_fa": m["achieved_continuation_fa"],
+                "max_reachable_continuation_fa": m["max_reachable_continuation_fa"],
+            })
+            rows.append(row)
+            del stat
+    status(f"switching: fixed continuation-FA {level:g} across all T", n=len(cfg.switch_fixed_T))
+
     # --- random T ------------------------------------------------------------
     rng = np.random.default_rng(streams["switch_random"])
     T_rand = rng.integers(0, cfg.switch_random_T_max + 1, size=cfg.switch_random_paths).astype(float)
