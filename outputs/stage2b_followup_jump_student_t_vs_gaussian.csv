@@ -1,0 +1,3 @@
+far_target,n_reps,frozen_diff,frozen_lo,frozen_hi,recal_diff,recal_lo,recal_hi,frozen_excludes_zero,recal_excludes_zero,scenario,detector_a,detector_b
+0.05,2000,0.011,0.0007141455602764669,0.021285854439723532,0.011,-0.011399999999999967,0.032399999999999984,True,False,jump,binary_student_t,binary_gaussian
+0.15,2000,0.0136,0.0028560684805475824,0.024343931519452418,0.0136,-0.002404999999999957,0.03160000000000007,True,False,jump,binary_student_t,binary_gaussian

@@ -46,7 +46,8 @@ pip install -r requirements.txt && pip install -e .
 .venv/bin/python -m strategy_survivorship.run_stage1      # 主 benchmark（约 3 秒）
 .venv/bin/python -m strategy_survivorship.run_stage11     # Stage 1.1 诊断（约 35 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2a     # Stage 2A 现实噪声（约 10 秒）
-.venv/bin/python -m strategy_survivorship.run_stage2b     # Stage 2B EWMA 波动率预测（约 26 秒）
+.venv/bin/python -m strategy_survivorship.run_stage2b     # Stage 2B EWMA 波动率预测（约 30 秒）
+.venv/bin/python -m strategy_survivorship.run_stage2c     # Stage 2C 统一门槛与误杀控制（约 2 分钟）
 ```
 
 这两条命令重建 `outputs/` 下的**全部**结果：表格、JSON、四张图和研究报告。
@@ -89,6 +90,9 @@ src/strategy_survivorship/
   stage2b_uncertainty.py   同时重采样校准集与测试集的 bootstrap
   stage2b_vol_diagnostics.py  波动率预测诊断
   plots_stage2b.py / report_stage2b.py / run_stage2b.py   Stage 2B 图、报告、流程
+  stage2b_followup.py      Stage 2C 追加的限定性分析（同一批 2B 数据）
+  stage2c.py               次序统计量门槛 + 校准误差缓冲 + 跨情境统一
+  plots_stage2c.py / report_stage2c.py / run_stage2c.py   Stage 2C 图、报告、流程
   plots_stage11.py / report_stage11.py / run_stage11.py   Stage 1.1 图、报告、流程
   report.py       生成 stage1_report.md
   notes.py        写入报告的“已修正问题”与“限制”
@@ -123,6 +127,12 @@ theory.md         公式、符号、单位、推导、参考链接
 | `outputs/stage2b_vol_diagnostics.csv` / `_qlike_benchmarks.csv` / `_information_days.csv` / `_vol_trace.csv` | 波动率诊断 |
 | `outputs/stage2b_probability_calibration.csv` / `_reliability.csv` | 概率校准 |
 | `outputs/figures/fig2b{1,2,3,4}_*.png` | Stage 2B 四张图 |
+| `outputs/stage2c_report.md` | **Stage 2C 报告**：未知情境下的统一门槛与误杀控制 |
+| `outputs/stage2c_thresholds.csv` / `_unified_thresholds.csv` | 每情境门槛、统一门槛与约束情境 |
+| `outputs/stage2c_metrics.csv` | 8 情境 × 3 臂 × 2 预算 × 6 方法的全部指标 |
+| `outputs/stage2c_paired.csv` / `_bootstrap.csv` | 配对区间 / 含校准重采样的敏感性区间 |
+| `outputs/stage2c_failure_probability.csv` | 全部路径的无效概率分布（63/126/252/504 天）|
+| `outputs/figures/fig2c{1,2,3,4}_*.png` | Stage 2C 四张图 |
 | `outputs/stage1_diagnostic_traces.csv` | 冲击诊断逐日收益、增量、log odds、概率 |
 | `outputs/run_metadata.json` | 运行配置、随机流指纹、环境版本、分阶段耗时 |
 | `outputs/figures/fig1_example_paths.png` | 固定示例路径的累计收益与两个贝叶斯概率 |

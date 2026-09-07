@@ -106,6 +106,81 @@
       252,
       504
     ],
+    "stage2c_coverage": [
+      [
+        "gaussian",
+        "gaussian",
+        []
+      ],
+      [
+        "student_t",
+        "student_t",
+        []
+      ],
+      [
+        "sv_rho098",
+        "stoch_vol",
+        []
+      ],
+      [
+        "jump_k5",
+        "jump",
+        []
+      ],
+      [
+        "sv_rho0",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_rho",
+            0.0
+          ]
+        ]
+      ]
+    ],
+    "stage2c_stress": [
+      [
+        "sv_rho090",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_rho",
+            0.9
+          ]
+        ]
+      ],
+      [
+        "sv_amp15",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_amplitude",
+            1.5
+          ]
+        ]
+      ],
+      [
+        "jump_k8",
+        "jump",
+        [
+          [
+            "noise_jump_kappa",
+            8.0
+          ]
+        ]
+      ]
+    ],
+    "stage2c_calibration_paths": 10000,
+    "stage2c_test_paths": 10000,
+    "stage2c_stress_paths": 5000,
+    "stage2c_delta": 0.05,
+    "stage2c_report_days": [
+      63,
+      126,
+      252,
+      504
+    ],
+    "stage2c_bootstrap_reps": 2000,
     "root_seed": 20260905,
     "label": "stage1_benchmark",
     "notes": [
@@ -134,7 +209,11 @@
         "stage2a",
         "stage2b",
         "stage2b_persistence_control",
-        "stage2b_bootstrap"
+        "stage2b_bootstrap",
+        "stage2c_calibration",
+        "stage2c_test",
+        "stage2c_stress",
+        "stage2c_bootstrap"
       ]
     }
   },
@@ -265,6 +344,38 @@
       "entropy": 20260905,
       "spawn_key": [
         14
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        15
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        16
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_stress": {
+      "entropy": 20260905,
+      "spawn_key": [
+        17
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        18
       ],
       "n_children_spawned": 0,
       "pool_size": 4
@@ -6248,11 +6359,132 @@
       "scenario": "jump"
     }
   ],
-  "elapsed_s": 26.178817167001398,
-  "figures": [
-    "figures/fig2b1_vol_forecast.png",
-    "figures/fig2b2_sv_curves.png",
-    "figures/fig2b3_arms.png",
-    "figures/fig2b4_reliability.png"
-  ]
+  "followup": {
+    "jump_student_t_vs_gaussian": [
+      {
+        "far_target": 0.05,
+        "n_reps": 2000,
+        "frozen_diff": 0.011,
+        "frozen_lo": 0.0007141455602764669,
+        "frozen_hi": 0.021285854439723532,
+        "recal_diff": 0.011,
+        "recal_lo": -0.011399999999999967,
+        "recal_hi": 0.032399999999999984,
+        "frozen_excludes_zero": true,
+        "recal_excludes_zero": false,
+        "scenario": "jump",
+        "detector_a": "binary_student_t",
+        "detector_b": "binary_gaussian"
+      },
+      {
+        "far_target": 0.15,
+        "n_reps": 2000,
+        "frozen_diff": 0.0136,
+        "frozen_lo": 0.0028560684805475824,
+        "frozen_hi": 0.024343931519452418,
+        "recal_diff": 0.0136,
+        "recal_lo": -0.002404999999999957,
+        "recal_hi": 0.03160000000000007,
+        "frozen_excludes_zero": true,
+        "recal_excludes_zero": false,
+        "scenario": "jump",
+        "detector_a": "binary_student_t",
+        "detector_b": "binary_gaussian"
+      }
+    ],
+    "rho0_ewma_vs_fixed_exploratory": [
+      {
+        "far_target": 0.05,
+        "n_reps": 2000,
+        "frozen_diff": -0.033,
+        "frozen_lo": -0.04275801437563591,
+        "frozen_hi": -0.0232419856243641,
+        "recal_diff": -0.033,
+        "recal_lo": -0.04999999999999999,
+        "recal_hi": -0.007599999999999996,
+        "frozen_excludes_zero": true,
+        "recal_excludes_zero": true,
+        "prespecified": false,
+        "added_in": "Stage 2C follow-up (exploratory)",
+        "scenario": "sv_rho0_control",
+        "detector_a": "ewma_gaussian",
+        "detector_b": "binary_gaussian"
+      },
+      {
+        "far_target": 0.05,
+        "n_reps": 2000,
+        "frozen_diff": -0.0258,
+        "frozen_lo": -0.03459823055653696,
+        "frozen_hi": -0.017001769443463037,
+        "recal_diff": -0.0258,
+        "recal_lo": -0.05160500000000003,
+        "recal_hi": -0.009990000000000063,
+        "frozen_excludes_zero": true,
+        "recal_excludes_zero": true,
+        "prespecified": false,
+        "added_in": "Stage 2C follow-up (exploratory)",
+        "scenario": "sv_rho0_control",
+        "detector_a": "ewma_student_t",
+        "detector_b": "binary_student_t"
+      },
+      {
+        "far_target": 0.15,
+        "n_reps": 2000,
+        "frozen_diff": -0.0338,
+        "frozen_lo": -0.043365000818326935,
+        "frozen_hi": -0.02423499918167306,
+        "recal_diff": -0.0338,
+        "recal_lo": -0.04719999999999991,
+        "recal_hi": -0.018399999999999972,
+        "frozen_excludes_zero": true,
+        "recal_excludes_zero": true,
+        "prespecified": false,
+        "added_in": "Stage 2C follow-up (exploratory)",
+        "scenario": "sv_rho0_control",
+        "detector_a": "ewma_gaussian",
+        "detector_b": "binary_gaussian"
+      },
+      {
+        "far_target": 0.15,
+        "n_reps": 2000,
+        "frozen_diff": -0.009,
+        "frozen_lo": -0.016885546121219223,
+        "frozen_hi": -0.0011144538787807752,
+        "recal_diff": -0.009,
+        "recal_lo": -0.02279999999999993,
+        "recal_hi": 0.0015999999999999376,
+        "frozen_excludes_zero": true,
+        "recal_excludes_zero": false,
+        "prespecified": false,
+        "added_in": "Stage 2C follow-up (exploratory)",
+        "scenario": "sv_rho0_control",
+        "detector_a": "ewma_student_t",
+        "detector_b": "binary_student_t"
+      }
+    ],
+    "sv_paired_brier_ewma_t_minus_ewma_g": [
+      {
+        "day": 252,
+        "n_reps": 2000,
+        "brier_a": 0.1676186165946046,
+        "brier_b": 0.17221504941529023,
+        "diff": -0.004596432820685614,
+        "lo": -0.006497024437589669,
+        "hi": -0.002687997861252272,
+        "excludes_zero": true
+      },
+      {
+        "day": 504,
+        "n_reps": 2000,
+        "brier_a": 0.11431569685365134,
+        "brier_b": 0.12059717912958404,
+        "diff": -0.006281482275932698,
+        "lo": -0.00846714828285553,
+        "hi": -0.004111741370789199,
+        "excludes_zero": true
+      }
+    ]
+  },
+  "elapsed_s": 29.553128500003368,
+  "figures": []
 }

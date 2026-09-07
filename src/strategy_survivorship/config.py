@@ -52,6 +52,12 @@ STREAM_ORDER: tuple[str, ...] = (
     "stage2b",
     "stage2b_persistence_control",
     "stage2b_bootstrap",
+    # Stage 2C: its own parents for calibration, covered tests, stress
+    # tests and the sensitivity bootstrap.
+    "stage2c_calibration",
+    "stage2c_test",
+    "stage2c_stress",
+    "stage2c_bootstrap",
 )
 
 
@@ -159,6 +165,33 @@ class Stage1Config:
     sv_control_rho: float = 0.0
     bootstrap_reps: int = 2000
     n_info_days: tuple[int, ...] = (126, 252, 504)
+
+    # --- Stage 2C: unified thresholds with a calibration-error buffer -------
+    # Coverage set: five full path-generating laws. Each entry is
+    # (key, base noise model, ((cfg field, value), ...)).
+    stage2c_coverage: tuple = (
+        ("gaussian", "gaussian", ()),
+        ("student_t", "student_t", ()),
+        ("sv_rho098", "stoch_vol", ()),
+        ("jump_k5", "jump", ()),
+        ("sv_rho0", "stoch_vol", (("noise_sv_rho", 0.0),)),
+    )
+    # Stress scenarios deliberately OUTSIDE the coverage set. They use the frozen
+    # unified thresholds and are not part of this round's probability guarantee.
+    stage2c_stress: tuple = (
+        ("sv_rho090", "stoch_vol", (("noise_sv_rho", 0.90),)),
+        ("sv_amp15", "stoch_vol", (("noise_sv_amplitude", 1.5),)),
+        ("jump_k8", "jump", (("noise_jump_kappa", 8.0),)),
+    )
+    stage2c_calibration_paths: int = 10000
+    stage2c_test_paths: int = 10000        # per role (valid / invalid)
+    stage2c_stress_paths: int = 5000       # per role
+    # delta is the CALIBRATION failure budget: the probability that the
+    # calibration procedure fails to bound the true FAR. It is NOT the strategy
+    # false-alarm budget alpha, and NOT a test confidence level.
+    stage2c_delta: float = 0.05
+    stage2c_report_days: tuple[int, ...] = (63, 126, 252, 504)
+    stage2c_bootstrap_reps: int = 2000
 
     # --- reproducibility ----------------------------------------------------
     root_seed: int = 20260905

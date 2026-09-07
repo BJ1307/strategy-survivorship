@@ -1,0 +1,5 @@
+far_target,n_reps,frozen_diff,frozen_lo,frozen_hi,recal_diff,recal_lo,recal_hi,frozen_excludes_zero,recal_excludes_zero,prespecified,added_in,scenario,detector_a,detector_b
+0.05,2000,-0.033,-0.04275801437563591,-0.0232419856243641,-0.033,-0.04999999999999999,-0.007599999999999996,True,True,False,Stage 2C follow-up (exploratory),sv_rho0_control,ewma_gaussian,binary_gaussian
+0.05,2000,-0.0258,-0.03459823055653696,-0.017001769443463037,-0.0258,-0.05160500000000003,-0.009990000000000063,True,True,False,Stage 2C follow-up (exploratory),sv_rho0_control,ewma_student_t,binary_student_t
+0.15,2000,-0.0338,-0.043365000818326935,-0.02423499918167306,-0.0338,-0.04719999999999991,-0.018399999999999972,True,True,False,Stage 2C follow-up (exploratory),sv_rho0_control,ewma_gaussian,binary_gaussian
+0.15,2000,-0.009,-0.016885546121219223,-0.0011144538787807752,-0.009,-0.02279999999999993,0.0015999999999999376,True,False,False,Stage 2C follow-up (exploratory),sv_rho0_control,ewma_student_t,binary_student_t

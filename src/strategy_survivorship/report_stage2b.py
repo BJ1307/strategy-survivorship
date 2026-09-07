@@ -94,7 +94,9 @@ def write_stage2b_report(cfg, summary, metrics: pd.DataFrame, boot: pd.DataFrame
     A("")
     c_eg = g("ewma_gaussian", "sv_rho0_control", "per_scenario", "detect_d504")
     c_bg = g("binary_gaussian", "sv_rho0_control", "per_scenario", "detect_d504")
-    A(f"**(4) 对持续性的依赖有多大？** ρ=0 对照（同样的单日边际与无条件方差，去掉持续性）："
+    A(f"**(4) 对持续性的依赖有多大？在当前 EWMA(λ=0.94)、当前参数、当前五个情境与当前检出率指标下，"
+      f"改善完全来自持续性。** 这是对这一组具体设定的证据，不是对「任何波动率预测方法」的一般结论。"
+      "ρ=0 对照（同样的单日边际与无条件方差，去掉持续性）："
       f"EWMA Gaussian {c_eg:.4f} vs 固定 Gaussian {c_bg:.4f}，差 {c_eg - c_bg:+.4f}；"
       f"而 ρ=0.98 时该差为 {sv_eg - sv_bg:+.4f}。")
     A("")
@@ -280,6 +282,17 @@ def write_stage2b_report(cfg, summary, metrics: pd.DataFrame, boot: pd.DataFrame
     # ---------------- 8 ----------------
     A("## 8. 下一步")
     A("")
+    A("> **已撤回的表述**：上一版把「点预测误差是主要瓶颈」写成已证明的结论，"
+      "并在 QLIKE 与 oracle 检出缺口之间做了未经验证的映射。"
+      "本轮没有做能支持该映射的实验（那需要在受控的预测误差水平上重跑检出率），"
+      "两句都撤回。已确立的只是：EWMA 的 QLIKE 明显低于常数预测，"
+      "且它与 oracle 的检出率差距在 SV 下排除零。")
+    A("")
+    A("> **已撤回的表述**：上一版把「点预测误差是主要瓶颈」写成已证明的结论，"
+      "并在 QLIKE 与 oracle 检出缺口之间做了未经验证的映射。"
+      "本轮没有做能支持该映射的实验（那需要在受控的预测误差水平上重跑检出率），两句都撤回。"
+      "已确立的只是：EWMA 的 QLIKE 明显低于常数预测，且它与 oracle 的检出率差距在 SV 下排除零。")
+    A("")
     A("见最终交付说明。若 EWMA 显示价值但预测误差明显，下一阶段候选是**潜在波动率的顺序贝叶斯滤波**"
       "（Jacquier, Polson, Sokolov: *Sequential Bayesian Learning for Merton's Jump Model with "
       "Stochastic Volatility*），本轮先完成上述简单对照。")
@@ -298,5 +311,116 @@ def write_stage2b_report(cfg, summary, metrics: pd.DataFrame, boot: pd.DataFrame
       f"本次 Stage 2B 耗时 {summary['elapsed_s']:.1f} s。"
       f"随机流：`{summary['stream_note']}`")
     A("")
+
+    A("")
+    A("## 附录 A：Stage 2C 追加的限定性分析（同一批 Stage 2B 数据）")
+    A("")
+    F = summary.get("followup") or {}
+    if F.get("jump_student_t_vs_gaussian"):
+        A("### A.1 跳跃情境：同一数据、两种区间构造")
+        A("")
+        A("固定 Student-t 对固定 Gaussian，在**同一批 Stage 2B 跳跃数据**上并列计算"
+          "「冻结门槛的配对区间」与「包含校准重采样的区间」。"
+          "这是同数据内的并列，不是跨阶段比较。")
+        A("")
+        L.extend(_t(F["jump_student_t_vs_gaussian"],
+                    ["α", "检出率之差", "冻结门槛 95%", "排除零", "含校准重采样 95%", "排除零"],
+                    lambda r: [f"{r['far_target']:g}", f"{r['frozen_diff']:+.4f}",
+                               f"[{r['frozen_lo']:+.4f}, {r['frozen_hi']:+.4f}]",
+                               "是" if r["frozen_excludes_zero"] else "否",
+                               f"[{r['recal_lo']:+.4f}, {r['recal_hi']:+.4f}]",
+                               "是" if r["recal_excludes_zero"] else "否"]))
+        A("")
+        A("两个 α 下，冻结门槛区间都排除零而含校准重采样的区间都不排除零。"
+          "**两者回答不同问题**：前者是「给定这组门槛，两条规则在新测试数据上差多少」，"
+          "后者是「整条流程重走一遍，差距还稳定吗」。不应把其中一个当作对另一个的更正。")
+        A("")
+    if F.get("sv_paired_brier_ewma_t_minus_ewma_g"):
+        A("### A.2 SV：EWMA Student-t 对 EWMA Gaussian 的配对 Brier 差异")
+        A("")
+        A("按路径配对；有效、无效两组**分别**重采样到各自原有规模，"
+          "因此原设计的 50/50 评价权重完整保留。")
+        A("")
+        L.extend(_t(F["sv_paired_brier_ewma_t_minus_ewma_g"],
+                    ["天数", "Brier(EWMA t)", "Brier(EWMA G)", "差", "95% 区间", "排除零"],
+                    lambda r: [str(int(r["day"])), f"{r['brier_a']:.5f}", f"{r['brier_b']:.5f}",
+                               f"{r['diff']:+.5f}", f"[{r['lo']:+.5f}, {r['hi']:+.5f}]",
+                               "是" if r["excludes_zero"] else "否"]))
+        A("")
+        A("检出率比较分不出这两个方法，但**概率质量上 EWMA Student-t 更好且区间排除零**。"
+          "两项结论并存，不互相取代。")
+        A("")
+    if F.get("rho0_ewma_vs_fixed_exploratory"):
+        A("### A.3 ρ=0 对照的负差异区间（探索性）")
+        A("")
+        A("> **这是 Stage 2C 追加的探索性分析**，不在 Stage 2B 运行前预先指定的比较清单内。")
+        A("")
+        L.extend(_t(F["rho0_ewma_vs_fixed_exploratory"],
+                    ["α", "对比", "检出率之差", "冻结门槛 95%", "含校准重采样 95%", "后者排除零"],
+                    lambda r: [f"{r['far_target']:g}",
+                               f"{LABEL_2B.get(r['detector_a'],r['detector_a'])} − {LABEL_2B.get(r['detector_b'],r['detector_b'])}",
+                               f"{r['frozen_diff']:+.4f}",
+                               f"[{r['frozen_lo']:+.4f}, {r['frozen_hi']:+.4f}]",
+                               f"[{r['recal_lo']:+.4f}, {r['recal_hi']:+.4f}]",
+                               "是" if r["recal_excludes_zero"] else "否"]))
+        A("")
+        A("**区分点估计与有区间支持的结论**：EWMA Gaussian 的负差异在两个 α 下都有区间支持；"
+          "EWMA Student-t 在 α=0.15 下只有点估计（含校准重采样的区间不排除零）。"
+          "第 1 节表中其余情境的轻微损失同样应按此标准区分——"
+          "那张表给的是点估计，只有本附录与第 6 节列出区间的行才有区间支持。")
+        A("")
+    A("")
+    A("## 附录 A：Stage 2C 追加的限定性分析（同一批 Stage 2B 数据）")
+    A("")
+    F = summary.get("followup") or {}
+    if F.get("jump_student_t_vs_gaussian"):
+        A("### A.1 跳跃情境：同一数据、两种区间构造")
+        A("")
+        A("固定 Student-t 对固定 Gaussian，在**同一批 Stage 2B 跳跃数据**上并列计算"
+          "「冻结门槛的配对区间」与「包含校准重采样的区间」。这是同数据内的并列，不是跨阶段比较。")
+        A("")
+        L.extend(_t(F["jump_student_t_vs_gaussian"],
+                    ["α", "检出率之差", "冻结门槛 95%", "排除零", "含校准重采样 95%", "排除零"],
+                    lambda r: [f"{r['far_target']:g}", f"{r['frozen_diff']:+.4f}",
+                               f"[{r['frozen_lo']:+.4f}, {r['frozen_hi']:+.4f}]",
+                               "是" if r["frozen_excludes_zero"] else "否",
+                               f"[{r['recal_lo']:+.4f}, {r['recal_hi']:+.4f}]",
+                               "是" if r["recal_excludes_zero"] else "否"]))
+        A("")
+        A("两个 α 下，冻结门槛区间都排除零而含校准重采样的区间都不排除零。**两者回答不同问题**："
+          "前者是「给定这组门槛，两条规则在新测试数据上差多少」，"
+          "后者是「整条流程重走一遍，差距还稳定吗」。不应把其中一个当作对另一个的更正。")
+        A("")
+    if F.get("sv_paired_brier_ewma_t_minus_ewma_g"):
+        A("### A.2 SV：EWMA Student-t 对 EWMA Gaussian 的配对 Brier 差异")
+        A("")
+        A("按路径配对；有效、无效两组**分别**重采样到各自原有规模，因此原设计的 50/50 评价权重完整保留。")
+        A("")
+        L.extend(_t(F["sv_paired_brier_ewma_t_minus_ewma_g"],
+                    ["天数", "Brier(EWMA t)", "Brier(EWMA G)", "差", "95% 区间", "排除零"],
+                    lambda r: [str(int(r["day"])), f"{r['brier_a']:.5f}", f"{r['brier_b']:.5f}",
+                               f"{r['diff']:+.5f}", f"[{r['lo']:+.5f}, {r['hi']:+.5f}]",
+                               "是" if r["excludes_zero"] else "否"]))
+        A("")
+        A("检出率比较分不出这两个方法，但**概率质量上 EWMA Student-t 更好且区间排除零**。两项结论并存。")
+        A("")
+    if F.get("rho0_ewma_vs_fixed_exploratory"):
+        A("### A.3 ρ=0 对照的负差异区间（探索性）")
+        A("")
+        A("> **这是 Stage 2C 追加的探索性分析**，不在 Stage 2B 运行前预先指定的比较清单内。")
+        A("")
+        L.extend(_t(F["rho0_ewma_vs_fixed_exploratory"],
+                    ["α", "对比", "检出率之差", "冻结门槛 95%", "含校准重采样 95%", "后者排除零"],
+                    lambda r: [f"{r['far_target']:g}",
+                               f"{LABEL_2B.get(r['detector_a'], r['detector_a'])} - {LABEL_2B.get(r['detector_b'], r['detector_b'])}",
+                               f"{r['frozen_diff']:+.4f}",
+                               f"[{r['frozen_lo']:+.4f}, {r['frozen_hi']:+.4f}]",
+                               f"[{r['recal_lo']:+.4f}, {r['recal_hi']:+.4f}]",
+                               "是" if r["recal_excludes_zero"] else "否"]))
+        A("")
+        A("**区分点估计与有区间支持的结论**：EWMA Gaussian 的负差异在两个 α 下都有区间支持；"
+          "EWMA Student-t 在 α=0.15 下只有点估计。第 1 节表中其余情境的轻微损失同样按此标准区分——"
+          "那张表给的是点估计，只有本附录与第 6 节列出区间的行才有区间支持。")
+        A("")
     path.write_text("\n".join(L), encoding="utf-8")
     return path

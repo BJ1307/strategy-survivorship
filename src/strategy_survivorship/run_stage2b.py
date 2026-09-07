@@ -38,6 +38,8 @@ from .stage2b import (
     scenario_streams,
     statistic,
 )
+from .stage2b_followup import (exploratory_rho0_interval,
+                               frozen_vs_recalibrated_pair, paired_brier_difference)
 from .stage2b_uncertainty import run_comparisons
 from .stage2b_vol_diagnostics import (
     fixed_path_trace,
@@ -146,6 +148,34 @@ def main(argv: list[str] | None = None) -> int:
     boot.to_csv(out_dir / "stage2b_bootstrap.csv", index=False)
     status("bootstrap done", comparisons=len(boot), reps=cfg.bootstrap_reps)
 
+    # ---- Stage 2C follow-up appendix, on the SAME Stage 2B blocks ----------- #
+    fk = make_streams(cfg)["stage2b_bootstrap"].spawn(3)
+    followup = {}
+    jm = per_scenario["jump"]["minima"]
+    followup["jump_student_t_vs_gaussian"] = [
+        {**frozen_vs_recalibrated_pair(jm["binary_student_t"], jm["binary_gaussian"],
+                                       a, cfg.bootstrap_reps, fk[0]),
+         "scenario": "jump", "detector_a": "binary_student_t", "detector_b": "binary_gaussian"}
+        for a in cfg.far_targets]
+    cm = per_scenario["sv_rho0_control"]["minima"]
+    followup["rho0_ewma_vs_fixed_exploratory"] = [
+        {**exploratory_rho0_interval(cm[e], cm[f], a, cfg.bootstrap_reps, fk[1]),
+         "scenario": "sv_rho0_control", "detector_a": e, "detector_b": f}
+        for a in cfg.far_targets
+        for e, f in (("ewma_gaussian", "binary_gaussian"), ("ewma_student_t", "binary_student_t"))]
+    svb = per_scenario["stoch_vol"]["blocks"]
+    qa_i = expit(-statistic("ewma_student_t", svb["test_invalid"], cfg))
+    qa_v = expit(-statistic("ewma_student_t", svb["test_valid"], cfg))
+    qb_i = expit(-statistic("ewma_gaussian", svb["test_invalid"], cfg))
+    qb_v = expit(-statistic("ewma_gaussian", svb["test_valid"], cfg))
+    followup["sv_paired_brier_ewma_t_minus_ewma_g"] = [
+        paired_brier_difference(qa_i, qa_v, qb_i, qb_v, d, cfg.bootstrap_reps, fk[2])
+        for d in (252, 504)]
+    del qa_i, qa_v, qb_i, qb_v
+    for name, rows in followup.items():
+        pd.DataFrame(rows).to_csv(out_dir / f"stage2b_followup_{name}.csv", index=False)
+    status("Stage 2B follow-up appendix done", blocks=len(followup))
+
     pd.DataFrame(prob_summ).to_csv(out_dir / "stage2b_probability_calibration.csv", index=False)
     pd.concat(prob_rel, ignore_index=True).to_csv(
         out_dir / "stage2b_reliability.csv", index=False)
@@ -186,6 +216,7 @@ def main(argv: list[str] | None = None) -> int:
         "bootstrap": json.loads(boot.to_json(orient="records")),
         "bootstrap_pairs_prespecified": [list(p) for p in pairs],
         "probability_calibration": prob_summ,
+        "followup": followup,
         "elapsed_s": elapsed,
         "figures": figures,
     }
