@@ -267,13 +267,27 @@ def test_every_generated_report_table_is_well_formed():
     import re
     from pathlib import Path
 
-    for name in ("stage1_report.md", "stage11_report.md", "stage2a_report.md"):
+    for name in ("stage1_report.md", "stage11_report.md", "stage2a_report.md",
+                 "stage2b_report.md", "stage2c_report.md", "stage2d_report.md",
+                 "stage2e_report.md"):
         f = Path("outputs") / name
         if not f.exists():
             continue
         for block in re.findall(r"(?:^\|.*\n)+", f.read_text(), re.M):
             counts = {row.count("|") for row in block.strip().split("\n")}
             assert len(counts) == 1, (name, block.split("\n")[0][:120])
+
+
+def test_no_generated_report_double_bolds_a_label():
+    """A label that already carries ** must not be wrapped in ** again.
+
+    "****SV+jump****" is not bold in any renderer; it shows the stray asterisks.
+    """
+    import re
+    from pathlib import Path
+
+    for f in sorted(Path("outputs").glob("stage*_report.md")):
+        assert "****" not in f.read_text(), f.name
 
 
 def test_pooled_abs_eps_autocorr_matches_the_analytic_population_value():

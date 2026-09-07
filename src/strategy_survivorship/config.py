@@ -63,6 +63,10 @@ STREAM_ORDER: tuple[str, ...] = (
     "stage2d_test",
     "stage2d_bootstrap",
     "stage2d_shock",
+    # Stage 2E: fresh data for the 2x2 ablation
+    "stage2e_calibration",
+    "stage2e_test",
+    "stage2e_bootstrap",
 )
 
 
@@ -162,6 +166,9 @@ class Stage1Config:
     ewma_student_t_df: float = 5.0
     # numerical guard only; reported when it fires, never tuned on test results
     ewma_variance_floor_factor: float = 1e-8
+    # Stage 2E: truncation constant for the variance update. Fixed at 4
+    # before running and NOT searched.
+    ewma_truncation_c: float = 4.0
     n_stage2b_calibration: int = 5000
     n_stage2b_test_valid: int = 5000
     n_stage2b_test_invalid: int = 5000
@@ -214,6 +221,13 @@ class Stage1Config:
     stage2d_shock_day: int = 126
     stage2d_shock_sigmas: float = 8.0
     stage2d_shock_path_index: int = 0
+
+    # --- Stage 2E ------------------------------------------------------------
+    stage2e_calibration_paths: int = 10000
+    stage2e_test_paths: int = 10000
+    stage2e_bootstrap_reps: int = 2000
+    # window (in trading days after a jump) for the false-alarm timing split
+    stage2e_jump_window: int = 20
 
     # --- reproducibility ----------------------------------------------------
     root_seed: int = 20260905

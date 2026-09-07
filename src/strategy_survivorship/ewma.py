@@ -71,6 +71,63 @@ def ewma_variance_forecast(returns: np.ndarray, cfg: Stage1Config) -> tuple[np.n
     return v, n_floored
 
 
+def ewma_truncated_variance_forecast(returns: np.ndarray, cfg: Stage1Config
+                                     ) -> tuple[np.ndarray, int]:
+    """EWMA variance whose update caps the squared residual at c^2 times itself.
+
+        e_t   = r_t - m
+        V~_1  = sigma_0^2
+        V~_{t+1} = lambda V~_t + (1 - lambda) * min(e_t^2, c^2 V~_t)
+
+    Strictly causal in exactly the same sense as the plain recursion: ``out[:, t]``
+    is the forecast for day t and depends on ``returns[:, :t]`` only.  The day-t
+    return can never be used to build the variance that scores day t.
+
+    Two properties, both proved rather than assumed (see theory.md):
+
+    * V~_t <= V_t for every t, by induction from a common initial value, because
+      min(x, y) <= x.  This says the scale is never larger -- it does NOT say the
+      false-alarm rate falls, since the Gaussian increment divides by V~_t and a
+      smaller denominator makes the statistic move more per day.
+    * Under a correct Gaussian reference, E[min(u^2, c^2)] with u ~ N(0,1) is
+      (2*Phi(c) - 1) - 2 c phi(c) + 2 c^2 (1 - Phi(c)), which at c = 4 is 0.99988.
+      So the update targets 99.988% of V under Gaussian residuals.
+
+    No bias correction is applied.  This is the candidate working scale as
+    specified; it is not claimed to be unbiased for the total return variance.
+    """
+    r = np.asarray(returns, dtype=float)
+    n_paths, n_days = r.shape
+    lam = cfg.ewma_lambda
+    c2 = cfg.ewma_truncation_c ** 2
+    m = midpoint(cfg)
+    floor = cfg.ewma_variance_floor_factor * cfg.sigma_daily ** 2
+
+    resid2 = (r - m) ** 2
+    v = np.empty((n_paths, n_days), dtype=float)
+    v[:, 0] = cfg.sigma_daily ** 2
+    for t in range(1, n_days):
+        capped = np.minimum(resid2[:, t - 1], c2 * v[:, t - 1])
+        v[:, t] = lam * v[:, t - 1] + (1.0 - lam) * capped
+
+    n_floored = int(np.count_nonzero(v < floor))
+    if n_floored:
+        v = np.maximum(v, floor)
+    return v, n_floored
+
+
+def ewma_trunc_gaussian_log_odds(returns: np.ndarray, cfg: Stage1Config) -> np.ndarray:
+    """Same Gaussian likelihood, truncated variance update. Raw returns still
+    enter the likelihood -- only the NEXT day's variance update is capped."""
+    v = ewma_truncated_variance_forecast(returns, cfg)[0]
+    return cfg.prior_log_odds + np.cumsum(ewma_gaussian_increments(returns, cfg, v), axis=-1)
+
+
+def ewma_trunc_student_t_log_odds(returns: np.ndarray, cfg: Stage1Config) -> np.ndarray:
+    v = ewma_truncated_variance_forecast(returns, cfg)[0]
+    return cfg.prior_log_odds + np.cumsum(ewma_student_t_increments(returns, cfg, v), axis=-1)
+
+
 def ewma_gaussian_increments(returns: np.ndarray, cfg: Stage1Config,
                              variance: np.ndarray | None = None) -> np.ndarray:
     """dL_t = (mu1 - mu0)(r_t - m) / v_t.

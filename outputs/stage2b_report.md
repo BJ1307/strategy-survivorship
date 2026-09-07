@@ -343,7 +343,7 @@ QLIKE 对照：
 .venv/bin/python -m strategy_survivorship.run_stage2b
 ```
 
-Python 3.13.13 / NumPy 2.5.2 / SciPy 1.18.1；本次 Stage 2B 耗时 29.6 s。随机流：`Stage 2B uses its own parent streams; no Stage 2A draw is reused.`
+Python 3.13.13 / NumPy 2.5.2 / SciPy 1.18.1；本次 Stage 2B 耗时 28.0 s。随机流：`Stage 2B uses its own parent streams; no Stage 2A draw is reused.`
 
 
 ## 附录 A：Stage 2C 追加的限定性分析（同一批 Stage 2B 数据）

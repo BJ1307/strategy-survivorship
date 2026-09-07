@@ -27,7 +27,8 @@ import pandas as pd
 
 from .config import Stage1Config
 from .evaluate import wilson_interval
-from .noise import draw_noise, returns_from_noise, true_daily_sigma
+from .noise import (diffusive_daily_variance, draw_noise, returns_from_noise,
+                    total_daily_variance_given_vol, true_daily_sigma)
 from .simulate import make_streams
 from .stage2c import (LABEL_2C, LATE_STARTERS, METHODS, buffered_rank, first_alarm_day,
                       first_eligible, metric_row, path_minima, rank_via_beta, statistic)
@@ -63,8 +64,11 @@ def make_block(cfg: Stage1Config, spec, seed_seq, n_paths: int, sharpe: float) -
     key, A, kappa, _ = spec
     cn = scenario_cfg(cfg, A, kappa)
     d = draw_noise("sv_jump", seed_seq, n_paths, cfg.horizon_days, cn)
+    # Both latent variances are stored for scoring and diagnostics only; no
+    # detector reads them, and neither is a real-time forecast.
     return {"returns": returns_from_noise(d.eps, sharpe, cfg),
-            "true_sigma": true_daily_sigma(d, cn),   # evaluator / diagnostic only
+            "diffusive_variance": diffusive_daily_variance(d, cn),
+            "total_variance_given_vol": total_daily_variance_given_vol(d, cn),
             "latent": d.latent}
 
 
@@ -111,7 +115,7 @@ def evaluate(cfg: Stage1Config, spec, seed_seq, transfer: dict, diagnostic: dict
     kids = seed_seq.spawn(2)
     bv = make_block(cfg, spec, kids[0], cfg.stage2d_test_paths, cfg.sharpe_valid)
     bi = make_block(cfg, spec, kids[1], cfg.stage2d_test_paths, cfg.sharpe_invalid)
-    rows, minima, qrows = [], {}, []
+    rows, minima, qrows, trunc = [], {}, [], {}
     from scipy.special import expit
 
     for m in METHODS:
@@ -147,6 +151,7 @@ def evaluate(cfg: Stage1Config, spec, seed_seq, transfer: dict, diagnostic: dict
                     row[f"detect_d{d}"] = det[f"rate_d{d}"]
                     dl, dh = wilson_interval(det[f"n_alarms_d{d}"], det["n_paths"], cfg.wilson_z)
                     row[f"detect_d{d}_lo"], row[f"detect_d{d}_hi"] = dl, dh
+                trunc[(m, arm, a)] = np.where(ti != -1, ti, cfg.horizon_days).astype(float)
                 row.update({"trunc_mean_detect_days": det["trunc_mean_days"],
                             "trunc_mean_detect_se": det["trunc_mean_se"],
                             "median_detect_days": det["median_days"],
@@ -155,7 +160,7 @@ def evaluate(cfg: Stage1Config, spec, seed_seq, transfer: dict, diagnostic: dict
                             "n_test_valid": far["n_paths"], "n_test_invalid": det["n_paths"]})
                 rows.append(row)
         del sv, si
-    return rows, minima, qrows, bv, bi
+    return rows, minima, qrows, bv, bi, trunc
 
 
 def shock_diagnostic(cfg: Stage1Config) -> pd.DataFrame:
@@ -188,7 +193,8 @@ def shock_diagnostic(cfg: Stage1Config) -> pd.DataFrame:
         frames.append(pd.DataFrame({
             "day": np.arange(1, cfg.horizon_days + 1), "variant": name, "return": r,
             "forecast_variance": v[0], "forecast_var_over_sigma0sq": v[0] / cfg.sigma_daily ** 2,
-            "true_variance": (d.latent["variance_multiplier"][idx] * cfg.sigma_daily ** 2),
+            "diffusive_variance": diffusive_daily_variance(d, cn)[idx],
+            "total_variance_given_vol": total_daily_variance_given_vol(d, cn)[idx],
             "ewma_gaussian_increment": gi, "ewma_student_t_increment": ti,
             "ewma_gaussian_cum": cfg.prior_log_odds + np.cumsum(gi),
             "ewma_student_t_cum": cfg.prior_log_odds + np.cumsum(ti)}))

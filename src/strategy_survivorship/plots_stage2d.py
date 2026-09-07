@@ -174,8 +174,10 @@ def figure_shock(cfg, sh, out: Path) -> Path:
         axes[2].plot(w.day, w.ewma_student_t_increment, color=c, lw=1.2)
     base_true = sh[sh.variant == "base"]
     bt = base_true[(base_true.day >= lo) & (base_true.day <= hi)]
-    axes[0].plot(bt.day, bt.true_variance / cfg.sigma_daily ** 2, color="0.6", ls=":", lw=1.3,
-                 label="true $v_t$")
+    axes[0].plot(bt.day, bt.diffusive_variance / cfg.sigma_daily ** 2, color="0.6", ls=":",
+                 lw=1.3, label="latent diffusive var")
+    axes[0].plot(bt.day, bt.total_variance_given_vol / cfg.sigma_daily ** 2, color="0.6",
+                 ls="-.", lw=1.0, label="latent total var (jump averaged)")
     for ax in axes:
         ax.axvline(d0, color="0.5", lw=1.0); ax.grid(alpha=0.3); ax.set_xlabel("trading day")
     axes[0].set_yscale("log"); axes[0].set_ylabel("$\\hat v_t/\\sigma_0^2$")

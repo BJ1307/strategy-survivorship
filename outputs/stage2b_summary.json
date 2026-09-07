@@ -181,6 +181,44 @@
       504
     ],
     "stage2c_bootstrap_reps": 2000,
+    "stage2d_scenarios": [
+      [
+        "gaussian_ctrl",
+        0.0,
+        0.0,
+        true
+      ],
+      [
+        "sv_ctrl",
+        1.0,
+        0.0,
+        true
+      ],
+      [
+        "jump_ctrl",
+        0.0,
+        5.0,
+        true
+      ],
+      [
+        "sv_jump",
+        1.0,
+        5.0,
+        false
+      ],
+      [
+        "sv_jump_big",
+        1.0,
+        8.0,
+        false
+      ]
+    ],
+    "stage2d_calibration_paths": 10000,
+    "stage2d_test_paths": 10000,
+    "stage2d_bootstrap_reps": 2000,
+    "stage2d_shock_day": 126,
+    "stage2d_shock_sigmas": 8.0,
+    "stage2d_shock_path_index": 0,
     "root_seed": 20260905,
     "label": "stage1_benchmark",
     "notes": [
@@ -213,7 +251,11 @@
         "stage2c_calibration",
         "stage2c_test",
         "stage2c_stress",
-        "stage2c_bootstrap"
+        "stage2c_bootstrap",
+        "stage2d_calibration",
+        "stage2d_test",
+        "stage2d_bootstrap",
+        "stage2d_shock"
       ]
     }
   },
@@ -376,6 +418,38 @@
       "entropy": 20260905,
       "spawn_key": [
         18
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        19
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        20
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        21
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_shock": {
+      "entropy": 20260905,
+      "spawn_key": [
+        22
       ],
       "n_children_spawned": 0,
       "pool_size": 4
@@ -6207,7 +6281,7 @@
       "day": 504,
       "years": 2.0,
       "n": 10000,
-      "brier": 0.09299741482403186,
+      "brier": 0.09299741482403184,
       "brier_base_rate": 0.25,
       "brier_skill_vs_base_rate": 0.6280103407038726,
       "mean_predicted_q": 0.49731338849116435,
@@ -6485,6 +6559,6 @@
       }
     ]
   },
-  "elapsed_s": 29.553128500003368,
+  "elapsed_s": 28.01669741600199,
   "figures": []
 }

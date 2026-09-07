@@ -28,7 +28,7 @@ from .simulate import make_streams, stream_fingerprint
 from .stage2c import METHODS
 from .stage2d import (COMBINED, LABEL_2D, SCEN_LABEL, calibrate_diagnostic, evaluate,
                       load_frozen_thresholds, shock_diagnostic, specs, streams_for)
-from .stage2d_uncertainty import paired_frozen, run_bootstrap
+from .stage2d_uncertainty import paired_frozen, paired_truncated_time, run_bootstrap
 
 MAIN_PAIRS = (("ewma_student_t", "binary_student_t"),
               ("ewma_gaussian", "binary_gaussian"),
@@ -77,12 +77,12 @@ def main(argv: list[str] | None = None) -> int:
     status("diagnostic thresholds frozen", scenarios=len(specs(cfg)),
            paths=cfg.stage2d_calibration_paths, J=diag["J"])
 
-    rows, minima, qrows, blocks = [], {}, [], {}
+    rows, minima, qrows, blocks, trunc = [], {}, [], {}, {}
     tst = make_streams(cfg)["stage2d_test"].spawn(len(specs(cfg)))
     for spec, kid in zip(specs(cfg), tst):
-        rr, mm, qq, bv, bi = evaluate(cfg, spec, kid, transfer, diag, days)
+        rr, mm, qq, bv, bi, tt = evaluate(cfg, spec, kid, transfer, diag, days)
         rows.extend(rr); minima[spec[0]] = mm; qrows.extend(qq)
-        blocks[spec[0]] = (bv, bi)
+        blocks[spec[0]] = (bv, bi); trunc[spec[0]] = tt
         status(f"scenario tested: {spec[0]}", rows=len(rr))
 
     metrics = pd.DataFrame(rows)
@@ -104,7 +104,26 @@ def main(argv: list[str] | None = None) -> int:
                 for ma, mb in MAIN_PAIRS:
                     paired.append(paired_frozen(minima[sc], thr, ma, mb, sc, arm, a, cfg))
     pd.DataFrame(paired).to_csv(out_dir / "stage2d_paired.csv", index=False)
-    status("paired (frozen threshold) differences done", rows=len(paired))
+
+    # follow-up: paired TRUNCATED DETECTION TIME differences, frozen thresholds
+    tt_rows = []
+    for sc in COMBINED:
+        for a in cfg.far_targets:
+            for arm in ("transfer", "diagnostic"):
+                tau = {m: trunc[sc][(m, arm, a)] for m in METHODS}
+                for ma, mb in MAIN_PAIRS:
+                    r = paired_truncated_time(tau, ma, mb, cfg)
+                    r.update({"scenario": sc, "arm": arm, "far_target": a,
+                              "method_a": ma, "method_b": mb,
+                              "trunc_mean_a": float(tau[ma].mean()),
+                              "trunc_mean_b": float(tau[mb].mean()),
+                              "n_paired_paths": int(tau[ma].size),
+                              "interval_covers": "test sampling only, thresholds frozen",
+                              "followup": True})
+                    tt_rows.append(r)
+    pd.DataFrame(tt_rows).to_csv(out_dir / "stage2d_paired_time.csv", index=False)
+    status("paired (frozen threshold) differences done",
+           detect_rows=len(paired), time_rows=len(tt_rows))
 
     # ---- bootstrap including calibration resampling ------------------------- #
     boot = run_bootstrap(cfg, diag, minima, MAIN_PAIRS,
@@ -115,27 +134,37 @@ def main(argv: list[str] | None = None) -> int:
     # ---- paired Brier between the two EWMA methods -------------------------- #
     from scipy.special import expit
 
+    from .probability_time import brier_and_reliability
     from .stage2b_followup import paired_brier_difference
     from .stage2c import statistic as stat2c
 
-    brier = []
-    bk = make_streams(cfg)["stage2d_bootstrap"].spawn(len(COMBINED) * len(days))
+    BRIER_PAIRS = (("ewma_student_t", "ewma_gaussian", False),
+                   ("ewma_student_t", "binary_student_t", True))   # True -> follow-up
+    brier, rel = [], []
+    bk = make_streams(cfg)["stage2d_bootstrap"].spawn(
+        len(COMBINED) * len(days) * len(BRIER_PAIRS))
     i = 0
     for sc in COMBINED:
         bv, bi = blocks[sc]
-        qa_i = expit(-stat2c("ewma_student_t", bi["returns"], cfg))
-        qa_v = expit(-stat2c("ewma_student_t", bv["returns"], cfg))
-        qb_i = expit(-stat2c("ewma_gaussian", bi["returns"], cfg))
-        qb_v = expit(-stat2c("ewma_gaussian", bv["returns"], cfg))
-        for d in days:
-            r = paired_brier_difference(qa_i, qa_v, qb_i, qb_v, d,
-                                        cfg.stage2d_bootstrap_reps, bk[i]); i += 1
-            r["scenario"] = sc
-            r["a"], r["b"] = "ewma_student_t", "ewma_gaussian"
-            brier.append(r)
-        del qa_i, qa_v, qb_i, qb_v
+        q = {}
+        for m in ("ewma_student_t", "ewma_gaussian", "binary_student_t"):
+            q[(m, "inv")] = expit(-stat2c(m, bi["returns"], cfg))
+            q[(m, "val")] = expit(-stat2c(m, bv["returns"], cfg))
+            for d in days:
+                s_, tab = brier_and_reliability(q[(m, "inv")], q[(m, "val")], d, m)
+                tab["scenario"] = sc
+                rel.append(tab)
+        for ma, mb, fu in BRIER_PAIRS:
+            for d in days:
+                r = paired_brier_difference(q[(ma, "inv")], q[(ma, "val")],
+                                            q[(mb, "inv")], q[(mb, "val")], d,
+                                            cfg.stage2d_bootstrap_reps, bk[i]); i += 1
+                r.update({"scenario": sc, "a": ma, "b": mb, "followup": fu})
+                brier.append(r)
+        del q
     pd.DataFrame(brier).to_csv(out_dir / "stage2d_brier.csv", index=False)
-    status("paired Brier done", rows=len(brier))
+    pd.concat(rel, ignore_index=True).to_csv(out_dir / "stage2d_reliability.csv", index=False)
+    status("paired Brier and reliability done", brier_rows=len(brier))
 
     shock = shock_diagnostic(cfg)
     shock.to_csv(out_dir / "stage2d_shock.csv", index=False)
@@ -165,6 +194,7 @@ def main(argv: list[str] | None = None) -> int:
         "paired": paired,
         "bootstrap": json.loads(boot.to_json(orient="records")),
         "brier": brier,
+        "paired_time": tt_rows,
         "failure_probability": qrows,
         "report_days": list(days),
         "elapsed_s": elapsed,

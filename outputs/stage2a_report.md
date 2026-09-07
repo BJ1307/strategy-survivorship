@@ -224,7 +224,7 @@ Stage 1 的门槛原样搬过来，**不重新校准**，看噪声改变造成�
 .venv/bin/python -m strategy_survivorship.run_stage2a    # 本报告
 ```
 
-Python 3.13.13 / NumPy 2.5.2 / SciPy 1.18.1；本次 Stage 2A 耗时 7.8 s。
+Python 3.13.13 / NumPy 2.5.2 / SciPy 1.18.1；本次 Stage 2A 耗时 7.7 s。
 
 | 输出 | 内容 |
 |---|---|

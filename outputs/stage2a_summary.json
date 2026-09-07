@@ -106,6 +106,119 @@
       252,
       504
     ],
+    "stage2c_coverage": [
+      [
+        "gaussian",
+        "gaussian",
+        []
+      ],
+      [
+        "student_t",
+        "student_t",
+        []
+      ],
+      [
+        "sv_rho098",
+        "stoch_vol",
+        []
+      ],
+      [
+        "jump_k5",
+        "jump",
+        []
+      ],
+      [
+        "sv_rho0",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_rho",
+            0.0
+          ]
+        ]
+      ]
+    ],
+    "stage2c_stress": [
+      [
+        "sv_rho090",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_rho",
+            0.9
+          ]
+        ]
+      ],
+      [
+        "sv_amp15",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_amplitude",
+            1.5
+          ]
+        ]
+      ],
+      [
+        "jump_k8",
+        "jump",
+        [
+          [
+            "noise_jump_kappa",
+            8.0
+          ]
+        ]
+      ]
+    ],
+    "stage2c_calibration_paths": 10000,
+    "stage2c_test_paths": 10000,
+    "stage2c_stress_paths": 5000,
+    "stage2c_delta": 0.05,
+    "stage2c_report_days": [
+      63,
+      126,
+      252,
+      504
+    ],
+    "stage2c_bootstrap_reps": 2000,
+    "stage2d_scenarios": [
+      [
+        "gaussian_ctrl",
+        0.0,
+        0.0,
+        true
+      ],
+      [
+        "sv_ctrl",
+        1.0,
+        0.0,
+        true
+      ],
+      [
+        "jump_ctrl",
+        0.0,
+        5.0,
+        true
+      ],
+      [
+        "sv_jump",
+        1.0,
+        5.0,
+        false
+      ],
+      [
+        "sv_jump_big",
+        1.0,
+        8.0,
+        false
+      ]
+    ],
+    "stage2d_calibration_paths": 10000,
+    "stage2d_test_paths": 10000,
+    "stage2d_bootstrap_reps": 2000,
+    "stage2d_shock_day": 126,
+    "stage2d_shock_sigmas": 8.0,
+    "stage2d_shock_path_index": 0,
     "root_seed": 20260905,
     "label": "stage1_benchmark",
     "notes": [
@@ -134,7 +247,15 @@
         "stage2a",
         "stage2b",
         "stage2b_persistence_control",
-        "stage2b_bootstrap"
+        "stage2b_bootstrap",
+        "stage2c_calibration",
+        "stage2c_test",
+        "stage2c_stress",
+        "stage2c_bootstrap",
+        "stage2d_calibration",
+        "stage2d_test",
+        "stage2d_bootstrap",
+        "stage2d_shock"
       ]
     }
   },
@@ -265,6 +386,70 @@
       "entropy": 20260905,
       "spawn_key": [
         14
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        15
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        16
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_stress": {
+      "entropy": 20260905,
+      "spawn_key": [
+        17
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        18
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        19
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        20
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        21
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_shock": {
+      "entropy": 20260905,
+      "spawn_key": [
+        22
       ],
       "n_children_spawned": 0,
       "pool_size": 4
@@ -4332,6 +4517,6 @@
       "scenario": "jump"
     }
   ],
-  "elapsed_s": 7.759393832999194,
+  "elapsed_s": 7.668518874997972,
   "figures": []
 }

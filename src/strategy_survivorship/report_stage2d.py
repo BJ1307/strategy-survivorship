@@ -94,10 +94,28 @@ def write_stage2d_report(cfg, summary, metrics, diag, boot, brier, shock, path: 
       "`E[eps]=0`、`Var(eps)=1`。**不做任何按整条路径的样本均值或方差标准化。**")
     A("")
     quiet = {k: 1 / math.sqrt(1 + k ** 2 * cfg.noise_jump_lambda_annual / cfg.D) for k in (0, 5, 8)}
-    A(f"> **κ 越大不等于任务必然更难。** 单位方差常数同时压低了无跳跃日的扩散尺度："
-      f"κ=0 时为 σ₀ 的 {quiet[0]:.4f}，κ=5 时 {quiet[5]:.4f}，κ=8 时 {quiet[8]:.4f}。"
-      "也就是说 κ=8 的普通交易日比 κ=0 **更安静**，单日信噪比反而更高。"
+    A(f"> **κ 越大不等于任务必然更难。** 单位方差常数同时压低了无跳跃日的扩散尺度。"
+      f"**跨全部无跳跃日的总体尺度**为 σ₀/c（因 E[v]=1）：κ=0 时 {quiet[0]:.4f}、"
+      f"κ=5 时 {quiet[5]:.4f}、κ=8 时 {quiet[8]:.4f}。"
+      "也就是说 κ=8 的普通交易日整体上比 κ=0 **更安静**，单日信噪比反而更高。"
+      "**但这是总体尺度，不是某个具体潜在状态下的尺度**——"
+      "给定 v_t 时的条件尺度是 `σ₀√v_t/c`，在 A=1 下其 90/10 分位比超过 3。"
       "本轮报告不预设 κ 的单调效应。")
+    A("")
+    A("**两个潜在方差的命名与定义**（评分与诊断用，**任何检测器都看不到，也都不是实时预测**）：")
+    A("")
+    A("```")
+    A("扩散方差（给定 v_t 且当日无跳跃）      : sigma_0^2 * v_t / c^2")
+    A("给定 v_t、未观察当日跳跃的总方差        : sigma_0^2 * (v_t + kappa^2 lambda/D) / c^2")
+    A("c^2 = 1 + kappa^2 lambda/D")
+    A("```")
+    A("")
+    A("> **已修正**：上一版的 `true_daily_sigma` 返回 `sigma_0 sqrt(v_t)`，"
+      "漏掉了组合归一化 `c`，也没有区分是否包含跳跃风险。"
+      "已逐一检查全部调用点：该量在 Stage 2D 中**只写不读**，"
+      "唯一的消费者是单次冲击诊断里的一列与图 2D.4 的一条参考线；"
+      "Stage 2A/2B 使用无跳跃的 SV 生成器（c=1），其 oracle 输入与全部数值**不受影响**（已重跑验证）。"
+      "**因此主分数、oracle、概率评分均保持原值，只有诊断被修正。**")
     A("")
     A(f"每个情境：{cfg.stage2d_calibration_paths} 条有效校准路径、"
       f"{cfg.stage2d_test_paths} 条有效测试路径、{cfg.stage2d_test_paths} 条无效测试路径；"
@@ -120,6 +138,13 @@ def write_stage2d_report(cfg, summary, metrics, diag, boot, brier, shock, path: 
     A("")
     A("> **第二组具有环境信息**：它知道自己身处哪个情境。它的作用是判断第一组的变化"
       "来自门槛迁移还是模型在该环境中的检测能力，**不能包装成未知环境下的部署结果**。")
+    A("")
+    A("> **保证范围要分开说。** 两个组合情境**不在** Stage 2C 迁移保证的覆盖集内，"
+      "所以第一组在这两个情境中没有概率保证。"
+      "但第二组是**按本轮五个情境自己校准**的，它有**自己的**有限样本保证："
+      "在这五种路径生成规律及其假设下，以至少 "
+      f"{1-cfg.stage2c_delta:.0%} 的概率同时把各自的真实两年 FAR 控制在目标以内。"
+      "**不能笼统说所有规则都没有保证。**")
     A("")
 
     # -------- 4 --------
@@ -254,8 +279,41 @@ def write_stage2d_report(cfg, summary, metrics, diag, boot, brier, shock, path: 
       "**本轮不把这一现象写成主要性能瓶颈**：单条人为扰动路径不足以支持那样的结论。")
     A("")
 
+    # -------- 8.5 follow-up --------
+    A("## 9. 追加证据（follow-up）")
+    A("")
+    A("> 以下为 Stage 2E 阶段追加，**不是运行前预先指定的发现**；使用的是同一批 Stage 2D 数据。")
+    A("")
+    A("### 9.1 截断检测时间的配对差异（冻结门槛，仅覆盖测试抽样）")
+    A("")
+    tt = [r for r in summary.get("paired_time", []) if r["far_target"] == a_main]
+    if tt:
+        L.extend(_t(tt, ["情境", "条件", "A", "B", "A 截断均检", "B 截断均检", "差(日)", "95% 区间"],
+                    lambda r: [SC[r["scenario"]], "迁移" if r["arm"] == "transfer" else "诊断",
+                               LABEL_2D[r["method_a"]], LABEL_2D[r["method_b"]],
+                               f"{r['trunc_mean_a']:.1f}", f"{r['trunc_mean_b']:.1f}",
+                               f"{r['trunc_time_diff_days']:+.2f}",
+                               f"[{r['trunc_time_diff_lo']:+.2f}, {r['trunc_time_diff_hi']:+.2f}]"]))
+        A("")
+        A(f"（α={a_alt:g} 档见 `stage2d_paired_time.csv`。）")
+        A("")
+    A("### 9.2 配对 Brier：EWMA Student-t 对固定 Student-t")
+    A("")
+    fb = [r for r in summary["brier"] if r.get("followup")]
+    if fb:
+        L.extend(_t(fb, ["情境", "天数", "Brier(EWMA t)", "Brier(固定 t)", "差", "95% 区间", "排除零"],
+                    lambda r: [SC[r["scenario"]], str(int(r["day"])), f"{r['brier_a']:.5f}",
+                               f"{r['brier_b']:.5f}", f"{r['diff']:+.5f}",
+                               f"[{r['lo']:+.5f}, {r['hi']:+.5f}]",
+                               "是" if r["excludes_zero"] else "否"]))
+        A("")
+    A("> **Brier 改善与概率校准改善是两件事**：Brier 是分辨力与校准的合成评分，"
+      "分箱可靠性单独见 `stage2d_reliability.csv`（含每箱样本数）。"
+      "全部概率诊断使用**所有路径**，不因报警而删去后续概率。")
+    A("")
+
     # -------- 9 --------
-    A("## 9. 复现")
+    A("## 10. 复现")
     A("")
     A("```bash")
     A(".venv/bin/python -m pytest")

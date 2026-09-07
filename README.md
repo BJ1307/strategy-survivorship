@@ -49,7 +49,8 @@ pip install -r requirements.txt && pip install -e .
 .venv/bin/python -m strategy_survivorship.run_stage2b     # Stage 2B EWMA 波动率预测（约 30 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2c     # Stage 2C 统一门槛与误杀控制（约 70 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2d     # Stage 2D SV+跳跃组合（约 70 秒）
-.venv/bin/python -m strategy_survivorship.run_stage2d --figures-only  # 仅从 CSV 重绘
+.venv/bin/python -m strategy_survivorship.run_stage2e     # Stage 2E 截断方差更新 2x2 消融（约 90 秒）
+.venv/bin/python -m strategy_survivorship.run_stage2e --figures-only  # 仅从 CSV 重绘
 ```
 
 这两条命令重建 `outputs/` 下的**全部**结果：表格、JSON、四张图和研究报告。
@@ -142,7 +143,15 @@ theory.md         公式、符号、单位、推导、参考链接
 | `outputs/stage2d_metrics.csv` / `_thresholds.csv` | 5 情境 × 2 条件 × 2 预算 × 6 方法指标、诊断门槛 |
 | `outputs/stage2d_paired.csv` / `_bootstrap.csv` / `_brier.csv` | 配对区间 / 敏感性区间 / 配对 Brier |
 | `outputs/stage2d_failure_probability.csv` / `_shock.csv` | 全路径 q 分布 / 单次冲击诊断 |
+| `outputs/stage2d_paired_time.csv` / `_reliability.csv` | 配对截断时间之差 / 分箱可靠性 |
 | `outputs/figures/fig2d{1,2,3,4}_*.png` | Stage 2D 四张图 |
+| `outputs/stage2e_report.md` | **Stage 2E 报告**：截断方差更新的 2×2 消融 |
+| `outputs/stage2e_metrics.csv` / `_thresholds.csv` | 5 情境 × 8 模型 × 2 预算指标（J=80 缓冲门槛）|
+| `outputs/stage2e_bootstrap.csv` | 三条预设配对差 **与 2×2 交互项**，含校准重采样的区间 |
+| `outputs/stage2e_paired.csv` / `_paired_time.csv` / `_brier.csv` / `_reliability.csv` | 冻结门槛下的配对区间、时间差、概率诊断 |
+| `outputs/stage2e_far_timing.csv` | 首次误杀的三类互斥时点分解（三类之和 = 总 FAR）|
+| `outputs/stage2e_failure_probability.csv` / `_shock.csv` | 全路径 q 分布 / 四路冲击诊断 |
+| `outputs/figures/fig2e{1,2,3,4}_*.png` | Stage 2E 四张图 |
 | `outputs/stage1_diagnostic_traces.csv` | 冲击诊断逐日收益、增量、log odds、概率 |
 | `outputs/run_metadata.json` | 运行配置、随机流指纹、环境版本、分阶段耗时 |
 | `outputs/figures/fig1_example_paths.png` | 固定示例路径的累计收益与两个贝叶斯概率 |

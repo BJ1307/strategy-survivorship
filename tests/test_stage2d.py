@@ -170,8 +170,104 @@ def test_latent_volatility_is_causal_in_its_own_shocks():
     assert not np.allclose(a1[:, k:], a2[:, k:])
 
 
-def test_true_sigma_is_exposed_for_the_combined_scenario():
+def test_latent_variances_are_exposed_for_the_combined_scenario():
+    """Shape and positivity, plus the ordering that defines them.
+
+    Deliberately NOT a restatement of the closed form -- the second-moment tests
+    above are what pin the definitions.
+    """
+    cfg = _cfg(1.0, 5.0)
     d = _draw(1.0, 5.0, n_paths=20, n_days=60)
-    s = N.true_daily_sigma(d, CFG)
-    assert s is not None and s.shape == d.eps.shape and (s > 0).all()
-    assert np.allclose(s, CFG.sigma_daily * np.sqrt(d.latent["variance_multiplier"]))
+    dv = N.diffusive_daily_variance(d, cfg)
+    tv = N.total_daily_variance_given_vol(d, cfg)
+    for x in (dv, tv):
+        assert x is not None and x.shape == d.eps.shape and (x > 0).all()
+    assert (tv > dv).all()                       # the jump adds risk
+    # the alias tracks the diffusive one
+    assert np.allclose(N.true_daily_sigma(d, cfg) ** 2, dv)
+    # and it is NOT sigma_0^2 v_t once a jump component exists
+    assert not np.allclose(dv, cfg.sigma_daily ** 2 * d.latent["variance_multiplier"])
+
+
+# --------------------------------------------------------------------------- #
+# the two latent variance definitions (Stage 2E correction)
+# --------------------------------------------------------------------------- #
+
+
+def test_diffusive_variance_matches_the_realised_jump_free_second_moment():
+    """Definitional check, not a restatement of the formula.
+
+    Condition on a narrow band of the latent v_t and keep only days with K_t = 0.
+    The realised second moment of r_t there must equal the DIFFUSIVE variance
+    sigma_0^2 v_t / c^2, not sigma_0^2 v_t.
+    """
+    A, kappa = 1.0, 5.0
+    cfg = _cfg(A, kappa)
+    d = _draw(A, kappa, seed=41, n_paths=4000, n_days=504)
+    r = (d.eps * CFG.sigma_daily)                       # mu = 0 under S = 0
+    v = d.latent["variance_multiplier"]
+    k = d.latent["jump_counts"]
+    c2 = 1.0 + kappa ** 2 * CFG.noise_jump_lambda_annual / CFG.D
+
+    for lo, hi in ((0.4, 0.6), (0.9, 1.1), (1.8, 2.2)):
+        m = (v >= lo) & (v < hi) & (k == 0)
+        assert m.sum() > 20000, (lo, hi, int(m.sum()))
+        realised = float((r[m] ** 2).mean())
+        vbar = float(v[m].mean())
+        assert realised == pytest.approx(CFG.sigma_daily ** 2 * vbar / c2, rel=0.04)
+        # and the un-normalised version would be wrong by exactly c^2
+        assert not (realised == pytest.approx(CFG.sigma_daily ** 2 * vbar, rel=0.04))
+
+
+def test_total_variance_given_vol_matches_the_realised_all_days_second_moment():
+    """Same bands, but keeping every day: the jump count is averaged over."""
+    A, kappa = 1.0, 5.0
+    d = _draw(A, kappa, seed=43, n_paths=4000, n_days=504)
+    r = d.eps * CFG.sigma_daily
+    v = d.latent["variance_multiplier"]
+    jv = kappa ** 2 * CFG.noise_jump_lambda_annual / CFG.D
+    c2 = 1.0 + jv
+    for lo, hi in ((0.4, 0.6), (0.9, 1.1), (1.8, 2.2)):
+        m = (v >= lo) & (v < hi)
+        realised = float((r[m] ** 2).mean())
+        vbar = float(v[m].mean())
+        assert realised == pytest.approx(CFG.sigma_daily ** 2 * (vbar + jv) / c2, rel=0.06)
+
+
+def test_the_two_definitions_differ_exactly_by_the_jump_variance():
+    A, kappa = 1.0, 8.0
+    cfg = _cfg(A, kappa)
+    d = _draw(A, kappa, n_paths=100, n_days=200)
+    dv = N.diffusive_daily_variance(d, cfg)
+    tv = N.total_daily_variance_given_vol(d, cfg)
+    jv = kappa ** 2 * CFG.noise_jump_lambda_annual / CFG.D
+    c2 = 1.0 + jv
+    assert np.allclose(tv - dv, CFG.sigma_daily ** 2 * jv / c2)
+    assert (tv > dv).all()
+
+
+def test_jump_free_marginal_scale_is_not_the_conditional_scale():
+    """Across ALL jump-free days the sd is 1/c times sigma_0 whatever A is,
+    because E[v] = 1; for a SPECIFIC latent state it is sqrt(v_t)/c and varies
+    widely. The report must not conflate the two."""
+    A, kappa = 1.0, 5.0
+    d = _draw(A, kappa, seed=45, n_paths=3000, n_days=504)
+    c = math.sqrt(1.0 + kappa ** 2 * CFG.noise_jump_lambda_annual / CFG.D)
+    quiet = d.latent["jump_counts"] == 0
+    marginal = float(d.eps[quiet].std())
+    assert marginal == pytest.approx(1.0 / c, rel=0.02)
+    # the conditional scale spans a wide range around it
+    v = d.latent["variance_multiplier"][quiet]
+    cond = np.sqrt(v) / c
+    assert np.quantile(cond, 0.90) / np.quantile(cond, 0.10) > 3.0
+
+
+def test_stage2a_and_2b_oracle_inputs_are_unchanged_by_the_correction():
+    """The jump-free stoch_vol generator has c = 1, so the alias is bit-identical
+    to the pre-correction definition and those stages' numbers cannot move."""
+    ss = np.random.SeedSequence(47)
+    d = N.draw_noise("stoch_vol", ss, 200, 300, CFG)
+    assert np.allclose(N.true_daily_sigma(d, CFG),
+                       CFG.sigma_daily * np.sqrt(d.latent["variance_multiplier"]))
+    assert np.allclose(N.diffusive_daily_variance(d, CFG),
+                       N.total_daily_variance_given_vol(d, CFG))

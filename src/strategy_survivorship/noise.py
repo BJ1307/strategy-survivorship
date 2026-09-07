@@ -225,16 +225,49 @@ def returns_from_noise(eps: np.ndarray, sharpe_annual: float, cfg) -> np.ndarray
     return cfg.daily_drift(sharpe_annual) + cfg.sigma_daily * eps
 
 
-def true_daily_sigma(draw: NoiseDraw, cfg) -> np.ndarray | None:
-    """The realised conditional daily volatility, for the ORACLE detector only.
+def _latent_jump_terms(draw: NoiseDraw, cfg) -> tuple[float, float]:
+    """(c^2, kappa^2 * lambda/D) for a draw; both are 1 and 0 when there is no jump."""
+    kappa = float(draw.latent.get("kappa", 0.0))
+    lam_daily = float(draw.latent.get("lambda_daily", 0.0))
+    jump_var = kappa * kappa * lam_daily
+    return 1.0 + jump_var, jump_var
 
-    Defined only for ``stoch_vol``, where the conditional scale is a persistent
-    latent state an adaptive rule could in principle track.  The jump model also
-    has a non-constant conditional scale given K_t, but that scale is an
-    unpredictable one-day event rather than a state, so a "known current
-    variance" oracle is not the right idealisation for it; that scenario is out
-    of scope for the oracle this round rather than constant-scale.
+
+def diffusive_daily_variance(draw: NoiseDraw, cfg) -> np.ndarray | None:
+    """Conditional variance of r_t given the latent v_t AND that no jump lands.
+
+        sigma_0^2 * v_t / c^2,     c^2 = 1 + kappa^2 lambda/D
+
+    This is the scale of an ordinary, jump-free day at a SPECIFIC latent state.
+    It is a latent truth used for scoring and diagnostics; it is NOT something any
+    detector observes, and it is not a real-time forecast.
     """
     if draw.scenario not in ("stoch_vol", "sv_jump"):
         return None
-    return cfg.sigma_daily * np.sqrt(draw.latent["variance_multiplier"])
+    c2, _ = _latent_jump_terms(draw, cfg)
+    return cfg.sigma_daily ** 2 * draw.latent["variance_multiplier"] / c2
+
+
+def total_daily_variance_given_vol(draw: NoiseDraw, cfg) -> np.ndarray | None:
+    """Conditional variance of r_t given the latent v_t but NOT the day's jump count.
+
+        sigma_0^2 * (v_t + kappa^2 lambda/D) / c^2
+
+    The jump count is averaged over, so this is the variance a rule would face if
+    it knew the volatility state but could not see whether today jumps.  Also a
+    latent truth, not an observable forecast.
+    """
+    if draw.scenario not in ("stoch_vol", "sv_jump"):
+        return None
+    c2, jv = _latent_jump_terms(draw, cfg)
+    return cfg.sigma_daily ** 2 * (draw.latent["variance_multiplier"] + jv) / c2
+
+
+def true_daily_sigma(draw: NoiseDraw, cfg) -> np.ndarray | None:
+    """Backwards-compatible alias: the DIFFUSIVE conditional standard deviation.
+
+    For the jump-free ``stoch_vol`` generator c = 1, so this is unchanged from the
+    Stage 2A/2B definition and those results are untouched.
+    """
+    v = diffusive_daily_variance(draw, cfg)
+    return None if v is None else np.sqrt(v)
