@@ -52,6 +52,7 @@ pip install -r requirements.txt && pip install -e .
 .venv/bin/python -m strategy_survivorship.run_stage2e     # Stage 2E 截断方差更新 2x2 消融（约 70 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2e1    # Stage 2E.1 收尾、跨预算统计、高斯参照（约 40 秒）
 .venv/bin/python -m strategy_survivorship.run_stage3a     # Stage 3A Sharpe 0.6 vs 0，保留 1 vs 0（约 120 秒）
+.venv/bin/python -m strategy_survivorship.run_stage3a1    # Stage 3A.1 监测期限诊断（约 60 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2e --figures-only  # 仅从 CSV 重绘
 ```
 
@@ -169,6 +170,12 @@ theory.md         公式、符号、单位、推导、参考链接
 | `outputs/stage3a_gaussian_reference.csv` / `_evidence_check.csv` | D_max 参照表 / 证据积累恒等式核验 |
 | `outputs/figures/fig3a{1,2,3,4}_*.png` | Stage 3A 四张图 |
 | `outputs/review_bundle_stage3a.zip` | Stage 3A 审阅包 |
+| `outputs/stage3a1_report.md` | **Stage 3A.1 报告**：监测期限诊断（安排 A 对 B）|
+| `outputs/stage3a1_metrics.csv` / `_thresholds.csv` | 2 情境 × 4 方法 × 2 s × 2 α × 2 安排 × 4 截止日；128 个冻结门槛 |
+| `outputs/stage3a1_bootstrap.csv` / `_paired_time.csv` | B−A 的检出差与误杀差；同一截止日的配对时间差 |
+| `outputs/stage3a1_out_of_horizon.csv` | 短期门槛延用到各天的实际累计误杀 |
+| `outputs/figures/fig3a1_{1,2,3}_*.png` | Stage 3A.1 三张图 |
+| `outputs/review_bundle_stage3a1.zip` | Stage 3A.1 审阅包（含完整包与环境文件）|
 | `outputs/stage1_diagnostic_traces.csv` | 冲击诊断逐日收益、增量、log odds、概率 |
 | `outputs/run_metadata.json` | 运行配置、随机流指纹、环境版本、分阶段耗时 |
 | `outputs/figures/fig1_example_paths.png` | 固定示例路径的累计收益与两个贝叶斯概率 |

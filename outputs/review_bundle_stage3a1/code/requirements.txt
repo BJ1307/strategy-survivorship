@@ -1,0 +1,7 @@
+# Direct dependencies for Stage 1. Pinned lower bounds only.
+# For an exact reproduction of the recorded run use requirements-lock.txt.
+numpy>=2.0
+scipy>=1.13
+pandas>=2.2
+matplotlib>=3.8
+pytest>=8.0
