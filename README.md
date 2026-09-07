@@ -49,7 +49,8 @@ pip install -r requirements.txt && pip install -e .
 .venv/bin/python -m strategy_survivorship.run_stage2b     # Stage 2B EWMA 波动率预测（约 30 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2c     # Stage 2C 统一门槛与误杀控制（约 70 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2d     # Stage 2D SV+跳跃组合（约 70 秒）
-.venv/bin/python -m strategy_survivorship.run_stage2e     # Stage 2E 截断方差更新 2x2 消融（约 90 秒）
+.venv/bin/python -m strategy_survivorship.run_stage2e     # Stage 2E 截断方差更新 2x2 消融（约 70 秒）
+.venv/bin/python -m strategy_survivorship.run_stage2e1    # Stage 2E.1 收尾、跨预算统计、高斯参照（约 40 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2e --figures-only  # 仅从 CSV 重绘
 ```
 
@@ -152,6 +153,13 @@ theory.md         公式、符号、单位、推导、参考链接
 | `outputs/stage2e_far_timing.csv` | 首次误杀的三类互斥时点分解（三类之和 = 总 FAR）|
 | `outputs/stage2e_failure_probability.csv` / `_shock.csv` | 全路径 q 分布 / 四路冲击诊断 |
 | `outputs/figures/fig2e{1,2,3,4}_*.png` | Stage 2E 四张图 |
+| `outputs/stage2e1_report.md` | **Stage 2E.1 核查说明**：撤回/改写的结论、跨预算统计、理论基准 |
+| `outputs/stage2e1_cross_budget.csv` | `I(0.05) − I(0.15)` 等跨预算配对差（探索性）|
+| `outputs/stage2e1_far_timing.csv` | 三类时点分解，含 Poisson 理论巧合基准与两种分母 |
+| `outputs/stage2e1_summary_table.csv` / `_paired_time.csv` | 导师口径的检出/误杀/时间汇总与配对时间差 |
+| `outputs/stage2e1_gaussian_reference.csv` / `_headroom.csv` | D_max(h,α) 参照表与高斯对照下的余量 |
+| `outputs/stage2e1_threshold_check.csv` | 重建门槛与冻结门槛的逐位比对 |
+| `outputs/review_bundle.zip` | 可直接上传的审阅包（报告、四张图、全部 CSV、关键实现）|
 | `outputs/stage1_diagnostic_traces.csv` | 冲击诊断逐日收益、增量、log odds、概率 |
 | `outputs/run_metadata.json` | 运行配置、随机流指纹、环境版本、分阶段耗时 |
 | `outputs/figures/fig1_example_paths.png` | 固定示例路径的累计收益与两个贝叶斯概率 |

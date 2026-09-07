@@ -120,8 +120,11 @@ def write_stage2e_report(cfg, summary, metrics, cal, boot, brier, shock, far_spl
     all_sig = {r["scenario"] for a in budgets for r in T[a][1]}
     counts = "；".join(f"α={a:g} 时 {tally(T[a][1], T[a][2], len(scen))}" for a in budgets)
     if all_sig and jump_story(all_sig):
-        A(f"是，但只在有跳跃的情境（κ>0）里，而且预算越紧收益越大：{counts}。"
-          "没有跳跃的两个情境在两个预算下都不显著。")
+        A(f"是，有小幅改进。{counts}。"
+          "**本轮观察到的明确增益集中在有跳跃的情境（κ>0）**，"
+          "没有跳跃的两个情境在两个预算下都不显著。"
+          "这是对本轮五个情境的描述，不是“截断只在有跳跃时有效”的一般结论——"
+          "无跳跃情境下的点估计接近零但并非零，本轮只能说区间无法与零区分。")
     elif all_sig:
         A(f"{counts}。显著的情境为 "
           f"{'、'.join(plain0[sc] for sc in scen if sc in all_sig)}。")
@@ -130,15 +133,21 @@ def write_stage2e_report(cfg, summary, metrics, cal, boot, brier, shock, far_spl
     A("")
     diff_table(T)
     A("")
-    big = max((r for a in budgets for r in T[a][0]), key=lambda r: r["d"])
     ref = {a: g("ewma_student_t", "sv_jump", "detect_d504", a)
               - g("binary_student_t", "sv_jump", "detect_d504", a) for a in budgets}
-    A(f"量级参照取自**同一次运行**：EWMA Student-t 相对固定尺度 Student-t 在 SV+跳跃情境的优势为 "
-      + "、".join(f"{ref[a]:+.4f}（α={a:g}）" for a in budgets) +
-      f"。本轮最大的截断效应是 {big['d']:+.4f}"
-      f"（{SC[big['scenario']].strip('*')}，α={big['far_target']:g}），"
-      f"约为同一预算下该参照的 {abs(big['d']) / abs(ref[big['far_target']]):.0%}。"
-      "所以截断是一个真实但二阶的改进，不是与上一轮同一量级的进展。")
+    A("**量级要在同一情境、同一预算、同一轮里比。**跨情境取最大值再与上一轮相比，"
+      "会把不同情境的难度混进同一个数字。主情境 SV+跳跃的两级台阶：")
+    A("")
+    step = [{"a": a, "ewma": ref[a],
+             "trunc": next(r["d"] for r in T[a][0] if r["scenario"] == "sv_jump")}
+            for a in budgets]
+    L.extend(_t(step, ["α", "固定 t → EWMA t", "EWMA t → 截断 t", "后者占前者"],
+                lambda r: [f"{r['a']:g}", f"{r['ewma'] * 100:+.2f} pp",
+                           f"{r['trunc'] * 100:+.2f} pp",
+                           f"{abs(r['trunc']) / abs(r['ewma']):.0%}"]))
+    A("")
+    A("即：**这是在已有改进之上的又一次小幅改进**，"
+      "本轮没有做任何展开去证明它属于某个渐近意义上的“二阶项”，因此不使用该说法。")
     A("")
 
     A("**问题二：收益是否取决于与重尾似然配对？**")
@@ -183,13 +192,24 @@ def write_stage2e_report(cfg, summary, metrics, cal, boot, brier, shock, far_spl
     if tight and loose:
         ta, la = tight[0], loose[0]
         tsc = "、".join(SC[r["scenario"]].strip("*") for r in I[ta][1])
-        A(f"**答案取决于预算，本轮不能给出一个与预算无关的结论。**"
+        A(f"**两个预算下的证据不同。**"
           f"在 α={ta:g} 下交互项在 {tsc} 显著为正"
           f"（最大 {max(r['d'] for r in I[ta][1]):+.4f}），"
-          f"即在紧预算下截断的收益**确实**需要配上 Student-t 似然："
-          f"同一预算下 Gaussian 一侧的截断在任何情境都不显著。"
-          f"在 α={la:g} 下交互项五个情境全部覆盖 0，"
-          f"两侧的主效应大小相当，与“近似可加”一致。")
+          f"即在紧预算下截断在 Student-t 一侧的增益大于在 Gaussian 一侧的增益，"
+          f"且同一预算下 Gaussian 一侧的截断在任何情境都不显著。"
+          f"**这仍然不等于“必须配上 Student-t 才有用”**——"
+          f"Gaussian 一侧的增益点估计并非零，只是本轮的区间无法与零区分。"
+          f"在 α={la:g} 下交互项五个情境全部覆盖 0，两侧的主效应大小相当——"
+          "这与“两条稳健化近似可加”**相容**，但覆盖 0 不构成可加性的证据，"
+          "只说明本轮的分辨率没有分出差别。")
+        A("")
+        A(f"**“α={ta:g} 下显著、α={la:g} 下不显著”本身不能推出两个预算下的交互不同。**"
+          "这是显著性之差与差的显著性的混淆。直接估计 `I(0.05) − I(0.15)` 的结果"
+          "见 Stage 2E.1 核查说明第 4 节与 `stage2e1_cross_budget.csv`；"
+          "那里的区间由两个预算共用同一组重抽下标、各自重算门槛得到。")
+        A("")
+        A("**交互项与跨预算比较都是在看到 Stage 2E 主结果之后追加的，标为探索性分析。**"
+          "它们的区间是逐项的，没有做多重比较校正。")
         A("")
         A("与之相符的一个读法（本轮无法进一步检验，仅作为记录）："
           "预算越紧、门槛越深，报警越依赖少数极端日；"
@@ -198,9 +218,12 @@ def write_stage2e_report(cfg, summary, metrics, cal, boot, brier, shock, far_spl
           "Student-t 版本没有这个爆炸，剩下的主要损害恰好是方差状态被污染，"
           "而截断修的正是这一项。")
     elif I[a_main][1] and not I[a_main][2]:
-        A(f"**收益取决于与 Student-t 似然的配对。**交互项在 {len(ipos)}/{len(irows)} 个情境显著为正。")
+        A(f"**截断在 Student-t 一侧的增益大于在 Gaussian 一侧的增益。**交互项在 "
+          f"{len(ipos)}/{len(irows)} 个情境显著为正。这不证明 Gaussian 一侧的增益为零，"
+          "也不证明 Student-t 似然是必要条件。")
     elif I[a_main][2] and not I[a_main][1]:
-        A(f"**截断更像是重尾似然的替代品。**交互项在 {len(ineg)}/{len(irows)} 个情境显著为负。")
+        A(f"**截断在 Gaussian 一侧的增益更大。**交互项在 {len(ineg)}/{len(irows)} 个情境"
+          "显著为负。这与“截断是重尾似然的替代品”相容，但不足以证明替代关系。")
     else:
         A(f"交互项在两个预算下都覆盖 0（最宽半宽 {half:.4f}，与主效应同量级），"
           "本轮只能排除远大于主效应的交互，不能排除与主效应相当的交互。")
@@ -257,9 +280,21 @@ def write_stage2e_report(cfg, summary, metrics, cal, boot, brier, shock, far_spl
     A("- 归纳可得 `Ṽ_t ≤ V_t` 逐日成立（同一收益序列下，截断方差不高于 plain 方差）。")
     A("- 方差更小会让每日似然比增量的绝对值更大，因此 **FAR 的方向不是被自动决定的**，"
       "必须重新校准而不能沿用旧门槛。")
-    A(f"- 在标准正态下 `E[min(u², c²)] = {cfg.ewma_truncation_c ** 0:g}` 的精确表达为 "
-      f"`(2Φ(c)−1) − 2cφ(c) + 2c²(1−Φ(c))`，c=4 时等于 0.99988，"
-      "即长期方差目标低估 0.0121%；本轮**不做**偏差修正，把这一点作为已知的、被量化的偏差记录。")
+    A("")
+    A("关于截断对方差水平的影响，本轮只作一个有条件的陈述：")
+    A("")
+    A("> 把标准化残差当作标准正态时，**单步更新输入**的二阶矩为 "
+      "`(2Φ(c)−1) − 2cφ(c) + 2c²(1−Φ(c))`，c=4 时等于 `0.99987946`，"
+      "比未截断的 1 少 `0.01205%`。")
+    A("")
+    A("**这不是递推的长期方差偏差，本轮不作那个陈述。**截断点 `c²Ṽ_t` 依赖模型自身的"
+      "随机状态；真实 DGP 下标准化残差并非标准正态；`e_t` 围绕固定中点而非条件均值；"
+      "且截断项同时出现在递推两边，使普通 EWMA 那条“权重和为 1 ⇒ 不动点等于输入均值”的"
+      "线性论证失效（方差被压低会让门槛变低、截断更频繁，是自我强化的反馈）。"
+      "推导见 `theory.md` §16.3。")
+    A("")
+    A("相应地，**截断后的 `Ṽ_t` 不被解释为对工作尺度、扩散方差或总方差中任何一个的"
+      "无偏估计**；它是检测规则的内部状态，其正当性来自校准后的检测表现。")
     A("")
 
     # ---------------- 3 ----------------
@@ -363,9 +398,18 @@ def write_stage2e_report(cfg, summary, metrics, cal, boot, brier, shock, far_spl
         L.extend(_t(srows, ["模型"] + [SC[sc].strip("*") for sc in scen],
                     lambda r: [LABEL_2E[r[0]]] + [f"{v:.4f}" for v in r[1]]))
         A("")
+        import math as _m
+        pJ = -_m.expm1(-cfg.noise_jump_lambda_annual / cfg.D)
         A("表中是**类 1 占该模型总 FAR 的比例**。两个 Gaussian 版本在 SV+跳跃族把三分之一到一半以上"
-          "的首次误杀打在跳跃当日，而巧合基准只有约 "
-          f"{share(base_sc, 'ewma_gaussian'):.2%}；两个 Student-t 版本则一直停在基准附近。")
+          "的首次误杀打在跳跃当日；两个 Student-t 版本则停在巧合水平附近。")
+        A("")
+        A(f"**巧合基准是一个理论值，不是某个对照里的观测比例。**"
+          f"跳跃计数服从 Poisson(λ/D)，λ={cfg.noise_jump_lambda_annual:g}/年、D={cfg.D}，"
+          f"当日有标记的概率为 `p_J = 1 − exp(−λ/D) = {pJ:.6f}`；"
+          f"注意 λ/D = {cfg.noise_jump_lambda_annual / cfg.D:.6f} 是计数均值而非概率。"
+          f"（此前把某个 κ=0 对照里的观测份额 {share(base_sc, 'ewma_gaussian'):.2%} "
+          "称作“精确基准”，已更正。）类 2 的理论值还须按实测报警日分布聚合，"
+          "推导与逐方法数值见 `theory.md` §16.6 与 `stage2e1_far_timing.csv`。")
         A("")
         gp_ = share("sv_jump", "ewma_gaussian")
         gt_ = share("sv_jump", "ewma_trunc_gaussian")
@@ -373,11 +417,20 @@ def write_stage2e_report(cfg, summary, metrics, cal, boot, brier, shock, far_spl
           "这与截断的设计一致：它只截断写入**下一日**方差状态的那一项，"
           "当日的似然仍然读到完整的收益。换句话说，截断修的是跳跃对随后若干天的**持续**污染，"
           "修不了跳跃**当日**的似然爆炸；后者要靠重尾似然。"
-          "这条机制解释了为什么本轮的效应量只有上一轮的一小部分。")
+          "这与“本轮效应量小于上一轮”的观察相容，但它是一个**尚待检验的机制假设**，"
+          "本轮没有为它设计独立检验。")
         A("")
     A("**跳跃标记只用于这一步的记分，不进入任何检测器。**"
-      "这是一个时点关联的描述，不能单独解释为跳跃对误杀的因果贡献："
-      "跳跃日同时也是波动率高的日子，两者在这个 DGP 里本来就相关。")
+      "这是一个时点关联的描述；实测份额减去巧合基准所得的数，"
+      "也不能称为跳跃对误杀的因果贡献。")
+    A("")
+    A("此外要分清潜在状态与观测量：本 DGP 里跳跃计数由 `rng.poisson(λ/D)` 独立抽出，"
+      "与随机波动的潜在状态 `v_t` **相互独立**（实测 corr = −0.0024，n=200,000，SE≈0.0022）。"
+      "与两者都相关的是**观测到的**大幅收益（corr(v,|r|)=0.43、corr(K,|r|)=0.37）。"
+      "此前写的“跳跃日与高波动日在这个 DGP 里本来就相关”与设定不符，已更正。")
+    A("")
+    A("只看份额还不够：份额下降也可能是别处的误杀上升。以**全部有效路径**为分母的"
+      "三类概率（三者之和等于总 FAR）见 `stage2e1_far_timing.csv` 的 `prob_*` 列。")
     A("")
 
     # ---------------- 7 ----------------
@@ -439,12 +492,15 @@ def write_stage2e_report(cfg, summary, metrics, cal, boot, brier, shock, far_spl
             best_a = max(rows_a, key=lambda r: r["d"])
             parts.append(f"α={a:g} 时 {len(T[a][1])}/{n_sc} 个情境显著为正"
                          f"（最大 {best_a['d']:+.4f}，{plain[best_a['scenario']]}）")
-        q1 = ("**有改进，真实但二阶，且预算越紧越大。**" + "；".join(parts) + "。"
-              f"显著的情境是 {'、'.join(plain[sc] for sc in any_sig)}"
-              + ("，全部是 κ>0 的情境，没有跳跃的情境一律不显著。"
-                 if jump_story(set(any_sig)) else "。")
-              + f"相对上一轮 EWMA 相对固定尺度的收益"
-              f"（{ref[a_alt]:+.4f} / {ref[a_main]:+.4f}），本轮的效应只有其一小部分。")
+        mt = {a: next(r["d"] for r in T[a][0] if r["scenario"] == "sv_jump") for a in budgets}
+        q1 = ("**有小幅改进，值得保留。**" + "；".join(parts) + "。"
+              f"本轮观察到的明确增益集中在 {'、'.join(plain[sc] for sc in any_sig)}"
+              + ("（都是 κ>0 的情境）" if jump_story(set(any_sig)) else "")
+              + "；这是本轮的观察，不等于已经证明截断只在有跳跃时有效。"
+              + f"在主情境 SV+跳跃、同一预算下的两级台阶为："
+              + "；".join(f"α={a:g} 时 固定 t→EWMA t {ref[a]*100:+.2f} pp、"
+                          f"EWMA t→截断 t {mt[a]*100:+.2f} pp（占 "
+                          f"{abs(mt[a])/abs(ref[a]):.0%}）" for a in budgets) + "。")
     A(f"1. **本轮是否胜过当前的强方法？** {q1}")
     if tight and loose:
         ta, la = tight[0], loose[0]
@@ -465,23 +521,38 @@ def write_stage2e_report(cfg, summary, metrics, cal, boot, brier, shock, far_spl
     A(f"2. **哪些机制得到了支持？** {q2}")
     best_main = max(g(m, "sv_jump") for m in METHODS_2E)
     best_alt = max(g(m, "sv_jump", "detect_d504", a_alt) for m in METHODS_2E)
-    A(f"3. **要达到实用速度还缺什么？** 缺的不是方差建模的稳健性。"
-      f"本轮最好的模型在两年内也只抓到 {best_main:.1%} 的无效策略（α={a_main:g}），"
-      f"在 α={a_alt:g} 下降到 {best_alt:.1%}。"
-      "限制来自**信噪比本身**：S=1 与 S=0 在 D=252 天上的可分性是固定的，"
-      "任何只重新加权同一条日收益序列的规则都逃不出这个上界。要提速需要更多信息"
-      "（横截面、多策略共享、更高频数据），而不是更聪明地读同一条序列。")
+    from .gaussian_bound import max_detection
+    b2 = max_detection(cfg.sharpe_valid, cfg.horizon_days / cfg.D, a_main)
+    A(f"3. **要达到实用速度还缺什么？** "
+      f"本轮最好的模型在两年内抓到 {best_main:.1%} 的无效策略（α={a_main:g}），"
+      f"在 α={a_alt:g} 下降到 {best_alt:.1%}。**此前写的“剩余差距已经全部来自不可突破的"
+      "信息限制、只能靠新增信息提速”这一结论已经撤回**——本项目没有证明组合 DGP 下的"
+      "最优检出率，更没有证明现有方法接近它。同一个年化 Sharpe 并不唯一决定一条收益序列的"
+      "可辨识程度：可预测的波动、分布中心的形状与跳跃结构都会改变可以提取多少证据；"
+      "Stage 2B 在 SV 情境取得的提升本身就是这一点的证据。"
+      f"可以给出的是一个**条件明确**的参照：在独立高斯、方差已知、两候选均值已知的模型里，"
+      f"S=1、两年、α={a_main:g} 的检出率上界为 {b2:.1%}（`theory.md` §17）。"
+      "它约束同一高斯模型下满足累计误杀约束的任何序贯规则，"
+      "但**不**适用于 SV+跳跃情境，因此组合情境里的 76.5% 不能读成“接近某个天花板”。")
     core_lo = min(g(m, "sv_jump") for m in CORE_2x2)
     core_hi = max(g(m, "sv_jump") for m in CORE_2x2)
     A(f"4. **下一步是否应该转向更弱的 Sharpe？** 是，但应作为**附加设定**而不是替换主基准。"
-      f"两个理由。其一，现实里多数策略的真实 Sharpe 低于 1，S=0.5 更贴近监督者真正要划的那条线。"
+      f"两个理由。其一，现实里多数策略的真实 Sharpe 低于 1；"
+      f"**下一组主实验用会议上明确讨论过的 S=0.6 对 S=0，并保留 S=1 对 S=0 作为主参照**。"
       f"其二，在 S=1 下，四个方差自适应规则的两年检出率已经聚在 "
       f"[{core_lo:.3f}, {core_hi:.3f}] 这个宽 {core_hi - core_lo:.3f} 的带里，"
       f"而最好的方法仍漏掉 {1 - best_main:.1%} 的无效策略；继续在规则形式上做文章的边际收益，"
       "已经小于把问题移到更难、更现实的区域所能提供的信息。"
       "**方向要说清楚**：更弱的 Sharpe 会让所有方法都更慢，"
       "它不是用来放大方法差异的手段，而是用来回答“在实际相关的信噪比下，"
-      "两年内到底能不能判定”这个问题本身。本轮不自行扩展到这一步。")
+      "两年内到底能不能判定”这个问题本身。"
+      f"同一高斯参照给出的量级是：S=0.6、两年、α={a_main:g} 时上界 "
+      f"{max_detection(0.6, cfg.horizon_days / cfg.D, a_main):.1%}，"
+      f"一年时 {max_detection(0.6, 1.0, a_main):.1%}。本轮不自行开始这组模拟。")
+    A("")
+    A("**另外收紧一条建议。**此前把“更高频数据”列为提速手段。更密的采样有助于识别波动与"
+      "跳跃结构，但在同一日历窗口内**不自动**带来更多关于漂移的独立证据："
+      "在漂移恒定、噪声独立同分布的模型里，同一窗口的漂移信息由 s·√h 决定，与采样频率无关。")
     A("")
 
     # ---------------- 9 ----------------
@@ -499,7 +570,13 @@ def write_stage2e_report(cfg, summary, metrics, cal, boot, brier, shock, far_spl
     A("- 全部结论都在 S=1 对 S=0、σ_ann=0.10、D=252、H=504 这一组固定设定之下。")
     A("- 五个情境都由同一族 SV+跳跃 DGP 生成；真实收益的失效方式可能不在这一族里。")
     A("- 误杀时点分解是关联描述，不是因果分解（见第 6 节）。")
-    A(f"- 截断在 c=4 处引入 0.0121% 的长期方差低估，本轮未做修正。")
+    A("- 截断在标准正态参考下使**单步更新输入**的二阶矩下降 0.01205%。"
+      "这不是递推的长期方差偏差，本轮不对后者作任何陈述（`theory.md` §16.3）。")
+    A("- 交互项与跨预算比较是看到主结果之后追加的**探索性分析**，"
+      "区间为逐项区间，未做多重比较校正。校准协议的 δ/J 只保护门槛的误杀约束，"
+      "不为检出率之差提供同时置信保证。")
+    A("- 本轮的“确定性复现检查”是同种子重跑得到相同 CSV，"
+      "**不是**用新的独立样本做的重复验证。")
     A("")
     A("## 10. 复现")
     A("")

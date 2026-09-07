@@ -182,11 +182,18 @@ def figure_far_timing(cfg, ft: pd.DataFrame, out: Path) -> Path:
             ax.bar(x, y, 0.62, bottom=bottom, color=colr, label=lab, edgecolor="white", lw=0.5)
             bottom += y
         ax.axhline(a, color="0.25", ls="--", lw=1.0)
+        # theoretical chance level for class 1: p_J * (that method's total FAR)
+        pJ = -np.expm1(-cfg.noise_jump_lambda_annual / cfg.trading_days_per_year)
+        tot = np.array([float(d[d.method == m].far_total.iloc[0]) for m in mm])
+        ax.plot(x, pJ * tot, ls="none", marker="_", ms=22, mew=1.6, color="0.15",
+                label="chance level for the red band" if s == scen[0] else None)
         ax.set_xticks(x)
         ax.set_xticklabels(["EWMA G", "EWMA t", "trunc G", "trunc t"][: len(mm)], fontsize=8)
         ax.set_title(SCEN_LABEL[s], fontsize=9)
+    for ax in axes:
+        ax.set_ylim(0.0, a * 1.42)              # headroom so the legend clears the budget line
     axes[0].set_ylabel(f"cumulative false-alarm rate, budget {a:.0%}")
-    axes[0].legend(frameon=False, fontsize=8, loc="upper left")
+    axes[0].legend(frameon=False, fontsize=7.5, loc="upper left", ncol=2)
     fig.suptitle("Stage 2E figure 4: first false alarm split into three exclusive "
                  "timing classes (association, not attribution)", y=1.0)
     fig.tight_layout()

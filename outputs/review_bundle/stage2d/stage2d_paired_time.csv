@@ -1,0 +1,25 @@
+trunc_time_diff_days,trunc_time_diff_lo,trunc_time_diff_hi,scenario,arm,far_target,method_a,method_b,trunc_mean_a,trunc_mean_b,n_paired_paths,interval_covers,followup
+-68.4297,-70.86072727124645,-65.99867272875355,sv_jump,transfer,0.05,ewma_student_t,binary_student_t,388.684,457.1137,10000,"test sampling only, thresholds frozen",True
+-76.1232,-78.99617879411237,-73.25022120588763,sv_jump,transfer,0.05,ewma_gaussian,binary_gaussian,383.9604,460.0836,10000,"test sampling only, thresholds frozen",True
+4.7236,2.6672259623262287,6.779974037673772,sv_jump,transfer,0.05,ewma_student_t,ewma_gaussian,388.684,383.9604,10000,"test sampling only, thresholds frozen",True
+-29.8834,-32.38330397235208,-27.38349602764792,sv_jump,diagnostic,0.05,ewma_student_t,binary_student_t,382.9818,412.8652,10000,"test sampling only, thresholds frozen",True
+-24.7902,-27.41127986277101,-22.169120137228987,sv_jump,diagnostic,0.05,ewma_gaussian,binary_gaussian,427.806,452.5962,10000,"test sampling only, thresholds frozen",True
+-44.8242,-46.96890974398255,-42.679490256017445,sv_jump,diagnostic,0.05,ewma_student_t,ewma_gaussian,382.9818,427.806,10000,"test sampling only, thresholds frozen",True
+-83.867,-86.59615415912074,-81.13784584087927,sv_jump,transfer,0.15,ewma_student_t,binary_student_t,299.8461,383.7131,10000,"test sampling only, thresholds frozen",True
+-74.5274,-77.76776875840031,-71.28703124159969,sv_jump,transfer,0.15,ewma_gaussian,binary_gaussian,302.4831,377.0105,10000,"test sampling only, thresholds frozen",True
+-2.637,-5.033093894264162,-0.24090610573583726,sv_jump,transfer,0.15,ewma_student_t,ewma_gaussian,299.8461,302.4831,10000,"test sampling only, thresholds frozen",True
+-25.2883,-27.993280365012087,-22.583319634987912,sv_jump,diagnostic,0.15,ewma_student_t,binary_student_t,293.6856,318.9739,10000,"test sampling only, thresholds frozen",True
+-28.8525,-32.08835919467053,-25.616640805329467,sv_jump,diagnostic,0.15,ewma_gaussian,binary_gaussian,342.6604,371.5129,10000,"test sampling only, thresholds frozen",True
+-48.9748,-51.494682479363036,-46.45491752063697,sv_jump,diagnostic,0.15,ewma_student_t,ewma_gaussian,293.6856,342.6604,10000,"test sampling only, thresholds frozen",True
+-92.3082,-94.8944350320942,-89.7219649679058,sv_jump_big,transfer,0.05,ewma_student_t,binary_student_t,369.3779,461.6861,10000,"test sampling only, thresholds frozen",True
+-105.6336,-108.6116093432969,-102.6555906567031,sv_jump_big,transfer,0.05,ewma_gaussian,binary_gaussian,354.6499,460.2835,10000,"test sampling only, thresholds frozen",True
+14.728,12.254657365098033,17.201342634901966,sv_jump_big,transfer,0.05,ewma_student_t,ewma_gaussian,369.3779,354.6499,10000,"test sampling only, thresholds frozen",True
+-35.7735,-38.417923079991425,-33.12907692000857,sv_jump_big,diagnostic,0.05,ewma_student_t,binary_student_t,362.9348,398.7083,10000,"test sampling only, thresholds frozen",True
+-4.8027,-7.218825075649946,-2.386574924350054,sv_jump_big,diagnostic,0.05,ewma_gaussian,binary_gaussian,447.7911,452.5938,10000,"test sampling only, thresholds frozen",True
+-84.8563,-87.49177187721268,-82.22082812278732,sv_jump_big,diagnostic,0.05,ewma_student_t,ewma_gaussian,362.9348,447.7911,10000,"test sampling only, thresholds frozen",True
+-104.2177,-107.00386782079038,-101.43153217920961,sv_jump_big,transfer,0.15,ewma_student_t,binary_student_t,282.5459,386.7636,10000,"test sampling only, thresholds frozen",True
+-102.4112,-105.65169266895276,-99.17070733104723,sv_jump_big,transfer,0.15,ewma_gaussian,binary_gaussian,279.1951,381.6063,10000,"test sampling only, thresholds frozen",True
+3.3508,0.7055626917581019,5.996037308241898,sv_jump_big,transfer,0.15,ewma_student_t,ewma_gaussian,282.5459,279.1951,10000,"test sampling only, thresholds frozen",True
+-23.8193,-26.5752661844779,-21.063333815522096,sv_jump_big,diagnostic,0.15,ewma_student_t,binary_student_t,271.8628,295.6821,10000,"test sampling only, thresholds frozen",True
+-12.8169,-15.943458032457098,-9.690341967542903,sv_jump_big,diagnostic,0.15,ewma_gaussian,binary_gaussian,360.1457,372.9626,10000,"test sampling only, thresholds frozen",True
+-88.2829,-91.18517719603719,-85.38062280396281,sv_jump_big,diagnostic,0.15,ewma_student_t,ewma_gaussian,271.8628,360.1457,10000,"test sampling only, thresholds frozen",True
