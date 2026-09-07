@@ -163,3 +163,18 @@ def test_delta_alpha_and_test_intervals_are_three_different_things():
 
     lo, hi = wilson_interval(500, 10000, CFG.wilson_z)
     assert lo < 0.05 < hi
+
+
+def test_excludes_zero_rejects_an_interval_that_touches_zero():
+    """[-0.02, 0.00] touches zero and must not count as excluding it.
+
+    The obvious `(lo > 0) == (hi > 0)` gets this case wrong.
+    """
+    from strategy_survivorship.evaluate import excludes_zero
+
+    assert excludes_zero(0.01, 0.02)
+    assert excludes_zero(-0.02, -0.01)
+    assert not excludes_zero(-0.01, 0.02)
+    assert not excludes_zero(0.0, 0.02)      # lower endpoint exactly zero
+    assert not excludes_zero(-0.02, 0.0)     # upper endpoint exactly zero -- the bug
+    assert not excludes_zero(0.0, 0.0)

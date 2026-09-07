@@ -58,6 +58,11 @@ STREAM_ORDER: tuple[str, ...] = (
     "stage2c_test",
     "stage2c_stress",
     "stage2c_bootstrap",
+    # Stage 2D: persistent SV and isolated jumps together
+    "stage2d_calibration",
+    "stage2d_test",
+    "stage2d_bootstrap",
+    "stage2d_shock",
 )
 
 
@@ -192,6 +197,23 @@ class Stage1Config:
     stage2c_delta: float = 0.05
     stage2c_report_days: tuple[int, ...] = (63, 126, 252, 504)
     stage2c_bootstrap_reps: int = 2000
+
+    # --- Stage 2D: SV and jumps combined ------------------------------------
+    # rho = 0.98 and lambda = 2/yr are held fixed; only (A, kappa) vary.
+    # (key, SV amplitude A, jump kappa, in the original guarantee coverage?)
+    stage2d_scenarios: tuple = (
+        ("gaussian_ctrl", 0.0, 0.0, True),
+        ("sv_ctrl", 1.0, 0.0, True),
+        ("jump_ctrl", 0.0, 5.0, True),
+        ("sv_jump", 1.0, 5.0, False),        # main experiment
+        ("sv_jump_big", 1.0, 8.0, False),    # stress
+    )
+    stage2d_calibration_paths: int = 10000
+    stage2d_test_paths: int = 10000
+    stage2d_bootstrap_reps: int = 2000
+    stage2d_shock_day: int = 126
+    stage2d_shock_sigmas: float = 8.0
+    stage2d_shock_path_index: int = 0
 
     # --- reproducibility ----------------------------------------------------
     root_seed: int = 20260905

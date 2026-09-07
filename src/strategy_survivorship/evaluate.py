@@ -27,6 +27,16 @@ NO_ALARM = -1  # sentinel in the "first alarm day" column
 # --------------------------------------------------------------------------- #
 
 
+def excludes_zero(lo: float, hi: float) -> bool:
+    """True only when the whole interval lies strictly on one side of zero.
+
+    ``(lo > 0) == (hi > 0)`` looks equivalent but reports True for an interval
+    whose UPPER endpoint is exactly 0 (e.g. [-0.02, 0.00]), which touches zero
+    and must not count as excluding it.
+    """
+    return bool(lo > 0.0 or hi < 0.0)
+
+
 def wilson_interval(successes: int, n: int, z: float) -> tuple[float, float]:
     """Wilson score interval for a binomial proportion.
 

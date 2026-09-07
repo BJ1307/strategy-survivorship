@@ -240,14 +240,17 @@ def test_no_sample_moment_of_the_path_is_used_in_the_construction():
         assert not np.allclose(pv, 1.0, atol=1e-6), scenario
 
 
-def test_true_sigma_is_exposed_only_where_it_exists():
+def test_true_sigma_is_exposed_only_where_a_latent_volatility_state_exists():
+    """stoch_vol and sv_jump carry a persistent latent variance an adaptive rule
+    could in principle track; the others do not, so no oracle input is defined."""
+    WITH_LATENT_VOL = {"stoch_vol", "sv_jump"}
     for scenario in N.SCENARIOS:
         d = _draw(scenario, n_paths=20, n_days=60)
         s = N.true_daily_sigma(d, CFG)
-        if scenario == "stoch_vol":
-            assert s is not None and s.shape == d.eps.shape and (s > 0).all()
+        if scenario in WITH_LATENT_VOL:
+            assert s is not None and s.shape == d.eps.shape and (s > 0).all(), scenario
         else:
-            assert s is None
+            assert s is None, scenario
 
 
 # --------------------------------------------------------------------------- #

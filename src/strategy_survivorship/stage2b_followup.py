@@ -21,6 +21,8 @@ import math
 
 import numpy as np
 import pandas as pd
+
+from .evaluate import excludes_zero
 from scipy.special import expit
 
 from .stage2b_uncertainty import _threshold
@@ -57,8 +59,8 @@ def frozen_vs_recalibrated_pair(minima_a: dict, minima_b: dict, alpha: float,
     return {"far_target": alpha, "n_reps": n_reps,
             "frozen_diff": frozen["diff"], "frozen_lo": frozen["lo"], "frozen_hi": frozen["hi"],
             "recal_diff": boot["diff"], "recal_lo": boot["lo"], "recal_hi": boot["hi"],
-            "frozen_excludes_zero": bool((frozen["lo"] > 0) == (frozen["hi"] > 0)),
-            "recal_excludes_zero": bool((boot["lo"] > 0) == (boot["hi"] > 0))}
+            "frozen_excludes_zero": excludes_zero(frozen["lo"], frozen["hi"]),
+            "recal_excludes_zero": excludes_zero(boot["lo"], boot["hi"])}
 
 
 def paired_brier_difference(q_a_inv, q_a_val, q_b_inv, q_b_val, day: int,
@@ -85,8 +87,8 @@ def paired_brier_difference(q_a_inv, q_a_val, q_b_inv, q_b_val, day: int,
     return {"day": day, "n_reps": n_reps, "brier_a": brier(ai, av), "brier_b": brier(bi, bv),
             "diff": point, "lo": float(np.quantile(draws, 0.025)),
             "hi": float(np.quantile(draws, 0.975)),
-            "excludes_zero": bool((np.quantile(draws, 0.025) > 0)
-                                  == (np.quantile(draws, 0.975) > 0))}
+            "excludes_zero": excludes_zero(float(np.quantile(draws, 0.025)),
+                                           float(np.quantile(draws, 0.975)))}
 
 
 def exploratory_rho0_interval(minima_a: dict, minima_b: dict, alpha: float,

@@ -495,7 +495,55 @@ P{Beta(k, N+1-k) > alpha} = P{Binomial(N, alpha) <= k-1}
 
 ---
 
-## 15. 参考资料
+## 15. Stage 2D：SV 与跳跃的组合 DGP
+
+```
+r_t   = mu_S + sigma_0 eps_t
+a_t   = rho a_{t-1} + sqrt(1-rho^2) xi_t,   a_1 ~ N(0,1)
+v_t   = exp(A a_t - A^2/2)
+K_t   ~ Poisson(lambda/D)
+eps_t = ( sqrt(v_t) z_t + kappa sqrt(K_t) w_t ) / sqrt(1 + kappa^2 lambda/D)
+```
+
+`xi, z, w, K` 的基础随机来源相互独立。**跳跃是独立加性成分**：它不乘以 `sqrt(v_t)`，
+因此落在平静日上的跳跃相对更大。
+
+**零均值**：两项都是零均值随机变量与独立零均值因子的乘积。
+
+**单位无条件方差**：`a_t` 边际为 `N(0,1)`，故 `A a_t ~ N(0, A^2)`，
+`E[v_t] = exp(A^2/2 - A^2/2) = 1`（对任意 `A`）。两个分子项独立，
+
+```
+Var(sqrt(v) z) = E[v] E[z^2] = 1
+Var(kappa sqrt(K) w) = kappa^2 E[K] E[w^2] = kappa^2 lambda/D
+```
+
+分子方差 `1 + kappa^2 lambda/D`，故 `Var(eps) = 1` 对**任意** `(A, kappa)` 成立。
+
+**退化关系**：`kappa = 0` 给出 `eps = sqrt(v) z`，即 Stage 2A 的 SV 模型；
+`A = 0` 给出 `v = 1`、`eps = (z + kappa sqrt(K) w)/sqrt(1+kappa^2 lambda/D)`，
+即 Stage 2A 的跳跃模型；两者都关时 `eps = z`。
+
+**kappa 不是单调的难度参数**。单位方差常数同时压低无跳跃日的扩散尺度：
+
+```
+无跳跃日的 sd = 1 / sqrt(1 + kappa^2 lambda/D)
+```
+
+`lambda = 2`、`D = 252` 时，`kappa = 5` 给 0.9135、`kappa = 8` 给 0.8143。
+也就是说 `kappa` 越大，普通交易日**越安静**，单日信噪比反而更高。
+报告中不预设 `kappa` 的单调效应。
+
+**单次冲击对 EWMA 方差预测的影响**。在第 t 日加入 `c sigma_0` 的冲击，
+次日预测方差多出约 `(1-lambda_ewma) c^2 sigma_0^2`（忽略中点项），
+其后按 `lambda_ewma` 每日衰减，半衰期 `ln(0.5)/ln(lambda_ewma)`。
+`lambda_ewma = 0.94` 时半衰期约 11.2 个交易日。
+Student-t 似然能压住**当日**的证据增量，但**其后各日**它与 Gaussian 共用同一个被抬高的
+方差预测，因此同样受影响。
+
+---
+
+## 16. 参考资料
 
 - Lo, A. W. (2002). *The Statistics of Sharpe Ratios.* Financial Analysts Journal 58(4), 36–52.
   <https://alo.mit.edu/wp-content/uploads/2017/06/The-Statistics-of-Sharpe-Ratios.pdf>

@@ -24,7 +24,7 @@ from dataclasses import dataclass
 import numpy as np
 from scipy.stats import t as student_t
 
-SCENARIOS = ("gaussian", "student_t", "stoch_vol", "jump")
+SCENARIOS = ("gaussian", "student_t", "stoch_vol", "jump", "sv_jump")
 
 
 @dataclass(frozen=True)
@@ -151,11 +151,66 @@ def stoch_vol_abs_eps_autocorr(lag: int, cfg) -> float:
     return num / den
 
 
+def sv_jump_noise(rng: np.random.Generator, n_paths: int, n_days: int, cfg) -> NoiseDraw:
+    """Persistent stochastic volatility AND isolated jumps, together.
+
+        a_t = rho a_{t-1} + sqrt(1-rho^2) xi_t,   a_1 ~ N(0,1)
+        v_t = exp(A a_t - A^2/2)
+        K_t ~ Poisson(lambda/D),  z_t, w_t ~ N(0,1)
+        eps_t = ( sqrt(v_t) z_t + kappa sqrt(K_t) w_t ) / sqrt(1 + kappa^2 lambda/D)
+
+    The jump is an INDEPENDENT ADDITIVE component: its size is not scaled by the
+    day's background volatility, so a jump landing on a calm day is relatively
+    much larger.  That is the design choice under test.
+
+    Moments.  a_t is marginally N(0,1) for every t, so A a_t ~ N(0, A^2) and
+    E[v_t] = exp(A^2/2 - A^2/2) = 1 for any A.  The two numerator terms are
+    independent with variances E[v_t] = 1 and kappa^2 E[K_t] = kappa^2 lambda/D,
+    so the constant makes E[eps] = 0 and Var(eps) = 1 for EVERY (A, kappa).
+
+    Note the constant also shrinks the diffusive part on a jump-free day by
+    1/sqrt(1 + kappa^2 lambda/D): at kappa = 8 that is 0.814, so ordinary days
+    are QUIETER than at kappa = 0 and a larger kappa is not automatically a
+    harder detection problem.
+
+    Degeneracies: kappa = 0 reproduces `stoch_vol_noise` bit for bit (same stream
+    order xi, z); A = 0 gives v == 1 and the exact `jump_noise` formula.
+    """
+    rho = cfg.noise_sv_rho
+    amp = cfg.noise_sv_amplitude
+    lam_annual = cfg.noise_jump_lambda_annual
+    kappa = cfg.noise_jump_kappa
+    if not -1.0 < rho < 1.0:
+        raise ValueError("rho must lie strictly inside (-1, 1)")
+    lam_daily = lam_annual / cfg.D
+
+    xi = rng.standard_normal((n_paths, n_days))
+    z = rng.standard_normal((n_paths, n_days))
+    k = rng.poisson(lam_daily, size=(n_paths, n_days))
+    w = rng.standard_normal((n_paths, n_days))
+
+    a = np.empty((n_paths, n_days))
+    a[:, 0] = xi[:, 0]                      # stationary start
+    sd = math.sqrt(1.0 - rho * rho)
+    for t in range(1, n_days):
+        a[:, t] = rho * a[:, t - 1] + sd * xi[:, t]
+    v = np.exp(amp * a - 0.5 * amp * amp)   # E[v] = 1 for any amp
+
+    diffusive = np.sqrt(v) * z
+    jump = kappa * np.sqrt(k) * w
+    scale = math.sqrt(1.0 + kappa * kappa * lam_daily)
+    return NoiseDraw((diffusive + jump) / scale, "sv_jump",
+                     {"variance_multiplier": v, "log_var": amp * a, "jump_counts": k,
+                      "lambda_daily": lam_daily, "kappa": kappa, "amplitude": amp,
+                      "normaliser": scale, "diffusive": diffusive, "jump": jump})
+
+
 GENERATORS = {
     "gaussian": gaussian_noise,
     "student_t": student_t_noise,
     "stoch_vol": stoch_vol_noise,
     "jump": jump_noise,
+    "sv_jump": sv_jump_noise,
 }
 
 
@@ -180,6 +235,6 @@ def true_daily_sigma(draw: NoiseDraw, cfg) -> np.ndarray | None:
     variance" oracle is not the right idealisation for it; that scenario is out
     of scope for the oracle this round rather than constant-scale.
     """
-    if draw.scenario != "stoch_vol":
+    if draw.scenario not in ("stoch_vol", "sv_jump"):
         return None
     return cfg.sigma_daily * np.sqrt(draw.latent["variance_multiplier"])

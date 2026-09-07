@@ -22,6 +22,8 @@ import math
 import numpy as np
 import pandas as pd
 
+from .evaluate import excludes_zero
+
 
 def _threshold(cal_min: np.ndarray, alpha: float) -> float:
     """Same rule as evaluate.calibrate_threshold, on per-path minima."""
@@ -80,7 +82,7 @@ def bootstrap_pair(
         "det_b": det_b0, "det_b_lo": db_lo, "det_b_hi": db_hi,
         "far_diff": far_a0 - far_b0, "far_diff_lo": df_lo, "far_diff_hi": df_hi,
         "det_diff": det_a0 - det_b0, "det_diff_lo": dd_lo, "det_diff_hi": dd_hi,
-        "det_diff_excludes_zero": bool((dd_lo > 0) == (dd_hi > 0)),
+        "det_diff_excludes_zero": excludes_zero(dd_lo, dd_hi),
         "includes_calibration_uncertainty": True,
     }
 

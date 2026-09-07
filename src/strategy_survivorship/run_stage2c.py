@@ -21,7 +21,7 @@ from scipy.special import expit
 
 from . import plots_stage2c as p2c
 from .config import DEFAULT, Stage1Config
-from .evaluate import wilson_interval
+from .evaluate import excludes_zero, wilson_interval
 from .report_stage2c import write_stage2c_report
 from .run_stage1 import environment_info
 from .run_stage11 import Status
@@ -149,8 +149,8 @@ def unified_bootstrap(cfg, cal_minima: dict, test_minima: dict, rank: dict,
             "detect_diff_hi": float(np.quantile(d_det, 0.975)),
             "far_diff_lo": float(np.quantile(d_far, 0.025)),
             "far_diff_hi": float(np.quantile(d_far, 0.975)),
-            "detect_excludes_zero": bool((np.quantile(d_det, 0.025) > 0)
-                                         == (np.quantile(d_det, 0.975) > 0)),
+            "detect_excludes_zero": excludes_zero(float(np.quantile(d_det, 0.025)),
+                                                 float(np.quantile(d_det, 0.975))),
             "binding_scenario_shares": json.dumps(
                 {g: round(c / reps, 4) for g, c in sorted(binding.items(), key=lambda kv: -kv[1])}),
         })
@@ -167,7 +167,10 @@ def bootstrap_pairs(cfg) -> list[tuple]:
                ("sv_rho098", "ewma_gaussian", "binary_student_t", alpha),
                ("sv_rho098", "ewma_student_t", "binary_gaussian", alpha),
                ("gaussian", "ewma_gaussian", "binary_gaussian", alpha),
-               ("jump_k5", "ewma_gaussian", "binary_gaussian", alpha)]
+               ("jump_k5", "ewma_gaussian", "binary_gaussian", alpha),
+               # exploratory addition (Stage 2D follow-up): the two EWMA methods
+               # directly against each other, not among the original pre-specified set
+               ("sv_rho098", "ewma_student_t", "ewma_gaussian", alpha)]
     return ps
 
 
@@ -258,6 +261,23 @@ def main(argv: list[str] | None = None) -> int:
                                "detect_diff_lo": float(d.mean() - z * se),
                                "detect_diff_hi": float(d.mean() + z * se),
                                "interval_covers": "test sampling only, frozen unified threshold"})
+    # exploratory: the two EWMA methods directly, frozen unified thresholds
+    for sc in ("sv_rho098",):
+        for alpha in cfg.far_targets:
+            ta = cal["unified"][("ewma_student_t", alpha)]["threshold"]
+            tb = cal["unified"][("ewma_gaussian", alpha)]["threshold"]
+            a = test_minima[sc]["ewma_student_t"]["test_invalid"] < ta
+            b = test_minima[sc]["ewma_gaussian"]["test_invalid"] < tb
+            d = a.astype(float) - b.astype(float)
+            se = d.std(ddof=1) / math.sqrt(d.size)
+            paired.append({"scenario": sc, "far_target": alpha, "method": "ewma_student_t",
+                           "reference": "ewma_gaussian", "n_paired_paths": int(d.size),
+                           "detect_method": float(a.mean()), "detect_reference": float(b.mean()),
+                           "detect_diff": float(d.mean()),
+                           "detect_diff_lo": float(d.mean() - z * se),
+                           "detect_diff_hi": float(d.mean() + z * se),
+                           "interval_covers": "test sampling only, frozen unified threshold",
+                           "exploratory": True})
     pd.DataFrame(paired).to_csv(out_dir / "stage2c_paired.csv", index=False)
     status("paired differences done", rows=len(paired))
 

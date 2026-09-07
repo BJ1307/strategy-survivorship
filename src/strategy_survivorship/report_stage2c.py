@@ -263,5 +263,110 @@ def write_stage2c_report(cfg, summary, metrics: pd.DataFrame, cal, boot, path: P
     A("")
     A("> **504 天是本研究当前使用的基准期限**，不是导师明确指定的期限。")
     A("")
+    # ---------------- appendix ----------------
+    A("")
+    A("## 附录 A：Stage 2D 追加的限定性分析")
+    A("")
+    A("以下为 Stage 2D 追加，**不重新选择任何原有模型或门槛**；正文的 Stage 2C 结果保持不变。")
+    A("")
+    A("### A.1 17.29 个百分点差距的分解")
+    A("")
+    gB = (g("ewma_student_t", "sv_rho098", "B_buffered", "detect_d504")
+          - g("binary_student_t", "sv_rho098", "B_buffered", "detect_d504"))
+    lBC = (g("binary_student_t", "sv_rho098", "C_unified", "detect_d504")
+           - g("binary_student_t", "sv_rho098", "B_buffered", "detect_d504"))
+    gC = (g("ewma_student_t", "sv_rho098", "C_unified", "detect_d504")
+          - g("binary_student_t", "sv_rho098", "C_unified", "detect_d504"))
+    L.extend(_t([{"m": m, "arm": arm} for m in ("ewma_student_t", "binary_student_t")
+                 for arm in ("B_buffered", "C_unified")],
+                ["方法", "臂", "两年检出率", "两年实测 FAR"],
+                lambda r: [LABEL_2C[r["m"]], ARM[r["arm"]],
+                           f"{g(r['m'], 'sv_rho098', r['arm'], 'detect_d504'):.4f}",
+                           f"{g(r['m'], 'sv_rho098', r['arm'], 'far_d504'):.4f}"]))
+    A("")
+    A(f"**分解（SV ρ=0.98，α={a_main:g}）**：C 条件下的 {100*gC:.2f} 个百分点差距 = "
+      f"B 条件下已经存在的 **{100*gB:.2f} 个百分点** + 固定 Student-t 在 B→C 中损失的 "
+      f"**{abs(100*lBC):.2f} 个百分点**。两项相加精确等于 {100*(gB - lBC):.2f}。")
+    A("")
+    A("**注意实测 FAR 不同**：固定 Student-t 在 C 条件下的实测 FAR 只有 "
+      f"{g('binary_student_t', 'sv_rho098', 'C_unified', 'far_d504'):.4f}，"
+      f"而 EWMA Student-t 是 {g('ewma_student_t', 'sv_rho098', 'C_unified', 'far_d504'):.4f}。"
+      "**因此 B→C 那 8.80 个百分点不是能力差异，而是固定 Student-t 被高斯情境约束后变得过度保守的结果。**")
+    A("")
+    A("### A.2 撤回「振幅更大所以更好预测」")
+    A("")
+    import math as _m
+    A2 = cfg.noise_sv_amplitude ** 2
+    A("上一轮把压力情境 SV 振幅 1.5 下 EWMA 检出率更高解释为「振幅更大所以更好预测」。**该表述撤回。**")
+    A("")
+    A("正确的算式是理想信息诊断：`v_t = exp(A a_t - A^2/2)`、`a_t ~ N(0,1)`，故")
+    A("")
+    A("```")
+    A("E[1/v_t] = E[exp(A^2/2 - A a_t)] = exp(A^2/2) * exp(A^2/2) = exp(A^2)")
+    A("```")
+    A("")
+    A(f"A=1 时为 {_m.exp(1):.4f}，A=1.5 时为 {_m.exp(2.25):.4f}。"
+      "它衡量的是**在已知真实方差时**，单位日历天等价于多少个标准信息日；"
+      "**它是 oracle 的理想信息诊断，不是 EWMA 检出率的定律**——"
+      "EWMA 只有预测值 `v̂`，其检出率还取决于预测误差，本轮没有做能把两者联系起来的实验。")
+    A("")
+    A("同样地，「改善完全来自持续性」应表述为：**在 Stage 2B 的 ρ=0 对照中，"
+      "EWMA 相对固定尺度方法的检出率优势消失并转为小幅负值**。"
+      "这是一个对照实验的结果，不是对所有可能波动率预测方法的一般性断言。")
+    A("")
+    A("### A.3 区间端点判定的修正")
+    A("")
+    A("原判据 `(lo > 0) == (hi > 0)` 在**上端点恰为 0** 时（如 `[-0.02, 0.00]`）会错误地判为"
+      "「排除零」。已改为 `lo > 0 or hi < 0` 并集中到 `evaluate.excludes_zero`，加测试锁定。"
+      "**逐一检查了已发布的全部差值区间：没有任何一行的端点恰为 0，因此已有结论不受影响。**")
+    A("")
+    A("### A.4 追加：两个 EWMA 方法的直接配对比较（探索性）")
+    A("")
+    A("> **这是 Stage 2D 追加的探索性比较**，不在 Stage 2C 运行前预先指定的清单内。")
+    A("")
+    ex = [r for r in summary["paired"] if r.get("exploratory")]
+    if ex:
+        L.extend(_t(ex, ["情境", "α", "EWMA t 检出", "EWMA G 检出", "差", "冻结门槛 95%（仅测试抽样）"],
+                    lambda r: [SC[r["scenario"]], f"{r['far_target']:g}",
+                               f"{r['detect_method']:.4f}", f"{r['detect_reference']:.4f}",
+                               f"{r['detect_diff']:+.4f}",
+                               f"[{r['detect_diff_lo']:+.4f}, {r['detect_diff_hi']:+.4f}]"]))
+        A("")
+    bb = [r for r in summary["bootstrap"]
+          if r["method_a"] == "ewma_student_t" and r["method_b"] == "ewma_gaussian"]
+    if bb:
+        A("含原五情境校准重采样的敏感性区间：")
+        A("")
+        L.extend(_t(bb, ["α", "差", "95% 敏感性区间", "排除零"],
+                    lambda r: [f"{r['far_target']:g}", f"{r['detect_diff']:+.4f}",
+                               f"[{r['detect_diff_lo']:+.4f}, {r['detect_diff_hi']:+.4f}]",
+                               "是" if r["detect_excludes_zero"] else "否"]))
+        A("")
+    A("Stage 2B 的检出率比较分不出这两个方法；**在 Stage 2C 的统一门槛下它们可以区分**，"
+      "EWMA Student-t 更好。两个结论并不矛盾：门槛不同、数据不同、评价条件不同。")
+    A("")
+    A(f"### A.5 α = {a_alt:g} 档的压力测试摘要")
+    A("")
+    st5 = M[(M.arm == "C_unified") & (M.far_target == a_alt) & (~M.covered_by_guarantee)]
+    L.extend(_t(st5.to_dict("records"),
+                ["情境", "方法", "两年实测 FAR", "FAR 95%", "是否超预算", "检出 504d"],
+                lambda r: [SC[r["scenario"]], LABEL_2C[r["method"]], f"{r['far_d504']:.4f}",
+                           f"[{r['far_lo']:.4f}, {r['far_hi']:.4f}]",
+                           "**是**" if r["far_d504"] > a_alt else "否",
+                           f"{r['detect_d504']:.4f}"]))
+    A("")
+    A("### A.6 SV 下四个概率模型的 q 分布完整数值")
+    A("")
+    fp2 = [r for r in summary["failure_probability"]
+           if r["scenario"] == "sv_rho098" and r["method"] in
+           ("binary_gaussian", "binary_student_t", "ewma_gaussian", "ewma_student_t")]
+    L.extend(_t(sorted(fp2, key=lambda r: (r["method"], r["true_state"], r["day"])),
+                ["方法", "真实状态", "天数", "均值 q", "中位 q", "10%", "25%", "75%", "90%"],
+                lambda r: [LABEL_2C[r["method"]], "有效" if r["true_state"] == "valid" else "无效",
+                           str(int(r["day"])), f"{r['mean_q']:.4f}", f"{r['median_q']:.4f}",
+                           f"{r['q10']:.4f}", f"{r['q25']:.4f}", f"{r['q75']:.4f}",
+                           f"{r['q90']:.4f}"]))
+    A("")
+
     path.write_text("\n".join(L), encoding="utf-8")
     return path

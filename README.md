@@ -47,7 +47,9 @@ pip install -r requirements.txt && pip install -e .
 .venv/bin/python -m strategy_survivorship.run_stage11     # Stage 1.1 诊断（约 35 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2a     # Stage 2A 现实噪声（约 10 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2b     # Stage 2B EWMA 波动率预测（约 30 秒）
-.venv/bin/python -m strategy_survivorship.run_stage2c     # Stage 2C 统一门槛与误杀控制（约 2 分钟）
+.venv/bin/python -m strategy_survivorship.run_stage2c     # Stage 2C 统一门槛与误杀控制（约 70 秒）
+.venv/bin/python -m strategy_survivorship.run_stage2d     # Stage 2D SV+跳跃组合（约 70 秒）
+.venv/bin/python -m strategy_survivorship.run_stage2d --figures-only  # 仅从 CSV 重绘
 ```
 
 这两条命令重建 `outputs/` 下的**全部**结果：表格、JSON、四张图和研究报告。
@@ -93,6 +95,9 @@ src/strategy_survivorship/
   stage2b_followup.py      Stage 2C 追加的限定性分析（同一批 2B 数据）
   stage2c.py               次序统计量门槛 + 校准误差缓冲 + 跨情境统一
   plots_stage2c.py / report_stage2c.py / run_stage2c.py   Stage 2C 图、报告、流程
+  stage2d.py               SV+跳跃组合 DGP、两个比较条件、单次冲击诊断
+  stage2d_uncertainty.py   冻结门槛配对区间 + 含校准重采样的 bootstrap
+  plots_stage2d.py / report_stage2d.py / run_stage2d.py   Stage 2D 图、报告、流程
   plots_stage11.py / report_stage11.py / run_stage11.py   Stage 1.1 图、报告、流程
   report.py       生成 stage1_report.md
   notes.py        写入报告的“已修正问题”与“限制”
@@ -133,6 +138,11 @@ theory.md         公式、符号、单位、推导、参考链接
 | `outputs/stage2c_paired.csv` / `_bootstrap.csv` | 配对区间 / 含校准重采样的敏感性区间 |
 | `outputs/stage2c_failure_probability.csv` | 全部路径的无效概率分布（63/126/252/504 天）|
 | `outputs/figures/fig2c{1,2,3,4}_*.png` | Stage 2C 四张图 |
+| `outputs/stage2d_report.md` | **Stage 2D 报告**：SV 与跳跃同时存在时的检测 |
+| `outputs/stage2d_metrics.csv` / `_thresholds.csv` | 5 情境 × 2 条件 × 2 预算 × 6 方法指标、诊断门槛 |
+| `outputs/stage2d_paired.csv` / `_bootstrap.csv` / `_brier.csv` | 配对区间 / 敏感性区间 / 配对 Brier |
+| `outputs/stage2d_failure_probability.csv` / `_shock.csv` | 全路径 q 分布 / 单次冲击诊断 |
+| `outputs/figures/fig2d{1,2,3,4}_*.png` | Stage 2D 四张图 |
 | `outputs/stage1_diagnostic_traces.csv` | 冲击诊断逐日收益、增量、log odds、概率 |
 | `outputs/run_metadata.json` | 运行配置、随机流指纹、环境版本、分阶段耗时 |
 | `outputs/figures/fig1_example_paths.png` | 固定示例路径的累计收益与两个贝叶斯概率 |
