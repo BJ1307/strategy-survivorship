@@ -491,4 +491,4 @@ Brier 之差为负表示前者的概率预测更准。`stage2e_reliability.csv` 
 uv run python -m strategy_survivorship.run_stage2e
 ```
 
-运行耗时 65.4 秒。图可以单独重画：`uv run python -m strategy_survivorship.run_stage2e --figures-only`。
+运行耗时 65.8 秒。图可以单独重画：`uv run python -m strategy_survivorship.run_stage2e --figures-only`。

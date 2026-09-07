@@ -120,13 +120,17 @@ def shock_2x2(cfg) -> pd.DataFrame:
         vt, _ = ewma_truncated_variance_forecast(r2, cfg)
         cols = {"day": np.arange(1, cfg.horizon_days + 1), "variant": name, "return": r,
                 "var_plain": vp[0], "var_trunc": vt[0]}
+        # Column names say which way round the log-odds run.  The running
+        # statistic every detector uses is L = log P(valid)/P(invalid); the
+        # report and the figures show U = -L = log P(invalid)/P(valid), so that
+        # "up" means "more evidence the strategy has failed".
         for tag, v in (("plain", vp), ("trunc", vt)):
             gi = ewma_gaussian_increments(r2, cfg, v)[0]
             ti = ewma_student_t_increments(r2, cfg, v)[0]
-            cols[f"inc_{tag}_gaussian"] = gi
-            cols[f"inc_{tag}_student_t"] = ti
-            cols[f"cum_{tag}_gaussian"] = cfg.prior_log_odds + np.cumsum(gi)
-            cols[f"cum_{tag}_student_t"] = cfg.prior_log_odds + np.cumsum(ti)
+            cols[f"inc_L_{tag}_gaussian"] = gi
+            cols[f"inc_L_{tag}_student_t"] = ti
+            cols[f"U_{tag}_gaussian"] = -(cfg.prior_log_odds + np.cumsum(gi))
+            cols[f"U_{tag}_student_t"] = -(cfg.prior_log_odds + np.cumsum(ti))
         frames.append(pd.DataFrame(cols))
     return pd.concat(frames, ignore_index=True)
 

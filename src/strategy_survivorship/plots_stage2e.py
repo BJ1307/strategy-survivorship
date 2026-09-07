@@ -41,52 +41,74 @@ def draw_all(cfg, out_dir: Path) -> list[str]:
 
 
 def figure_mechanism(cfg, sh: pd.DataFrame, out: Path) -> Path:
-    """What the cap actually does on one fixed path with one injected shock."""
+    """What the cap does on one fixed path with one injected shock.
+
+    Everything is drawn as U = log P(invalid)/P(valid), so UP means MORE
+    evidence that the strategy has failed.  The running statistic inside the
+    detectors is L = -U; only the display sign differs.  Each panel states the
+    shock direction it uses.
+    """
     day0 = cfg.stage2d_shock_day
     lo, hi = day0 - 20, day0 + 60
-    fig, axes = plt.subplots(1, 3, figsize=(14.4, 4.3))
+    fig, axes = plt.subplots(1, 3, figsize=(14.6, 4.5))
     ann = np.sqrt(cfg.trading_days_per_year)
+    amp = cfg.stage2d_shock_sigmas
 
     b = sh[sh.variant == "base"]
     p = sh[sh.variant == "plus"]
-    w = (p.day >= lo) & (p.day <= hi)
+    n = sh[sh.variant == "minus"]
     wb = (b.day >= lo) & (b.day <= hi)
+    wp = (p.day >= lo) & (p.day <= hi)
+    wn = (n.day >= lo) & (n.day <= hi)
 
     ax = axes[0]
-    ax.plot(b.day[wb], np.sqrt(b.var_plain[wb]) * ann, color="#17becf", label="plain EWMA")
-    ax.plot(b.day[wb], np.sqrt(b.var_trunc[wb]) * ann, color="#1f77b4", ls="--",
-            label="truncated EWMA")
-    ax.plot(p.day[w], np.sqrt(p.var_plain[w]) * ann, color="#17becf", alpha=0.45)
-    ax.plot(p.day[w], np.sqrt(p.var_trunc[w]) * ann, color="#1f77b4", ls="--", alpha=0.45)
+    for frame, w, sty, lab in ((b, wb, dict(lw=1.4), "no shock"),
+                               (p, wp, dict(lw=1.0, alpha=0.55), f"+{amp:g}$\\sigma$"),
+                               (n, wn, dict(lw=1.0, alpha=0.55, ls=":"), f"-{amp:g}$\\sigma$")):
+        ax.plot(frame.day[w], np.sqrt(frame.var_plain[w]) * ann, color="#17becf",
+                label=f"plain, {lab}", **sty)
+        ax.plot(frame.day[w], np.sqrt(frame.var_trunc[w]) * ann, color="#1f77b4",
+                dashes=(4, 2), **sty)
     ax.axvline(day0, color="0.35", lw=0.9, ls=":")
-    ax.set_title(f"forecast vol, faint = +{cfg.stage2d_shock_sigmas:g}$\\sigma$ shock")
+    ax.set_title(f"A. forecast vol, all three shock directions\n"
+                 f"(cyan = plain EWMA, blue dashed = truncated)", fontsize=9)
     ax.set_ylabel("annualised forecast vol")
-    ax.legend(frameon=False, fontsize=8)
+    ax.legend(frameon=False, fontsize=7)
 
     ax = axes[1]
-    for tag, ls in (("plain", "-"), ("trunc", "--")):
-        d = p[f"cum_{tag}_gaussian"][w].to_numpy() - b[f"cum_{tag}_gaussian"][wb].to_numpy()
-        ax.plot(p.day[w], d, ls=ls, color=C["ewma_gaussian"], label=f"Gaussian, {tag}")
-        d = p[f"cum_{tag}_student_t"][w].to_numpy() - b[f"cum_{tag}_student_t"][wb].to_numpy()
-        ax.plot(p.day[w], d, ls=ls, color=C["ewma_student_t"], label=f"Student-t, {tag}")
+    for frame, w, sign, ls in ((p, wp, "+", "-"), (n, wn, "-", ":")):
+        for tag, lw in (("plain", 1.5), ("trunc", 1.1)):
+            for mth, col in (("gaussian", C["ewma_gaussian"]),
+                             ("student_t", C["ewma_student_t"])):
+                d = (frame[f"U_{tag}_{mth}"][w].to_numpy()
+                     - b[f"U_{tag}_{mth}"][wb].to_numpy())
+                ax.plot(frame.day[w], d, ls=ls, lw=lw, color=col,
+                        alpha=1.0 if tag == "plain" else 0.55,
+                        label=f"{mth}, {tag}, {sign}{amp:g}$\\sigma$"
+                        if mth == "gaussian" or tag == "plain" else None)
     ax.axhline(0.0, color="0.6", lw=0.8)
     ax.axvline(day0, color="0.35", lw=0.9, ls=":")
-    ax.set_title("shock effect on the running log-odds")
-    ax.set_ylabel("log-odds(shocked) - log-odds(base)")
-    ax.legend(frameon=False, fontsize=8)
+    ax.set_title(f"B. shock effect on U, solid = +{amp:g}$\\sigma$, dotted = -{amp:g}$\\sigma$\n"
+                 "(a positive return pushes U DOWN)", fontsize=9)
+    ax.set_ylabel("$\\Delta U$ = U(shocked) - U(base)")
+    ax.legend(frameon=False, fontsize=6.5, ncol=2)
 
     ax = axes[2]
     for tag, ls in (("plain", "-"), ("trunc", "--")):
         for mth, col in (("gaussian", C["ewma_gaussian"]), ("student_t", C["ewma_student_t"])):
-            ax.plot(b.day[wb], b[f"cum_{tag}_{mth}"][wb], ls=ls, color=col, lw=1.1)
+            ax.plot(b.day[wb], b[f"U_{tag}_{mth}"][wb], ls=ls, color=col, lw=1.1,
+                    label=f"{mth}, {tag}")
     ax.axvline(day0, color="0.35", lw=0.9, ls=":")
-    ax.set_title("unshocked log-odds (solid plain, dashed truncated)")
-    ax.set_ylabel("log-odds of failure")
-    for a in axes:
-        a.set_xlabel("day")
-    fig.suptitle("Stage 2E figure 1: what the variance cap does, one SV+jump path", y=1.0)
+    ax.set_title("C. NO shock: U on the base path\n(solid plain, dashed truncated)", fontsize=9)
+    ax.set_ylabel("$U=\\log\\,P(\\mathrm{invalid})/P(\\mathrm{valid})$")
+    ax.legend(frameon=False, fontsize=7)
+    for a_ in axes:
+        a_.set_xlabel("day")
+    fig.suptitle("Stage 2E figure 1: what the variance cap does, one SV+jump path. "
+                 "All log-odds are U = log P(invalid)/P(valid); up = more evidence of failure.",
+                 y=1.02, fontsize=10)
     fig.tight_layout()
-    fig.savefig(out, dpi=160)
+    fig.savefig(out, dpi=160, bbox_inches="tight")
     plt.close(fig)
     return out
 
@@ -140,7 +162,8 @@ def figure_diffs(cfg, bo: pd.DataFrame, out: Path) -> Path:
             r = sub[(sub.contrast == "pair") & (sub.method_a == pair[0])
                     & (sub.method_b == pair[1])]
             series.append((lab, r))
-        series.append(("interaction:\n(t-side) - (G-side)", sub[sub.contrast == "interaction"]))
+        series.append(("EXPLORATORY interaction:\n(t-side gain) - (G-side gain)",
+                       sub[sub.contrast == "interaction"]))
         for j, (lab, r) in enumerate(series):
             y = np.array([float(r[r.scenario == s].detect_diff.iloc[0]) for s in scen])
             lo = np.array([float(r[r.scenario == s].detect_diff_lo.iloc[0]) for s in scen])
@@ -154,10 +177,12 @@ def figure_diffs(cfg, bo: pd.DataFrame, out: Path) -> Path:
         ax.set_title(f"FAR budget {a:.0%}")
     np.atleast_1d(axes)[0].set_ylabel("difference in detection by day 504")
     np.atleast_1d(axes)[0].legend(frameon=False, fontsize=7.5, loc="upper left")
-    fig.suptitle("Stage 2E figure 3: pre-specified differences and the 2x2 interaction, "
-                 "95% bootstrap intervals that also resample the calibration sample", y=1.0)
+    fig.suptitle("Stage 2E figure 3: THREE PRE-SPECIFIED differences (filled) and the "
+                 "POST-HOC interaction (open, purple).\n95% per-comparison bootstrap "
+                 "intervals that also resample the calibration sample; no multiplicity "
+                 "adjustment.", y=1.02, fontsize=10)
     fig.tight_layout()
-    fig.savefig(out, dpi=160)
+    fig.savefig(out, dpi=160, bbox_inches="tight")
     plt.close(fig)
     return out
 

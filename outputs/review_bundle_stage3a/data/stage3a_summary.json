@@ -1,0 +1,1327 @@
+{
+  "stage": "3A",
+  "config": {
+    "trading_days_per_year": 252,
+    "horizon_days": 504,
+    "sigma_annual": 0.1,
+    "sharpe_valid": 1.0,
+    "sharpe_invalid": 0.0,
+    "prior_valid": 0.5,
+    "student_t_df": 5.0,
+    "rolling_window": 252,
+    "rolling_ddof": 1,
+    "far_targets": [
+      0.05,
+      0.15
+    ],
+    "n_calibration": 5000,
+    "n_test_valid": 5000,
+    "n_test_invalid": 5000,
+    "eval_horizons": [
+      126,
+      252,
+      504
+    ],
+    "n_calibration_replications": 0,
+    "wilson_z": 1.959963984540054,
+    "shock_day": 252,
+    "shock_in_daily_sigma": 8.0,
+    "diagnostic_path_index": 0,
+    "prob_time_paths": 5000,
+    "prob_time_report_days": [
+      126,
+      252,
+      504
+    ],
+    "prob_time_long_days": [
+      1260,
+      2520
+    ],
+    "prob_thresholds": [
+      0.8,
+      0.9,
+      0.95
+    ],
+    "prob_coverage_target": 0.8,
+    "brier_days": [
+      252,
+      504
+    ],
+    "sensitivity_sharpe": [
+      1.0,
+      0.6
+    ],
+    "switch_fixed_T": [
+      0,
+      252,
+      756,
+      1260
+    ],
+    "switch_fixed_paths": 2000,
+    "switch_random_paths": 5000,
+    "switch_random_T_max": 1260,
+    "switch_post_window": 504,
+    "switch_post_horizons": [
+      126,
+      252,
+      504
+    ],
+    "switch_T_bin_edges": [
+      0,
+      252,
+      504,
+      756,
+      1008,
+      1261
+    ],
+    "switch_matched_pre_fa": 0.15,
+    "switch_matched_cal_paths": 4000,
+    "switch_matched_survival_floor": 0.5,
+    "switch_contfa_test_paths": 5000,
+    "switch_fixed_continuation_fa": 0.02,
+    "noise_scenarios": [
+      "gaussian",
+      "student_t",
+      "stoch_vol",
+      "jump"
+    ],
+    "noise_student_t_df": 5.0,
+    "noise_sv_rho": 0.98,
+    "noise_sv_amplitude": 1.0,
+    "noise_jump_lambda_annual": 2.0,
+    "noise_jump_kappa": 5.0,
+    "n_noise_calibration": 5000,
+    "n_noise_test_valid": 5000,
+    "n_noise_test_invalid": 5000,
+    "ewma_lambda": 0.94,
+    "ewma_student_t_df": 5.0,
+    "ewma_variance_floor_factor": 1e-08,
+    "ewma_truncation_c": 4.0,
+    "n_stage2b_calibration": 5000,
+    "n_stage2b_test_valid": 5000,
+    "n_stage2b_test_invalid": 5000,
+    "sv_control_rho": 0.0,
+    "bootstrap_reps": 2000,
+    "n_info_days": [
+      126,
+      252,
+      504
+    ],
+    "stage2c_coverage": [
+      [
+        "gaussian",
+        "gaussian",
+        []
+      ],
+      [
+        "student_t",
+        "student_t",
+        []
+      ],
+      [
+        "sv_rho098",
+        "stoch_vol",
+        []
+      ],
+      [
+        "jump_k5",
+        "jump",
+        []
+      ],
+      [
+        "sv_rho0",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_rho",
+            0.0
+          ]
+        ]
+      ]
+    ],
+    "stage2c_stress": [
+      [
+        "sv_rho090",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_rho",
+            0.9
+          ]
+        ]
+      ],
+      [
+        "sv_amp15",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_amplitude",
+            1.5
+          ]
+        ]
+      ],
+      [
+        "jump_k8",
+        "jump",
+        [
+          [
+            "noise_jump_kappa",
+            8.0
+          ]
+        ]
+      ]
+    ],
+    "stage2c_calibration_paths": 10000,
+    "stage2c_test_paths": 10000,
+    "stage2c_stress_paths": 5000,
+    "stage2c_delta": 0.05,
+    "stage2c_report_days": [
+      63,
+      126,
+      252,
+      504
+    ],
+    "stage2c_bootstrap_reps": 2000,
+    "stage2d_scenarios": [
+      [
+        "gaussian_ctrl",
+        0.0,
+        0.0,
+        true
+      ],
+      [
+        "sv_ctrl",
+        1.0,
+        0.0,
+        true
+      ],
+      [
+        "jump_ctrl",
+        0.0,
+        5.0,
+        true
+      ],
+      [
+        "sv_jump",
+        1.0,
+        5.0,
+        false
+      ],
+      [
+        "sv_jump_big",
+        1.0,
+        8.0,
+        false
+      ]
+    ],
+    "stage2d_calibration_paths": 10000,
+    "stage2d_test_paths": 10000,
+    "stage2d_bootstrap_reps": 2000,
+    "stage2d_shock_day": 126,
+    "stage2d_shock_sigmas": 8.0,
+    "stage2d_shock_path_index": 0,
+    "stage2e_calibration_paths": 10000,
+    "stage2e_test_paths": 10000,
+    "stage2e_bootstrap_reps": 2000,
+    "stage2e_jump_window": 20,
+    "stage3a_sharpes": [
+      1.0,
+      0.6
+    ],
+    "stage3a_calibration_paths": 10000,
+    "stage3a_test_paths": 10000,
+    "stage3a_bootstrap_reps": 2000,
+    "stage3a_prob_level": 0.9,
+    "root_seed": 20260905,
+    "label": "stage1_benchmark",
+    "notes": [
+      "Benchmark DGP is fixed-volatility iid Gaussian only.",
+      "Student-t detector is deliberately mis-specified under this DGP."
+    ],
+    "derived": {
+      "sigma_daily": 0.00629940788348712,
+      "sqrt_D": 15.874507866387544,
+      "student_t_scale_a_nu": 0.7745966692414834,
+      "prior_log_odds": 0.0,
+      "daily_drift_valid": 0.0003968253968253968,
+      "daily_drift_invalid": 0.0,
+      "stream_order": [
+        "calibration_valid",
+        "test_valid",
+        "test_invalid",
+        "diagnostic",
+        "prob_time_valid",
+        "prob_time_invalid",
+        "switch_fixed",
+        "switch_random",
+        "switch_matched_cal",
+        "switch_random_T",
+        "switch_contfa_test",
+        "stage2a",
+        "stage2b",
+        "stage2b_persistence_control",
+        "stage2b_bootstrap",
+        "stage2c_calibration",
+        "stage2c_test",
+        "stage2c_stress",
+        "stage2c_bootstrap",
+        "stage2d_calibration",
+        "stage2d_test",
+        "stage2d_bootstrap",
+        "stage2d_shock",
+        "stage2e_calibration",
+        "stage2e_test",
+        "stage2e_bootstrap",
+        "stage2e1_bootstrap",
+        "stage3a_calibration",
+        "stage3a_test",
+        "stage3a_bootstrap"
+      ]
+    }
+  },
+  "environment": {
+    "python": "3.13.13",
+    "python_implementation": "CPython",
+    "platform": "macOS-14.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "numpy": "2.5.2",
+    "scipy": "1.18.1",
+    "pandas": "3.0.5",
+    "matplotlib": "3.11.1"
+  },
+  "random_streams": {
+    "calibration_valid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        0
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "test_valid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        1
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "test_invalid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        2
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "diagnostic": {
+      "entropy": 20260905,
+      "spawn_key": [
+        3
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "prob_time_valid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        4
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "prob_time_invalid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        5
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_fixed": {
+      "entropy": 20260905,
+      "spawn_key": [
+        6
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_random": {
+      "entropy": 20260905,
+      "spawn_key": [
+        7
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_matched_cal": {
+      "entropy": 20260905,
+      "spawn_key": [
+        8
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_random_T": {
+      "entropy": 20260905,
+      "spawn_key": [
+        9
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_contfa_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        10
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2a": {
+      "entropy": 20260905,
+      "spawn_key": [
+        11
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b": {
+      "entropy": 20260905,
+      "spawn_key": [
+        12
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b_persistence_control": {
+      "entropy": 20260905,
+      "spawn_key": [
+        13
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        14
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        15
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        16
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_stress": {
+      "entropy": 20260905,
+      "spawn_key": [
+        17
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        18
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        19
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        20
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        21
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_shock": {
+      "entropy": 20260905,
+      "spawn_key": [
+        22
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2e_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        23
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2e_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        24
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2e_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        25
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2e1_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        26
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3a_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        27
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3a_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        28
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3a_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        29
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    }
+  },
+  "sharpes": [
+    1.0,
+    0.6
+  ],
+  "methods": [
+    "binary_gaussian",
+    "binary_student_t",
+    "trailing_sharpe_252",
+    "known_vol_rolling_252",
+    "ewma_gaussian",
+    "ewma_student_t",
+    "ewma_trunc_gaussian",
+    "ewma_trunc_student_t"
+  ],
+  "main_setting": {
+    "scenario": "sv_jump",
+    "far_target": 0.15,
+    "sharpe_valid": 0.6
+  },
+  "main_pairs": [
+    [
+      "ewma_student_t",
+      "binary_student_t"
+    ],
+    [
+      "ewma_trunc_student_t",
+      "ewma_student_t"
+    ],
+    [
+      "ewma_trunc_student_t",
+      "trailing_sharpe_252"
+    ]
+  ],
+  "J": 160,
+  "delta_per_comparison": 0.0003125,
+  "ranks": {
+    "0.05": {
+      "buffered": 427,
+      "beta_route": 427
+    },
+    "0.15": {
+      "buffered": 1379,
+      "beta_route": 1379
+    }
+  },
+  "sampling": {
+    "base_noise_paths": 150000,
+    "return_path_evaluations": 300000,
+    "note": "the two signal strengths SHARE their noise blocks (common random numbers), so these are not independent noise paths"
+  },
+  "evidence_check": [
+    {
+      "sharpe_valid": 1.0,
+      "day": 63,
+      "mean_U_theory": 0.125,
+      "mean_U_measured": 0.12766362632367895,
+      "var_U_theory": 0.25,
+      "var_U_measured": 0.2483117525001231,
+      "n_paths": 40000,
+      "model": "pure Gaussian binary detector, invalid state, prior odds 1",
+      "mean_z": 1.0654505294715788,
+      "var_z": 0.9550050666001828,
+      "mean_rel_err": 0.021309010589431576,
+      "var_rel_err": 0.006752989999507575
+    },
+    {
+      "sharpe_valid": 1.0,
+      "day": 252,
+      "mean_U_theory": 0.5,
+      "mean_U_measured": 0.500172216251857,
+      "var_U_theory": 1.0,
+      "var_U_measured": 1.001871230441302,
+      "n_paths": 40000,
+      "model": "pure Gaussian binary detector, invalid state, prior odds 1",
+      "mean_z": 0.03444325037140761,
+      "var_z": 0.2646286389214573,
+      "mean_rel_err": 0.0003444325037140761,
+      "var_rel_err": 0.0018712304413019964
+    },
+    {
+      "sharpe_valid": 1.0,
+      "day": 504,
+      "mean_U_theory": 1.0,
+      "mean_U_measured": 0.9900626691428707,
+      "var_U_theory": 2.0,
+      "var_U_measured": 2.005984534606436,
+      "n_paths": 40000,
+      "model": "pure Gaussian binary detector, invalid state, prior odds 1",
+      "mean_z": 1.4053508071940957,
+      "var_z": 0.4231652105813481,
+      "mean_rel_err": 0.009937330857129334,
+      "var_rel_err": 0.00299226730321811
+    },
+    {
+      "sharpe_valid": 0.6,
+      "day": 63,
+      "mean_U_theory": 0.045,
+      "mean_U_measured": 0.04656272981905817,
+      "var_U_theory": 0.09,
+      "var_U_measured": 0.09088711161704142,
+      "n_paths": 40000,
+      "model": "pure Gaussian binary detector, invalid state, prior odds 1",
+      "mean_z": 1.041819879372116,
+      "var_z": 1.3939439977718873,
+      "mean_rel_err": 0.034727329312403875,
+      "var_rel_err": 0.009856795744904754
+    },
+    {
+      "sharpe_valid": 0.6,
+      "day": 252,
+      "mean_U_theory": 0.18,
+      "mean_U_measured": 0.18128666686947975,
+      "var_U_theory": 0.36,
+      "var_U_measured": 0.359868173068819,
+      "n_paths": 40000,
+      "model": "pure Gaussian binary detector, invalid state, prior odds 1",
+      "mean_z": 0.4288889564932526,
+      "var_z": 0.05178586209851634,
+      "mean_rel_err": 0.007148149274887544,
+      "var_rel_err": 0.00036618591994713116
+    },
+    {
+      "sharpe_valid": 0.6,
+      "day": 504,
+      "mean_U_theory": 0.36,
+      "mean_U_measured": 0.36262565658084456,
+      "var_U_theory": 0.72,
+      "var_U_measured": 0.7195078133010006,
+      "n_paths": 40000,
+      "model": "pure Gaussian binary detector, invalid state, prior odds 1",
+      "mean_z": 0.6188731911274269,
+      "var_z": 0.0966733894689488,
+      "mean_rel_err": 0.007293490502346031,
+      "var_rel_err": 0.0006835926374991937
+    }
+  ],
+  "report_days": [
+    63,
+    126,
+    252,
+    504
+  ],
+  "gaussian_reference": [
+    {
+      "sharpe_valid": 1.0,
+      "far_budget": 0.05,
+      "years": 0.25,
+      "days": 63,
+      "max_detection": 0.1261348982,
+      "max_detection_check": 0.1261348982,
+      "effective_signal_s_sqrt_h": 0.5,
+      "route_gap": 1.110223025e-16
+    },
+    {
+      "sharpe_valid": 1.0,
+      "far_budget": 0.05,
+      "years": 0.5,
+      "days": 126,
+      "max_detection": 0.1741872616,
+      "max_detection_check": 0.1741872616,
+      "effective_signal_s_sqrt_h": 0.7071067812,
+      "route_gap": 2.775557562e-16
+    },
+    {
+      "sharpe_valid": 1.0,
+      "far_budget": 0.05,
+      "years": 1.0,
+      "days": 252,
+      "max_detection": 0.2595110228,
+      "max_detection_check": 0.2595110228,
+      "effective_signal_s_sqrt_h": 1.0,
+      "route_gap": 2.220446049e-16
+    },
+    {
+      "sharpe_valid": 1.0,
+      "far_budget": 0.05,
+      "years": 2.0,
+      "days": 504,
+      "max_detection": 0.4087972198,
+      "max_detection_check": 0.4087972198,
+      "effective_signal_s_sqrt_h": 1.4142135624,
+      "route_gap": 4.440892099e-16
+    },
+    {
+      "sharpe_valid": 1.0,
+      "far_budget": 0.15,
+      "years": 0.25,
+      "days": 63,
+      "max_detection": 0.2958295302,
+      "max_detection_check": 0.2958295302,
+      "effective_signal_s_sqrt_h": 0.5,
+      "route_gap": 5.551115123e-17
+    },
+    {
+      "sharpe_valid": 1.0,
+      "far_budget": 0.15,
+      "years": 0.5,
+      "days": 126,
+      "max_detection": 0.3709544171,
+      "max_detection_check": 0.3709544171,
+      "effective_signal_s_sqrt_h": 0.7071067812,
+      "route_gap": 0.0
+    },
+    {
+      "sharpe_valid": 1.0,
+      "far_budget": 0.15,
+      "years": 1.0,
+      "days": 252,
+      "max_detection": 0.4854683954,
+      "max_detection_check": 0.4854683954,
+      "effective_signal_s_sqrt_h": 1.0,
+      "route_gap": 5.551115123e-17
+    },
+    {
+      "sharpe_valid": 1.0,
+      "far_budget": 0.15,
+      "years": 2.0,
+      "days": 504,
+      "max_detection": 0.6472030481,
+      "max_detection_check": 0.6472030481,
+      "effective_signal_s_sqrt_h": 1.4142135624,
+      "route_gap": 0.0
+    },
+    {
+      "sharpe_valid": 0.6,
+      "far_budget": 0.05,
+      "years": 0.25,
+      "days": 63,
+      "max_detection": 0.0893362541,
+      "max_detection_check": 0.0893362541,
+      "effective_signal_s_sqrt_h": 0.3,
+      "route_gap": 1.110223025e-16
+    },
+    {
+      "sharpe_valid": 0.6,
+      "far_budget": 0.05,
+      "years": 0.5,
+      "days": 126,
+      "max_detection": 0.1111207309,
+      "max_detection_check": 0.1111207309,
+      "effective_signal_s_sqrt_h": 0.4242640687,
+      "route_gap": 2.220446049e-16
+    },
+    {
+      "sharpe_valid": 0.6,
+      "far_budget": 0.05,
+      "years": 1.0,
+      "days": 252,
+      "max_detection": 0.1480453126,
+      "max_detection_check": 0.1480453126,
+      "effective_signal_s_sqrt_h": 0.6,
+      "route_gap": 2.775557562e-16
+    },
+    {
+      "sharpe_valid": 0.6,
+      "far_budget": 0.05,
+      "years": 2.0,
+      "days": 504,
+      "max_detection": 0.2129214369,
+      "max_detection_check": 0.2129214369,
+      "effective_signal_s_sqrt_h": 0.8485281374,
+      "route_gap": 3.330669074e-16
+    },
+    {
+      "sharpe_valid": 0.6,
+      "far_budget": 0.15,
+      "years": 0.25,
+      "days": 63,
+      "max_detection": 0.2307334955,
+      "max_detection_check": 0.2307334955,
+      "effective_signal_s_sqrt_h": 0.3,
+      "route_gap": 0.0
+    },
+    {
+      "sharpe_valid": 0.6,
+      "far_budget": 0.15,
+      "years": 0.5,
+      "days": 126,
+      "max_detection": 0.2702128686,
+      "max_detection_check": 0.2702128686,
+      "effective_signal_s_sqrt_h": 0.4242640687,
+      "route_gap": 0.0
+    },
+    {
+      "sharpe_valid": 0.6,
+      "far_budget": 0.15,
+      "years": 1.0,
+      "days": 252,
+      "max_detection": 0.331261159,
+      "max_detection_check": 0.331261159,
+      "effective_signal_s_sqrt_h": 0.6,
+      "route_gap": 0.0
+    },
+    {
+      "sharpe_valid": 0.6,
+      "far_budget": 0.15,
+      "years": 2.0,
+      "days": 504,
+      "max_detection": 0.4254754628,
+      "max_detection_check": 0.4254754628,
+      "effective_signal_s_sqrt_h": 0.8485281374,
+      "route_gap": 5.551115123e-17
+    }
+  ],
+  "brier": [
+    {
+      "detector": "binary_gaussian",
+      "day": 63,
+      "years": 0.25,
+      "n": 20000,
+      "brier": 0.234594975478758,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.061620098084968045,
+      "mean_predicted_q": 0.5000328525829817,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_gaussian",
+      "day": 126,
+      "years": 0.5,
+      "n": 20000,
+      "brier": 0.22154643967601706,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.11381424129593176,
+      "mean_predicted_q": 0.5000365500767978,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_gaussian",
+      "day": 252,
+      "years": 1.0,
+      "n": 20000,
+      "brier": 0.19671152422831656,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.21315390308673376,
+      "mean_predicted_q": 0.5003119450271203,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_gaussian",
+      "day": 504,
+      "years": 2.0,
+      "n": 20000,
+      "brier": 0.1584752898105132,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.3660988407579472,
+      "mean_predicted_q": 0.499836497619126,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_student_t",
+      "day": 63,
+      "years": 0.25,
+      "n": 20000,
+      "brier": 0.22726936750398208,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.09092252998407169,
+      "mean_predicted_q": 0.500753664700476,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_student_t",
+      "day": 126,
+      "years": 0.5,
+      "n": 20000,
+      "brier": 0.20844862117447088,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.16620551530211647,
+      "mean_predicted_q": 0.5015359037508663,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_student_t",
+      "day": 252,
+      "years": 1.0,
+      "n": 20000,
+      "brier": 0.17463641537107324,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.301454338515707,
+      "mean_predicted_q": 0.5006627050914856,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_student_t",
+      "day": 504,
+      "years": 2.0,
+      "n": 20000,
+      "brier": 0.12548449940059317,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.4980620023976273,
+      "mean_predicted_q": 0.5004670997795136,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_student_t",
+      "day": 63,
+      "years": 0.25,
+      "n": 20000,
+      "brier": 0.22163303735732848,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.11346785057068609,
+      "mean_predicted_q": 0.5004626177473334,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_student_t",
+      "day": 126,
+      "years": 0.5,
+      "n": 20000,
+      "brier": 0.19969245482082387,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.2012301807167045,
+      "mean_predicted_q": 0.5011014956974789,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_student_t",
+      "day": 252,
+      "years": 1.0,
+      "n": 20000,
+      "brier": 0.16067169603196788,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.3573132158721285,
+      "mean_predicted_q": 0.500794205561628,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_student_t",
+      "day": 504,
+      "years": 2.0,
+      "n": 20000,
+      "brier": 0.1080395321781542,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.5678418712873832,
+      "mean_predicted_q": 0.49974499564949965,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_trunc_student_t",
+      "day": 63,
+      "years": 0.25,
+      "n": 20000,
+      "brier": 0.2211979816791118,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.11520807328355276,
+      "mean_predicted_q": 0.500603939852485,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_trunc_student_t",
+      "day": 126,
+      "years": 0.5,
+      "n": 20000,
+      "brier": 0.1989806811973088,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.2040772752107648,
+      "mean_predicted_q": 0.5011184730294508,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_trunc_student_t",
+      "day": 252,
+      "years": 1.0,
+      "n": 20000,
+      "brier": 0.1591118217820077,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.3635527128719692,
+      "mean_predicted_q": 0.5005114776063797,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_trunc_student_t",
+      "day": 504,
+      "years": 2.0,
+      "n": 20000,
+      "brier": 0.10556802403032094,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.5777279038787162,
+      "mean_predicted_q": 0.4995569887707914,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 1.0,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_gaussian",
+      "day": 63,
+      "years": 0.25,
+      "n": 20000,
+      "brier": 0.24447631427916108,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.022094742883355667,
+      "mean_predicted_q": 0.5000357671652451,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_gaussian",
+      "day": 126,
+      "years": 0.5,
+      "n": 20000,
+      "brier": 0.23984616690147992,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.04061533239408033,
+      "mean_predicted_q": 0.5000780073499904,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_gaussian",
+      "day": 252,
+      "years": 1.0,
+      "n": 20000,
+      "brier": 0.22896692857912712,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.08413228568349151,
+      "mean_predicted_q": 0.5004076060649673,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_gaussian",
+      "day": 504,
+      "years": 2.0,
+      "n": 20000,
+      "brier": 0.20974134727946936,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.16103461088212256,
+      "mean_predicted_q": 0.5002632607035048,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_student_t",
+      "day": 63,
+      "years": 0.25,
+      "n": 20000,
+      "brier": 0.24169132916629113,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.03323468333483548,
+      "mean_predicted_q": 0.5004661746226268,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_student_t",
+      "day": 126,
+      "years": 0.5,
+      "n": 20000,
+      "brier": 0.23449102845640854,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.06203588617436584,
+      "mean_predicted_q": 0.5009224472298954,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_student_t",
+      "day": 252,
+      "years": 1.0,
+      "n": 20000,
+      "brier": 0.2185453478092113,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.12581860876315476,
+      "mean_predicted_q": 0.5005499102870317,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "binary_student_t",
+      "day": 504,
+      "years": 2.0,
+      "n": 20000,
+      "brier": 0.1904301906538061,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.23827923738477563,
+      "mean_predicted_q": 0.5009671508901641,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_student_t",
+      "day": 63,
+      "years": 0.25,
+      "n": 20000,
+      "brier": 0.23899342897215328,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.04402628411138687,
+      "mean_predicted_q": 0.5003577577102751,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_student_t",
+      "day": 126,
+      "years": 0.5,
+      "n": 20000,
+      "brier": 0.23002711808272847,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.07989152766908614,
+      "mean_predicted_q": 0.5010097622523972,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_student_t",
+      "day": 252,
+      "years": 1.0,
+      "n": 20000,
+      "brier": 0.20976214437166385,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.1609514225133446,
+      "mean_predicted_q": 0.5007494827682538,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_student_t",
+      "day": 504,
+      "years": 2.0,
+      "n": 20000,
+      "brier": 0.17713508563178237,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.2914596574728705,
+      "mean_predicted_q": 0.5004409409762395,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_trunc_student_t",
+      "day": 63,
+      "years": 0.25,
+      "n": 20000,
+      "brier": 0.23884385103138056,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.04462459587447776,
+      "mean_predicted_q": 0.5004416376934018,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_trunc_student_t",
+      "day": 126,
+      "years": 0.5,
+      "n": 20000,
+      "brier": 0.2297379725151268,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.08104810993949285,
+      "mean_predicted_q": 0.5010853714433006,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_trunc_student_t",
+      "day": 252,
+      "years": 1.0,
+      "n": 20000,
+      "brier": 0.209015110524087,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.163939557903652,
+      "mean_predicted_q": 0.5005578954553322,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    },
+    {
+      "detector": "ewma_trunc_student_t",
+      "day": 504,
+      "years": 2.0,
+      "n": 20000,
+      "brier": 0.17558812067017712,
+      "brier_base_rate": 0.25,
+      "brier_skill_vs_base_rate": 0.2976475173192915,
+      "mean_predicted_q": 0.5003136615305457,
+      "observed_invalid_frac": 0.5,
+      "scenario": "sv_jump",
+      "sharpe_valid": 0.6,
+      "state_mix": "50/50 valid/invalid, prior 0.5",
+      "post_alarm": "all paths kept; nothing deleted after an alarm"
+    }
+  ],
+  "elapsed_s": 111.59154416699994,
+  "figures": [
+    "figures/fig3a1_detection_curves.png",
+    "figures/fig3a2_differences.png",
+    "figures/fig3a3_failure_probability.png",
+    "figures/fig3a4_gaussian_reference.png"
+  ]
+}

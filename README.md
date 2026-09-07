@@ -51,6 +51,7 @@ pip install -r requirements.txt && pip install -e .
 .venv/bin/python -m strategy_survivorship.run_stage2d     # Stage 2D SV+跳跃组合（约 70 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2e     # Stage 2E 截断方差更新 2x2 消融（约 70 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2e1    # Stage 2E.1 收尾、跨预算统计、高斯参照（约 40 秒）
+.venv/bin/python -m strategy_survivorship.run_stage3a     # Stage 3A Sharpe 0.6 vs 0，保留 1 vs 0（约 120 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2e --figures-only  # 仅从 CSV 重绘
 ```
 
@@ -159,7 +160,15 @@ theory.md         公式、符号、单位、推导、参考链接
 | `outputs/stage2e1_summary_table.csv` / `_paired_time.csv` | 导师口径的检出/误杀/时间汇总与配对时间差 |
 | `outputs/stage2e1_gaussian_reference.csv` / `_headroom.csv` | D_max(h,α) 参照表与高斯对照下的余量 |
 | `outputs/stage2e1_threshold_check.csv` | 重建门槛与冻结门槛的逐位比对 |
-| `outputs/review_bundle.zip` | 可直接上传的审阅包（报告、四张图、全部 CSV、关键实现）|
+| `outputs/review_bundle.zip` | Stage 2E/2E.1 审阅包（保留） |
+| `outputs/stage3a_report.md` | **Stage 3A 报告**：弱信号下需要多少观测 |
+| `outputs/stage3a_metrics.csv` / `_thresholds.csv` | 5 情境 × 8 方法 × 2 信号强度 × 2 预算（J=160，秩 427/1379）|
+| `outputs/stage3a_bootstrap.csv` / `_paired_time.csv` | 三条预设比较、增益随 s 的配对变化、配对时间差 |
+| `outputs/stage3a_failure_probability.csv` / `_probability_level.csv` | q 的分位数 / 首达 q≥0.9 的比例（两种真实状态）|
+| `outputs/stage3a_brier.csv` / `_reliability.csv` | Brier 分数 / 分箱可靠性 |
+| `outputs/stage3a_gaussian_reference.csv` / `_evidence_check.csv` | D_max 参照表 / 证据积累恒等式核验 |
+| `outputs/figures/fig3a{1,2,3,4}_*.png` | Stage 3A 四张图 |
+| `outputs/review_bundle_stage3a.zip` | Stage 3A 审阅包 |
 | `outputs/stage1_diagnostic_traces.csv` | 冲击诊断逐日收益、增量、log odds、概率 |
 | `outputs/run_metadata.json` | 运行配置、随机流指纹、环境版本、分阶段耗时 |
 | `outputs/figures/fig1_example_paths.png` | 固定示例路径的累计收益与两个贝叶斯概率 |
