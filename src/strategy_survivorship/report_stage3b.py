@@ -7,7 +7,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .stage3b import (ALWAYS_VALID, LOG_ODDS_METHODS, MAIN, MAIN_PAIRS,
+from .stage3b import (ALWAYS_VALID, EVIDENCE_METHODS, MAIN, MAIN_PAIRS,
                       METHODS_3B, RANDOM_T)
 
 CN = {"binary_gaussian": "固定 Gaussian", "binary_student_t": "固定 Student-t",
@@ -141,10 +141,92 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
       "失效后中位时间同样以全部存活者为分母，取累计比例首次达到一半的那一天。")
     A("")
 
+    # ---------------- 3.5: the supervisor's primary setting -------------
+    st0 = f"fixed_T{T0}"
+    s_pri = max(S["sharpes"])
+    A(f"## 3.5 主线设定 s={s_pri:g}（导师指定）")
+    A("")
+    A(f"导师指定的主线是 **Sharpe {s_pri:g} 对 0**；s={s0:g} 是后加的弱信号压力测试。"
+      f"下面先给 s={s_pri:g} 的完整结果，再在第 4–5 节给出 s={s0:g}。")
+    A("")
+    A(f"**协议记录不改写**：Stage 3B 事先写定的主比较用的是 s={s0:g}、T={T0}、"
+      f"α={a_main:g}。本节是按导师要求调整**展示重点**，"
+      f"不把 s={s_pri:g} 追溯描述为当时唯一的预设主分析。"
+      f"s={s_pri:g} 使用它自己的收益漂移 μ₁={s_pri:g}·σ_ann/D、检测器候选均值、"
+      "EWMA 中心与 Stage 3A 对应的 504 日冻结门槛——**不是** s=0.6 结果的改标签或换算。")
+    A("")
+    for st in sets:
+        A(f"**{_setlabel(cfg, st)}**，{SC[sc0]}，α={a_main:g}，失效后 {h0} 天")
+        A("")
+        L.extend(_t(list(METHODS_3B),
+                    ["方法", "失效前误杀", "存活率", "存活数", "条件检出", "95% 区间",
+                     "联合检出", f"E[min(τ−T,{max(hs)})]（存活者）", "失效后未检出",
+                     "失效后中位"],
+                    lambda m: [
+                        CN[m], f"{g(sc0, s_pri, a_main, st, m, 'pre_failure_far'):.4f}",
+                        f"{g(sc0, s_pri, a_main, st, m, 'survival_rate'):.4f}",
+                        f"{int(g(sc0, s_pri, a_main, st, m, 'n_survivors'))}",
+                        f"{g(sc0, s_pri, a_main, st, m, f'cond_detect_h{h0}'):.4f}",
+                        f"[{g(sc0, s_pri, a_main, st, m, f'cond_detect_h{h0}_lo'):.4f}, "
+                        f"{g(sc0, s_pri, a_main, st, m, f'cond_detect_h{h0}_hi'):.4f}]",
+                        f"{g(sc0, s_pri, a_main, st, m, f'joint_detect_h{h0}'):.4f}",
+                        f"{g(sc0, s_pri, a_main, st, m, 'expected_min_delay'):.1f}",
+                        f"{g(sc0, s_pri, a_main, st, m, 'post_failure_undetected'):.4f}",
+                        _med(g(sc0, s_pri, a_main, st, m, 'median_post_failure_delay'),
+                             str(g(sc0, s_pri, a_main, st, m,
+                                   'median_post_failure_note')))]))
+        A("")
+    A(f"配对区间（s={s_pri:g}，同样是 {cfg.stage3b_bootstrap_reps} 次配对重抽，"
+      "存活分母每次重算）：")
+    A("")
+    rows = [(st, ma, mb, q) for st in sets for ma, mb in MAIN_PAIRS
+            for q in ("joint", "cond", "pre_far")]
+    def rp(r):
+        st, ma, mb, q = r
+        b = bo(sc0, s_pri, a_main, st, q, ma, mb)
+        if b is None:
+            return [_setlabel(cfg, st), f"{CN[ma]} − {CN[mb]}", QN[q], "-", "-", "-"]
+        return [_setlabel(cfg, st), f"{CN[ma]} − {CN[mb]}", QN[q],
+                f"{float(b.point) * 100:+.2f} pp",
+                f"[{float(b.lo) * 100:+.2f}, {float(b.hi) * 100:+.2f}]",
+                "是" if bool(b.excludes_zero) else "否"]
+    L.extend(_t(rows, ["失效设定", "比较", "量", "点估计", "95% 区间", "排除 0"], rp))
+    A("")
+    tt_gain = {st: (g(sc0, s_pri, a_main, st, "ewma_trunc_student_t", f"joint_detect_h{h0}")
+                    - g(sc0, s_pri, a_main, st, "ewma_student_t", f"joint_detect_h{h0}"))
+               for st in sets}
+    A(f"截断更新的额外贡献（截断 t 减普通 EWMA t 的联合检出，s={s_pri:g}）："
+      + "；".join(f"{_setlabel(cfg, st)} {v * 100:+.2f} pp" for st, v in tt_gain.items())
+      + "。这一对不在 Stage 3B 预设比较之列，因此只报点估计，不作显著性声明。")
+    A("")
+    b_t0 = bo(sc0, s_pri, a_main, "fixed_T0", "cond", *MAIN_PAIRS[0])
+    b_late = bo(sc0, s_pri, a_main, st0, "joint", *MAIN_PAIRS[1])
+    b_rand = bo(sc0, s_pri, a_main, RANDOM_T, "joint", *MAIN_PAIRS[1])
+    A(f"**从 s={s_pri:g} 自己的数据读出来的四点。**")
+    A("")
+    A(f"1. **EWMA t 相对固定 t 的改善**：T=0（上线即无效）条件检出差 "
+      f"{float(b_t0.point) * 100:+.2f} pp "
+      f"[{float(b_t0.lo) * 100:+.2f}, {float(b_t0.hi) * 100:+.2f}]，"
+      f"随机 T 下联合检出差 "
+      f"{float(bo(sc0, s_pri, a_main, RANDOM_T, 'joint', *MAIN_PAIRS[0]).point) * 100:+.2f} pp。"
+      "四个失效设定下这一差都排除 0。")
+    A(f"2. **滚动 Sharpe 的排序仍随 T 改变**：EWMA t 减 trailing Sharpe 的联合检出差，"
+      f"T=0 为 {float(bo(sc0, s_pri, a_main, 'fixed_T0', 'joint', *MAIN_PAIRS[1]).point) * 100:+.2f} pp，"
+      f"T={T0} 为 {float(b_late.point) * 100:+.2f} pp "
+      f"[{float(b_late.lo) * 100:+.2f}, {float(b_late.hi) * 100:+.2f}]，"
+      f"随机 T 为 {float(b_rand.point) * 100:+.2f} pp。"
+      f"方向在 T={T0} 处反转，幅度比 s={s0:g} 时更大；成因见第 6 节列出的四条未分解机制。")
+    A(f"3. **截断更新的额外贡献**：{min(tt_gain.values()) * 100:+.2f} 到 "
+      f"{max(tt_gain.values()) * 100:+.2f} pp，比第 1 点小一个数量级。")
+    A(f"4. **绝对能力**：见 Stage 3A——s={s_pri:g}、{SC[sc0]}、α={a_main:g} 下，"
+      "观察满一年后最好的方法检出 48.74% 的无效策略，两年 76.17%；"
+      f"同一设定 s={s0:g} 时为 25.84% / 52.32%。"
+      "这些是模拟结果，不是真实市场部署的验证。")
+    A("")
+
     # ---------------- 4 ----------------
     A(f"## 4. 主设定：s={s0:g}、{SC[sc0]}、α={a_main:g}、T={T0}、失效后 {h0} 天")
     A("")
-    st0 = f"fixed_T{T0}"
     rows = list(METHODS_3B)
     L.extend(_t(rows, ["方法", "失效前误杀", "95% 区间", "存活数", "条件检出", "95% 区间",
                        "联合检出", "95% 区间", f"E[min(τ−T,{max(hs)})]（存活者）",
@@ -228,7 +310,7 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
         A(f"**s = {s:g}**，{SC[sc0]}")
         A("")
         d = ev[(ev.scenario == sc0) & (ev.sharpe_valid == s)]
-        rows = [(st, m) for st in sets for m in LOG_ODDS_METHODS]
+        rows = [(st, m) for st in sets for m in EVIDENCE_METHODS]
         def re_(r):
             x = d[(d.setting == r[0]) & (d.method == r[1])]
             if not len(x):
@@ -262,16 +344,24 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
     A("")
     tr = "trailing_sharpe_252"
     elig = int(g(sc0, s0, a_main, st0, tr, "first_eligible_day"))
-    A(f"**读表时必须注意的结构性成因。** {CN[tr]} 最早只能在第 {elig} 天说话。"
-      f"因此在 T=0 时，它在 h={h0} 天的失效后窗口里只有第 {elig}–{h0} 天可用；"
-      f"而在 T={T0}={elig} 时，它的启动期恰好在失效时刻走完，"
-      f"失效后窗口对它是完整的。**同一件事也压低了它的失效前误杀**："
+    A(f"**{CN[tr]} 在 T={T0} 处同时误杀更少、条件检出与联合检出更高，这是本设定下的"
+      f"实测事实。** 但本轮**没有**分解这个优势的来源。至少有四条机制可能同时起作用，"
+      "它们的相对份额未被测量：")
+    A("")
+    A(f"1. **启动期**：它最早只能在第 {elig} 天说话，因此在 T=0 时失效后窗口里只有"
+      f"第 {elig}–{h0} 天可用，而在 T={T0} 时启动期恰在失效时刻走完。"
+      f"同一件事也限制了它在失效前的报警机会："
       f"T={T0} 时它在失效前只有第 {elig} 天这一天可能报警"
-      f"（实测 {g(sc0, s0, a_main, st0, tr, 'pre_failure_far'):.2%}，"
-      f"而 {CN['ewma_student_t']} 为 "
-      f"{g(sc0, s0, a_main, st0, 'ewma_student_t', 'pre_failure_far'):.2%}）。"
-      "所以它在 T=252 处同时“误杀更少、条件检出更高”，"
-      "**主要是启动期与窗口对齐的结果，不能读成它的判别能力更强**。")
+      f"（实测误杀 {g(sc0, s0, a_main, st0, tr, 'pre_failure_far'):.2%}，"
+      f"{CN['ewma_student_t']} 为 "
+      f"{g(sc0, s0, a_main, st0, 'ewma_student_t', 'pre_failure_far'):.2%}）。")
+    A("2. **滚动窗口会逐步移除失效前的数据**：失效之后，有利的历史证据会随窗口滑出，"
+      "而累计型模型不会自动丢弃它。")
+    A("3. **方差状态**：EWMA 类方法在失效时刻带着一个由过去数据形成的方差估计。")
+    A("4. **存活者筛选**：条件统计只在没有被提前误杀的路径上计算，各方法的存活集合不同。")
+    A("")
+    A("因此**不能**把这个优势归因于其中任何单独一条，也不能据此断言"
+      "“它的判别能力更强”或“它的优势只是窗口对齐”——两种说法本轮都没有证据支持。")
     A("")
     A("其二，若累计型模型在较晚失效时变慢，**不要把全部差异都归因于历史证据**："
       "初始化、方差状态与存活筛选（只有没被提前误杀的路径才进入条件统计）"
@@ -308,9 +398,9 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
           f"而在随机 T 下为 {float(r_rand.point) * 100:+.2f} pp "
           f"[{float(r_rand.lo) * 100:+.2f}, {float(r_rand.hi) * 100:+.2f}]——"
           "两个区间都排除 0，**方向相反**。"
-          f"如上一节所述，T={T0} 恰好等于 {CN[tr]} 的启动期长度，"
-          "这个特定的 T 对它最有利；因此不应把任一方向当作一般结论，"
-          "而应记为“方法排序依赖于失效时刻相对于各方法可用窗口的位置”。")
+          f"本轮只测了 T ∈ {{0, 126, {T0}}} 与随机 T 四个设定，"
+          f"**没有**扫描 T，因此不能说 T={T0} 是对 {CN[tr]} 全局最有利的失效时刻。"
+          "能记录的是：**方法排序随失效时刻改变**，成因见上一节列出的四条未分解机制。")
     A("")
     A("**（二）这些结果是否足以支持本周向导师说明适用范围？** "
       "可以说明的是：本项目现有的五个检测器在“先有效、后失效”这一设定下仍然可用，"

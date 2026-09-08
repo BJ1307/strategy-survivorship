@@ -35,6 +35,7 @@ from .stage2c import buffered_rank, first_alarm_day, path_minima, rank_via_beta
 from .stage2d import specs
 from .stage2e import first_eligible, statistic
 from .stage3a import draw_eps, sharpe_cfg
+from .stage3b_scales import LOG_ODDS_METHODS
 
 # four methods, all day-1 eligible: no rolling window is involved, so the
 # 63-day horizon is not handicapped by a start-up delay
@@ -92,13 +93,20 @@ def prefix_minima(stat: np.ndarray, elig: int, horizon: int) -> np.ndarray:
     return path_minima(stat, elig, horizon)
 
 
-def working_probability_threshold(threshold: float) -> float:
+def working_probability_threshold(threshold: float, method: str | None = None) -> float:
     """The alarm rule L < thr is the same rule as q > expit(-thr).
+
+    Only defined for a statistic that IS a log-odds.  Every method in
+    ``METHODS_3A1`` is one; the guard exists so that adding a rolling statistic
+    to that tuple fails loudly instead of quietly producing a meaningless number.
 
     q = expit(-L) is the posterior probability of failure, so a threshold on the
     log-odds statistic is a threshold on that probability.  Reported so the rule
     can be read without knowing the log-odds convention.
     """
+    if method is not None and method not in LOG_ODDS_METHODS:
+        raise ValueError(f"{method} is not a log-odds statistic; expit(-thr) has no "
+                         "interpretation for it")
     return float(expit(-threshold))
 
 

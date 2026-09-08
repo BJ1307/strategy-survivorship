@@ -22,6 +22,12 @@ outputs/smoke*/
 outputs/tmp*/
 outputs/status.json
 
+# Review bundles are BUILD PRODUCTS: each one repackages the whole source tree
+# plus a slice of outputs/.  Rebuild with `make bundle STAGE=3b`, or read the
+# `pre-consolidation` tag for the ones handed over during the week.
+outputs/review_bundle*/
+outputs/*.zip
+
 # OS / editor
 .DS_Store
 .idea/

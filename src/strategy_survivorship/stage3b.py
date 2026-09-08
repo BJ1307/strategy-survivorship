@@ -43,8 +43,10 @@ METHODS_3B = ("binary_gaussian", "binary_student_t", "trailing_sharpe_252",
 # The trailing Sharpe's statistic is an annualised Sharpe ratio, not a log-odds,
 # so expit of it is a number without an interpretation; it is excluded rather
 # than reported on a scale it does not live on.
-LOG_ODDS_METHODS = ("binary_gaussian", "binary_student_t", "ewma_student_t",
-                    "ewma_trunc_student_t")
+from .stage3b_scales import LOG_ODDS_METHODS  # noqa: E402  (kept next to its use)
+
+# the log-odds subset of THIS stage's five methods, in report order
+EVIDENCE_METHODS = tuple(m for m in METHODS_3B if m in LOG_ODDS_METHODS)
 SCENARIOS_3B = ("gaussian_ctrl", "sv_jump")
 NEVER = -1                      # tau = infinity; must never be read as an early alarm
 ALWAYS_VALID = "always_valid"   # the T = infinity control
@@ -182,8 +184,15 @@ def evidence_at_T(stat: np.ndarray, T: np.ndarray, cfg: Stage1Config) -> np.ndar
 
 
 def evaluate(cfg: Stage1Config, thresholds: dict, eps_fail: dict, eps_valid: dict,
-             fail_times: dict) -> tuple:
-    """Every (scenario, s, method, alpha, failure setting), plus the T=inf control."""
+             fail_times: dict, survivor_alpha: float | None = None) -> tuple:
+    """Every (scenario, s, method, alpha, failure setting), plus the T=inf control.
+
+    ``survivor_alpha`` chooses which budget's rule defines "survived to T" for the
+    evidence diagnostic.  It is an explicit argument rather than a silent
+    ``far_targets[-1]``, and it is recorded in the output so a reader knows which
+    rule selected the sample they are looking at.
+    """
+    survivor_alpha = cfg.far_targets[-1] if survivor_alpha is None else float(survivor_alpha)
     windows = list(cfg.stage3b_post_windows)
     rows, taus, ev, always = [], {}, [], []
     for sc in SCENARIOS_3B:
@@ -227,10 +236,19 @@ def evaluate(cfg: Stage1Config, thresholds: dict, eps_fail: dict, eps_valid: dic
                                      "failure_kind": kind,
                                      "T_fixed": T0 if kind == "fixed" else "",
                                      "mean_T": float(T.mean()), "threshold": t,
-                                     "working_prob_threshold": float(expit(-t)),
+                                     # blank where the statistic is not a log-odds:
+                                     # expit of an annualised Sharpe ratio is a
+                                     # number without an interpretation
+                                     "working_prob_threshold":
+                                         float(expit(-t)) if m in LOG_ODDS_METHODS else "",
+                                     "working_prob_threshold_note":
+                                         "" if m in LOG_ODDS_METHODS
+                                         else "not applicable: the statistic is not a "
+                                              "log-odds",
                                      "first_eligible_day": elig, **sm})
                         taus[(sc, s, m, a, key)] = (tau.copy(), T)
-                    surv_mask = ~((tau != NEVER) & (tau <= T))
+                    if a == survivor_alpha:
+                        surv_mask = ~((tau != NEVER) & (tau <= T))
                     if m not in LOG_ODDS_METHODS:
                         del st, u
                         continue
@@ -244,7 +262,7 @@ def evaluate(cfg: Stage1Config, thresholds: dict, eps_fail: dict, eps_valid: dic
                                "n_survivors_last_alpha": int(surv_mask.sum()),
                                "mean_U_at_T_survivors": float(u[surv_mask].mean()),
                                "mean_q_at_T_survivors": float(expit(u[surv_mask]).mean()),
-                               "survivor_filter_alpha": cfg.far_targets[-1],
+                               "survivor_filter_alpha": survivor_alpha,
                                "score_note": "working failure score: a static two-state "
                                              "classifier's q on switching data, not a "
                                              "posterior that models the switch"})

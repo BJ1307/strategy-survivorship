@@ -13,7 +13,7 @@ import numpy as np
 import pandas as pd
 
 from .plots import setup_style
-from .stage3b import LOG_ODDS_METHODS, MAIN, METHODS_3B, RANDOM_T
+from .stage3b import EVIDENCE_METHODS, MAIN, METHODS_3B, RANDOM_T
 
 C = {"binary_gaussian": "#1f77b4", "binary_student_t": "#d62728",
      "trailing_sharpe_252": "#2ca02c", "ewma_student_t": "#ff7f0e",
@@ -28,12 +28,21 @@ SET_LABEL = {"fixed_T0": "T=0", "fixed_T126": "T=126", "fixed_T252": "T=252",
 
 
 def draw_all(cfg, out_dir: Path) -> list[str]:
+    """One set of figures per signal strength.
+
+    The pre-specified main comparison for Stage 3B was s = 0.6; the s = 1 set is
+    the supervisor's primary setting and is drawn from the same run's data, not
+    relabelled or rescaled from s = 0.6.
+    """
     m = pd.read_csv(out_dir / "stage3b_metrics.csv")
     e = pd.read_csv(out_dir / "stage3b_evidence.csv")
     fd = out_dir / "figures"
-    outs = [figure_rates(cfg, m, fd / "fig3b1_rates.png"),
-            figure_delay(cfg, m, fd / "fig3b2_delay.png"),
-            figure_evidence(cfg, e, fd / "fig3b3_evidence.png")]
+    outs = []
+    for sharpe in sorted(cfg.stage3a_sharpes, reverse=True):
+        tag = f"s{sharpe:g}".replace(".", "")
+        outs += [figure_rates(cfg, m, fd / f"fig3b1_rates_{tag}.png", sharpe),
+                 figure_delay(cfg, m, fd / f"fig3b2_delay_{tag}.png", sharpe),
+                 figure_evidence(cfg, e, fd / f"fig3b3_evidence_{tag}.png", sharpe)]
     return [str(p.relative_to(out_dir)) for p in outs]
 
 
@@ -41,9 +50,10 @@ def _order(cfg):
     return [f"fixed_T{T}" for T in cfg.stage3b_fixed_failure_days] + [RANDOM_T]
 
 
-def figure_rates(cfg, m: pd.DataFrame, out: Path) -> Path:
+def figure_rates(cfg, m: pd.DataFrame, out: Path, sharpe: float | None = None) -> Path:
     """Early false alarms, and the two detection rates they have to be read with."""
-    a, s, sc, h = MAIN["alpha"], MAIN["sharpe"], MAIN["scenario"], MAIN["h"]
+    a, sc, h = MAIN["alpha"], MAIN["scenario"], MAIN["h"]
+    s = MAIN["sharpe"] if sharpe is None else float(sharpe)
     sets = _order(cfg)
     x = np.arange(len(sets))
     fig, axes = plt.subplots(1, 3, figsize=(13.4, 4.6))
@@ -66,7 +76,7 @@ def figure_rates(cfg, m: pd.DataFrame, out: Path) -> Path:
         ax.set_title(title, fontsize=9.5)
     axes[0].set_ylabel(f"rate  (s={s:g}, budget {a:.0%})")
     axes[0].legend(frameon=False, fontsize=7, loc="upper left")
-    fig.suptitle("Stage 3B figure 1: a strategy that is valid first and fails at T. "
+    fig.suptitle(f"Stage 3B figure 1 (s = {s:g} vs 0): valid first, failing at T. "
                  "SV+jumps, one frozen 504-day threshold per method.\n"
                  "Joint = survival x conditional; a path that never alarms is tau = "
                  "infinity, never an early false alarm. Post-failure window fixed at "
@@ -77,9 +87,10 @@ def figure_rates(cfg, m: pd.DataFrame, out: Path) -> Path:
     return out
 
 
-def figure_delay(cfg, m: pd.DataFrame, out: Path) -> Path:
+def figure_delay(cfg, m: pd.DataFrame, out: Path, sharpe: float | None = None) -> Path:
     """Post-failure delay on a common window, over ALL survivors."""
-    a, s, sc = MAIN["alpha"], MAIN["sharpe"], MAIN["scenario"]
+    a, sc = MAIN["alpha"], MAIN["scenario"]
+    s = MAIN["sharpe"] if sharpe is None else float(sharpe)
     sets = _order(cfg)
     hs = list(cfg.stage3b_post_windows)
     fig, axes = plt.subplots(1, 2, figsize=(12.0, 4.6))
@@ -117,7 +128,8 @@ def figure_delay(cfg, m: pd.DataFrame, out: Path) -> Path:
     ax.set_title("conditional detection against the window", fontsize=9.5)
     ax.legend(frameon=False, fontsize=7)
     axes[0].set_xlabel("failure-time setting")
-    fig.suptitle("Stage 3B figure 2: delay after failure, measured on a COMMON window so "
+    fig.suptitle(f"Stage 3B figure 2 (s = {s:g} vs 0): delay after failure, measured on a "
+                 "COMMON window so "
                  "different T do not get different amounts of observation.\n"
                  "Undetected survivors are scored at the cap, not dropped; an early false "
                  "alarm is not a zero delay.", y=1.02, fontsize=9.5)
@@ -127,19 +139,21 @@ def figure_delay(cfg, m: pd.DataFrame, out: Path) -> Path:
     return out
 
 
-def figure_evidence(cfg, e: pd.DataFrame, out: Path) -> Path:
+def figure_evidence(cfg, e: pd.DataFrame, out: Path, sharpe: float | None = None) -> Path:
     """How much favourable history each method is carrying at the moment of failure."""
-    s, sc = MAIN["sharpe"], MAIN["scenario"]
+    sc = MAIN["scenario"]
+    s = MAIN["sharpe"] if sharpe is None else float(sharpe)
     sets = _order(cfg)
     x = np.arange(len(sets))
     fig, axes = plt.subplots(1, 2, figsize=(12.0, 4.6))
     d = e[(e.scenario == sc) & (e.sharpe_valid == s)]
+    alpha_used = float(d.survivor_filter_alpha.iloc[0]) if len(d) else float("nan")
     for ax, (col_all, col_sur, name) in zip(
             axes, [("mean_U_at_T_all", "mean_U_at_T_survivors",
                     "working failure log-odds  U_T"),
                    ("mean_q_at_T_all", "mean_q_at_T_survivors",
                     "working failure score  q_T")]):
-        for k, mth in enumerate(LOG_ODDS_METHODS):
+        for k, mth in enumerate(EVIDENCE_METHODS):
             ya = [float(d[(d.setting == st) & (d.method == mth)][col_all].iloc[0])
                   if len(d[(d.setting == st) & (d.method == mth)]) else np.nan
                   for st in sets]
@@ -156,12 +170,16 @@ def figure_evidence(cfg, e: pd.DataFrame, out: Path) -> Path:
     axes[0].axhline(0.0, color="0.6", lw=0.8)
     axes[1].axhline(0.5, color="0.6", lw=0.8)
     axes[0].legend(frameon=False, fontsize=7)
-    fig.suptitle("Stage 3B figure 3: evidence carried into the failure moment. Solid = all "
-                 "paths, dashed = paths that survived to T.\nT=0 uses the PRIOR, not the "
-                 "end of the horizon. Working failure score from a static two-state "
-                 "classifier, not a posterior that models the switch.\nThe trailing "
-                 "Sharpe is omitted: its statistic is a Sharpe ratio, not a log-odds, so "
-                 "expit of it would not mean anything.", y=1.03, fontsize=9.5)
+    fig.suptitle(f"Stage 3B figure 3 (s = {s:g} vs 0): MEAN evidence at the failure "
+                 "moment. "
+                 "Solid = mean over all paths, dashed = mean over paths that survived "
+                 f"to T\nunder the alpha = {alpha_used:.0%} rule (survivor sets differ "
+                 "by budget, so the dashed line depends on that choice).\n"
+                 "T=0 uses the PRIOR, not the end of the horizon. Working failure score "
+                 "from a static two-state classifier, not a posterior that models the "
+                 "switch.\nThe trailing Sharpe is omitted: its statistic is a Sharpe "
+                 "ratio, not a log-odds, so expit of it would not mean anything.",
+                 y=1.06, fontsize=9)
     fig.tight_layout()
     fig.savefig(out, dpi=160, bbox_inches="tight")
     plt.close(fig)

@@ -898,10 +898,13 @@
     }
   ],
   "joint_identity_max_gap": 5.551115123125783e-17,
-  "elapsed_s": 55.7578650000014,
+  "elapsed_s": 56.88205891600228,
   "figures": [
-    "figures/fig3b1_rates.png",
-    "figures/fig3b2_delay.png",
-    "figures/fig3b3_evidence.png"
+    "figures/fig3b1_rates_s1.png",
+    "figures/fig3b2_delay_s1.png",
+    "figures/fig3b3_evidence_s1.png",
+    "figures/fig3b1_rates_s06.png",
+    "figures/fig3b2_delay_s06.png",
+    "figures/fig3b3_evidence_s06.png"
   ]
 }
