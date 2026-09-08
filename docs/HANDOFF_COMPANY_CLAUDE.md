@@ -19,13 +19,23 @@
 |---|---|
 | 仓库 | `https://github.com/BJ1307/strategy-survivorship`（私有） |
 | 分支 | `main` |
-| 生成全部实验结果的版本 | tag `pre-consolidation`（Stage 3B 完成时的 `17595a5`） |
-| 本次整理版本 | 见 `git log -1`，提交信息以 `Consolidation:` 开头 |
+| 生成全部实验结果的版本 | `17595a5b885b5e9d896fe416000865c6cea708a3`，tag **`pre-consolidation`** |
+| 本次整理版本 | `eb8620dc4b0b48056013e1a874f515e2f876c003`（提交信息以 `Consolidation:` 开头） |
 | 语言 | Python 3.13，依赖见 `requirements-lock.txt` |
 
-`outputs/` 下的 CSV 与 JSON 是在 `pre-consolidation` 处生成的；收口只改了文档、图与措辞，
-**没有重跑任何模拟**（唯一例外是 Stage 3B 为补出 Sharpe=1 的图而重跑了一次，
-结果确定性一致，门槛文件逐字节相同）。
+### 结果来源清单
+
+| 产物 | 由哪个版本生成 | 收口时是否改动 |
+|---|---|---|
+| `outputs/stage1*` … `outputs/stage3a1*` 的全部 CSV/JSON | `17595a5`（`pre-consolidation`） | 否 |
+| `outputs/stage3b_*.csv` / `.json` | `17595a5` 的代码，收口时确定性重跑一次 | 数值不变；新增 `working_prob_threshold_note` 列，滚动方法的 `working_prob_threshold` 由数值改为留空 |
+| `outputs/stage3a1_metrics.csv` 的 `median_*` 两列 | Stage 3B 轮次修复中位数定义时重建 | 是（只这两列；门槛文件逐字节相同） |
+| `outputs/figures/fig3b*` | 收口时按 Sharpe 分别重画 | 是（文件名加 `_s1` / `_s06` 后缀） |
+| `docs/figures/fig1..4` | 收口时由 `figures_brief` 从上述 CSV 新画 | 新增 |
+| 各阶段 `*_report.md` | 收口时用 `--report-only` 从既有 CSV 重生成 | 文字与新增章节，数值来自同一批 CSV |
+
+**收口过程没有重新校准任何门槛，也没有改变任何随机流。**
+干净 checkout 验证：330 项测试通过，四张精选图从已提交 CSV 重建后与仓库中的文件逐字节一致。
 
 ### 阅读顺序
 
