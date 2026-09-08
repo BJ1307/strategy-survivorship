@@ -53,6 +53,7 @@ pip install -r requirements.txt && pip install -e .
 .venv/bin/python -m strategy_survivorship.run_stage2e1    # Stage 2E.1 收尾、跨预算统计、高斯参照（约 40 秒）
 .venv/bin/python -m strategy_survivorship.run_stage3a     # Stage 3A Sharpe 0.6 vs 0，保留 1 vs 0（约 120 秒）
 .venv/bin/python -m strategy_survivorship.run_stage3a1    # Stage 3A.1 监测期限诊断（约 60 秒）
+.venv/bin/python -m strategy_survivorship.run_stage3b     # Stage 3B 随机失效时间诊断（约 60 秒）
 .venv/bin/python -m strategy_survivorship.run_stage2e --figures-only  # 仅从 CSV 重绘
 ```
 
@@ -176,6 +177,13 @@ theory.md         公式、符号、单位、推导、参考链接
 | `outputs/stage3a1_out_of_horizon.csv` | 短期门槛延用到各天的实际累计误杀 |
 | `outputs/figures/fig3a1_{1,2,3}_*.png` | Stage 3A.1 三张图 |
 | `outputs/review_bundle_stage3a1.zip` | Stage 3A.1 审阅包（含完整包与环境文件）|
+| `outputs/stage3b_report.md` | **Stage 3B 报告**：随机失效时间的有限诊断 |
+| `outputs/stage3b_metrics.csv` | 失效前误杀、条件检出、联合检出、失效后延迟（2 情境 × 5 方法 × 2 s × 2 α × 4 失效设定）|
+| `outputs/stage3b_always_valid.csv` | T=∞ 始终有效对照的全期实际误杀率 |
+| `outputs/stage3b_bootstrap.csv` | 预设比较的配对区间（存活分母每次重抽重算）|
+| `outputs/stage3b_evidence.csv` / `_identity_check.csv` | 失效时刻的 U_T、q_T / 解析恒等式核验 |
+| `outputs/figures/fig3b{1,2,3}_*.png` | Stage 3B 三张图 |
+| `outputs/review_bundle_stage3b.zip` | Stage 3B 审阅包 |
 | `outputs/stage1_diagnostic_traces.csv` | 冲击诊断逐日收益、增量、log odds、概率 |
 | `outputs/run_metadata.json` | 运行配置、随机流指纹、环境版本、分阶段耗时 |
 | `outputs/figures/fig1_example_paths.png` | 固定示例路径的累计收益与两个贝叶斯概率 |
