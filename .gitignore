@@ -28,6 +28,16 @@ outputs/status.json
 outputs/review_bundle*/
 outputs/*.zip
 
+# Real market data. FRED states the S&P 500 series comes from S&P Dow Jones
+# Indices and may not be redistributed, so the raw snapshots and every per-day
+# derived series stay local. The downloader, the protocol and the data dictionary
+# ARE tracked. The data is not, and NEITHER ARE THE PROVENANCE SIDECARS: they live
+# under data/ and this rule seals the whole directory, so `data/raw/*.provenance.json`
+# and `acquisition.provenance.json` stay local too and are supplied out of band.
+# (Earlier wording here claimed the provenance record was tracked. It never was.)
+data/
+outputs/market/
+
 # OS / editor
 .DS_Store
 .idea/

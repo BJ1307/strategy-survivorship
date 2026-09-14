@@ -77,6 +77,70 @@ done
 | 3A.1 | 监测期限本身是不是原因 | [`stage3a1_report.md`](outputs/stage3a1_report.md) |
 | 3B | 先有效、后失效（第一年内） | [`stage3b_report.md`](outputs/stage3b_report.md) |
 
+| 真实数据 1 | 真实指数噪声的可复现参照与训练期诊断（**不含**模拟对比） | 本地生成：`outputs/market/market_stage1_report.md` |
+| 真实数据 2 | 冻结生成器与 S&P 500 训练样本的诊断对照（**不搜参数、不碰监测器**） | 本地生成：`outputs/market/market_stage2_report.md` |
+| 真实数据 3 | 只校准 A、ρ，冻结后在 2022–2023 验证（**改善未能延续**） | 本地生成：`outputs/market/market_stage3_report.md` |
+| 真实数据 4 | 2017–2023 回顾性 walk-forward 回放（**定期重估平均未胜过固定参数**） | 本地生成：`outputs/market/market_stage4_report.md` |
+| 跨市场 | S&P／Nasdaq-100／Nikkei 225／动量因子 × 三个**固定**模型的基线对照 | 本地生成：`outputs/market/market_cross_report.md` |
+| 跨资产 | 八个收益类对象 + 七个市场状态序列，按三类口径分开 | [`docs/CROSS_ASSET_FINDINGS.md`](docs/CROSS_ASSET_FINDINGS.md) |
+| 恢复实验 | 真实生成机制已知时，现有校准程序能否找回参数（**参数恢复差、筛选不稳**） | 本地生成：`outputs/market/market_recovery_report.md` |
+| 敏感性 | 固定伪历史、只换内部模拟种子，选择是否移动（**20 次拟合全部不动**） | 本地生成：`outputs/market/market_sensitivity_report.md` |
+
+真实数据阶段的口径写在 [`docs/MARKET_STAGE1_PROTOCOL.md`](docs/MARKET_STAGE1_PROTOCOL.md)，
+字段说明在 [`docs/MARKET_DATA_DICTIONARY.md`](docs/MARKET_DATA_DICTIONARY.md)。
+**市场数据与由它派生的每日序列、图和报告都不进 Git**（FRED 载明 S&P 数据不得再分发）。
+`data/` 整个目录被忽略，**provenance 记录也在其中**，因此同样不在 Git 里，按需另行提供。
+克隆后用下面的命令在本地重建：
+
+```bash
+.venv/bin/python -m strategy_survivorship.run_market_stage1
+.venv/bin/python -m strategy_survivorship.report_market_stage1
+.venv/bin/python -m strategy_survivorship.run_market_stage2 --paths 2000
+.venv/bin/python -m strategy_survivorship.report_market_stage2
+```
+
+```bash
+.venv/bin/python -m strategy_survivorship.run_market_stage3
+.venv/bin/python -m strategy_survivorship.report_market_stage3
+.venv/bin/python -m strategy_survivorship.run_market_stage4      # 约 2 分钟
+.venv/bin/python -m strategy_survivorship.report_market_stage4
+```
+
+```bash
+.venv/bin/python -m strategy_survivorship.run_market_cross --paths 2000
+.venv/bin/python -m strategy_survivorship.report_market_cross
+```
+
+```bash
+.venv/bin/python -m strategy_survivorship.run_market_assets --paths 1500
+.venv/bin/python -m strategy_survivorship.plots_market_assets
+```
+
+```bash
+.venv/bin/python -m strategy_survivorship.run_market_recovery      # 约 9 分钟
+.venv/bin/python -m strategy_survivorship.report_market_recovery
+.venv/bin/python -m strategy_survivorship.plots_market_recovery
+.venv/bin/python -m strategy_survivorship.run_market_sensitivity   # 约 4 分钟
+.venv/bin/python -m strategy_survivorship.report_market_sensitivity
+.venv/bin/python -m strategy_survivorship.plots_market_sensitivity
+```
+
+收益取样的窗口边界口径（**按结束日期归属、首日可回取前一个收盘价、缺失交易日不静默跨过**）
+写在 [`docs/RETURN_BOUNDARY_CONVENTION.md`](docs/RETURN_BOUNDARY_CONVENTION.md)，
+由 `market_returns.py` 统一实现；两个旧入口在共同口径下逐位一致，可用下面一条命令复核：
+
+```bash
+.venv/bin/python -m strategy_survivorship.run_market_returns_check
+```
+
+下一轮的模型基准比较（iid Student-t、GARCH(1,1)-t 对照现有 SV 核）**只有设计、尚未实现**，
+写在 [`docs/BENCHMARK_PROTOCOL_NEXT_ROUND.md`](docs/BENCHMARK_PROTOCOL_NEXT_ROUND.md)。
+
+参数与配置变更记入 [`docs/PARAMETER_CHANGE_LOG.md`](docs/PARAMETER_CHANGE_LOG.md)，
+给导师的数据请求在 [`docs/DATA_REQUEST_FOR_SUPERVISOR.md`](docs/DATA_REQUEST_FOR_SUPERVISOR.md)。
+导师数据来源清单在 [`docs/DATA_SOURCE_INVENTORY.md`](docs/DATA_SOURCE_INVENTORY.md)，
+下一轮跨市场扫描规范在 [`docs/CROSS_MARKET_SCAN_SPEC.md`](docs/CROSS_MARKET_SCAN_SPEC.md)。
+
 **负面结果保留在报告里**：高斯情境下稳健处理的代价、门槛迁移失败、弱信号低检出、
 以及基线方法在某些设定下胜出，都没有被筛掉。
 
