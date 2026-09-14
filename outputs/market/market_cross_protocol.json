@@ -1,0 +1,109 @@
+{
+  "purpose": "find which real objects the existing controllable-Sharpe generator already resembles, so the NEXT small calibration has a target. This stage fits nothing.",
+  "objects": {
+    "sp500": {
+      "label": "S&P 500",
+      "kind": "price_index",
+      "calendar": "nyse",
+      "chosen_because": "the object stages 1-4 calibrated against"
+    },
+    "nasdaq100": {
+      "label": "Nasdaq-100",
+      "kind": "price_index",
+      "calendar": "nyse",
+      "chosen_because": "same country and calendar, different composition -- separates composition from window"
+    },
+    "nikkei225": {
+      "label": "Nikkei 225",
+      "kind": "price_index",
+      "calendar": "jpx",
+      "chosen_because": "a different exchange calendar and a different crisis timing"
+    },
+    "ff_momentum": {
+      "label": "Momentum factor (daily)",
+      "kind": "factor_return",
+      "calendar": "nyse",
+      "chosen_because": "a long-short STRATEGY return rather than a price index; chosen for the type it adds, not for how it fits"
+    }
+  },
+  "objects_fixed_before_results": true,
+  "models": {
+    "gaussian": "iid normal",
+    "stoch_vol": "pure SV at the recorded A = 1, rho = 0.98",
+    "sv_jump": "SV + jumps, additionally kappa = 5, lambda = 2/yr"
+  },
+  "no_search": "every shape parameter is the value already in config.py; the only quantity estimated per object is its overall scale",
+  "transforms": {
+    "price_index": "simple daily return P_t/P_(t-1) - 1 between consecutive trading days, decimals",
+    "factor_return": "the published daily factor return, percent converted to decimal once on load; never differenced and never compounded into a price first",
+    "forbidden": "no forward fill, no monthly series interpolated to daily, no winsorising"
+  },
+  "periods": {
+    "describe": [
+      "2017-01-01",
+      "2021-12-31"
+    ],
+    "contrast": [
+      "2022-01-01",
+      "2023-12-31"
+    ],
+    "describe_role": "description AND the scale estimate",
+    "contrast_role": "a frozen-parameter development contrast. It is development data that has already been examined, not a new independent test.",
+    "excluded": "2024-2025 takes no part in any statistic, figure or choice this round"
+  },
+  "scale_handling": {
+    "per_object": "sigma_annual = sd(returns in the describe window) * sqrt(252), estimated separately for each object",
+    "frozen": "the SAME scale is used for the contrast period. The later period's realised volatility never rescales a main result.",
+    "level_versus_shape": "the RV_21 quantiles are reported TWICE and the two must not be confused. As LEVELS they compare the market and the simulation at the same frozen sigma_annual. As SHAPE they are divided by the series' OWN annualised sd -- and for a simulation that ratio is formed INSIDE each path before any quantile is taken across paths, because dividing every path by one common number is a different quantity.",
+    "cross_market_shape": "scale-free statistics (tails, ACF, W1 on standardised returns, concentration, lead-lag) are compared directly; the volatility range is compared through the per-path shape ratio above.",
+    "no_unified_leaderboard": "stage 4's per-branch standardised total loss is NOT reused here and no object is ranked by a single total score."
+  },
+  "diagnostics": {
+    "volatility_range": [
+      "rv21_q10",
+      "rv21_q50",
+      "rv21_q90"
+    ],
+    "distribution_and_tails": [
+      "W1 on standardised daily returns with a simulation-to-simulation reference",
+      "tail frequency AND raw count at 2 sd, each side",
+      "tail frequency AND raw count at 3 sd, each side",
+      "tail frequency AND raw count at 5 sd, each side"
+    ],
+    "volatility_persistence": [
+      "acf_absret_lag1",
+      "acf_absret_lag5",
+      "acf_absret_lag10",
+      "acf_absret_lag21",
+      "acf_absret_lag63"
+    ],
+    "auxiliary_mechanism": [
+      "concentration_max_exceed_63d",
+      "leadlag_ret_vs_future_sq_lag1",
+      "leadlag_ret_vs_future_sq_lag5",
+      "leadlag_ret_vs_future_sq_lag21"
+    ],
+    "nothing_else": "no statistic was added or removed after seeing a result"
+  },
+  "simulation": {
+    "paths_per_cell": 2000,
+    "length": "matched to that object's window",
+    "entropy": 20260922,
+    "tag": "blake2b(object, model, period) -- stable across processes",
+    "initialisation": "stationary; no path is rescaled after the draw"
+  },
+  "figures": [
+    "one cross-market gap overview table",
+    "one figure on the volatility-persistence gap, which stages 2-4 identified as the core mismatch"
+  ],
+  "stopping_condition": "stop once every object has been contrasted against the three fixed models over both periods and the gap table exists. No re-run with different settings, whatever the result.",
+  "range_semantics": "a simulated range is the spread of a statistic under a FIXED model; it is not a market-parameter confidence interval, being inside it does not make a model correct, and being outside it does not identify a missing mechanism.",
+  "not_in_this_stage": [
+    "GAN",
+    "change-point detection",
+    "a leverage term",
+    "a new jump mechanism",
+    "any window or parameter search",
+    "declaring a best-fitting market on a total score"
+  ]
+}

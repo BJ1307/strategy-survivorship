@@ -1,0 +1,24 @@
+{
+  "rows_in_file": 2610,
+  "rows_in_window": 2348,
+  "trading_days_expected": 2262,
+  "trading_days_observed": 2262,
+  "blank_weekdays": 86,
+  "blank_weekdays_matching_a_holiday": 86,
+  "blank_on_an_expected_trading_day": [],
+  "weekday_absent_from_file": [],
+  "unexpected_value_on_a_holiday": [],
+  "duplicate_dates": [],
+  "nonpositive_prices": [],
+  "out_of_order": false,
+  "coverage_requested": [
+    "2017-01-01",
+    "2025-12-31"
+  ],
+  "coverage_available": [
+    "2017-01-03",
+    "2025-12-31"
+  ],
+  "covers_request": true,
+  "defects": []
+}

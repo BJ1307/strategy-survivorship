@@ -1,0 +1,9 @@
+object,period,same_pinned_file,n_cross,n_assets,n_common_convention,cross_vs_assets_shared,cross_vs_assets_max_abs_diff,cross_vs_common_shared,cross_vs_common_max_abs_diff,cross_dates_absent_from_common
+ff_momentum,describe,True,1259,1259,1259,1259,0.0,1259,0.0,0
+sp500,describe,True,1258,1258,1259,1258,0.0,1258,0.0,0
+nasdaq100,describe,True,1258,1258,1259,1258,0.0,1258,0.0,0
+nikkei225,describe,True,1220,1220,1221,1220,0.0,1220,0.0,0
+ff_momentum,contrast,True,501,501,501,501,0.0,501,0.0,0
+sp500,contrast,True,500,500,501,500,0.0,500,0.0,0
+nasdaq100,contrast,True,500,500,501,500,0.0,500,0.0,0
+nikkei225,contrast,True,489,489,490,489,0.0,489,0.0,0

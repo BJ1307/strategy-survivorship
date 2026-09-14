@@ -1,0 +1,355 @@
+{
+  "protocol": {
+    "question": "does re-estimating A and rho before each year describe the following year's statistics better than leaving them fixed?",
+    "status": "RETROSPECTIVE replay on history that has already been examined. Re-running a calibration on data we have already studied is not the same as having run it live, and nothing here is evidence about a future year.",
+    "development_scope": [
+      "2017-01-01",
+      "2023-12-31"
+    ],
+    "holdout": "2024-2025 takes no part in any statistic, figure or choice. To be exact about what happens: the CSV is read whole, then truncated at the development end by data_up_to() BEFORE anything is computed, so those rows are loaded into memory and discarded unexamined rather than never touched by the file reader. A functional check corrupts every holdout return and confirms the development frame and a full calibration are unchanged.",
+    "evaluation_years": [
+      2020,
+      2021,
+      2022,
+      2023
+    ],
+    "window_rules": {
+      "rolling3y": "the three calendar years before the evaluation year",
+      "expanding": "2017 through the year before the evaluation year",
+      "note": "for 2020 the two rules coincide (2017-2019), so that year carries no information about the choice between them"
+    },
+    "cadence": "calibrate once before each year, frozen inside the year. Neither the window length nor the update frequency is searched.",
+    "branches": {
+      "sv_only": "pure SV, kappa = 0",
+      "sv_jump": "SV + jumps at the recorded kappa and lambda"
+    },
+    "grid": {
+      "A": [
+        0.6,
+        0.8,
+        1.0,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2.0
+      ],
+      "rho": [
+        0.9,
+        0.94,
+        0.96,
+        0.98,
+        0.99
+      ],
+      "note": "the stage-3 grid, unchanged. It is NOT widened if a result is poor."
+    },
+    "comparison": {
+      "recalibrated": "A and rho re-estimated on the window",
+      "fixed_baseline": "A = 1.0, rho = 0.98",
+      "shared": "both use the SAME overall scale, estimated from that window. The scale is never derived from the evaluation year."
+    },
+    "objective": "the stage-3 objective, unchanged: RV_21 quantiles compared in logs and the centred-absolute-return ACF at lags [1, 5, 10, 21, 63], two groups of equal total weight. A finite-sample simulated-moment distance, not a likelihood and not a test.",
+    "lengths": {
+      "calibration": "the simulated length matches the history window",
+      "evaluation": "the simulated length matches the evaluation year"
+    },
+    "standardising_references": {
+      "calibration": "built at EACH origin from then-available information: the baseline parameters, the window's own scale estimate and the window's length. Fixed across candidates inside that calibration. The stage-2 full-training reference is NOT carried into early windows -- it contains information from after them.",
+      "evaluation": "ONE reference per (year, branch): baseline parameters, the scale from the EXPANDING window ending before the year, and a length equal to the year's trading-day count, which is a calendar fact.",
+      "what_the_shared_reference_does_and_does_not_cover": "it is shared by the two METHODS (re-estimated and fixed baseline) inside one (year, branch) cell, which is what makes the difference between them meaningful. It is NOT shared across branches: pure SV and SV+jumps each get their own weights, so a loss LEVEL from one branch is not on the same scale as a loss level from the other and the two must not be ranked against each other."
+    },
+    "statistics_inside_the_year": "every evaluation statistic is computed inside the evaluation year, identically for the market and for every simulated path. RV_21 therefore begins on the 21st trading day of the year. No statistic crosses the boundary, so no embargo is imposed.",
+    "initialisation": "the log-variance AR(1) starts from its stationary law. This is a check on whether the distribution SHAPE transfers after a rolling re-fit; it is not a conditional forecast and the latent state is never filtered on the real path.",
+    "budgets_and_seeds": {
+      "screen_paths": 400,
+      "final_paths": 2000,
+      "eval_paths": 2000,
+      "n_finalists": 3,
+      "screening": "common random numbers across every cell of one calibration",
+      "final": "fresh streams, independent of the screen",
+      "seeds": "derived from the protocol coordinates (rule, branch, year), never from the data"
+    },
+    "auxiliary": {
+      "list": [
+        "skewness",
+        "excess_kurtosis",
+        "tail_below_m2_count",
+        "tail_above_p2_count",
+        "tail_below_m3_count",
+        "tail_above_p3_count",
+        "acf_ret_lag1",
+        "acf_ret_lag5",
+        "acf_sqret_lag1",
+        "acf_sqret_lag5",
+        "leadlag_ret_vs_future_sq_lag1",
+        "leadlag_ret_vs_future_sq_lag5",
+        "concentration_max_exceed_63d"
+      ],
+      "rule": "reported every year, NEVER added to the objective whatever they show"
+    },
+    "reporting_limits": [
+      "this is a RETROSPECTIVE walk-forward replay over development history that has already been examined; it is not a live track record",
+      "the sixteen year-rule-branch cells are not sixteen independent market experiments: they share one index, one history, overlapping calibration windows and two branches of the same model family",
+      "four years and two overlapping window rules are not independent replicates; no significance statement is made from them",
+      "a Monte-Carlo standard error here is the precision of the EVALUATION computation given the parameters and the reference weights. It excludes market sampling uncertainty and parameter-estimation uncertainty entirely",
+      "a failure is not attributed to a regime change by default",
+      "the main window rule is not swapped on the strength of the replay",
+      "every simulated range is conditional on the model AND the parameters, and carries no parameter-estimation uncertainty"
+    ],
+    "if_annual_re_estimation_is_ever_adopted": "freeze the ALGORITHM and its hyper-parameters -- the grid, the objective, the window rule, the budget, the selection rule -- and let the PARAMETERS update every year by that frozen rule. 'Re-estimate annually' and 'do not re-tune between years' are not in conflict: the first is the parameters moving under a fixed procedure, the second is the procedure itself not being touched once the evaluation has begun.",
+    "relation_to_the_monitoring_project": "a generator that re-estimates well does NOT imply the monitor's two-year 15% cumulative false-alarm control still holds. Using such updates in a real monitor would require recalibrating the whole rule INCLUDING the update action; a budget is not re-issued at each update."
+  },
+  "stage3_corrections": {
+    "provenance": "recomputed from outputs/market/market_stage3_*, which are unchanged. Stage 3's numbers all stand; what is corrected is how they were described.",
+    "1_order_of_operations": {
+      "what_stage_3_implied": "that both validation loss definitions were fixed before any validation number existed",
+      "what_actually_happened": "the smoke run of run_market_stage3 executed the WHOLE pipeline, including the validation period, and printed validation losses. The validation-length standardisation was added AFTER that output had been seen, and the code comment claiming otherwise was wrong.",
+      "status_now": "loss_frozen_training_scales remains the pre-specified primary result. loss_validation_length_scales is a POST-HOC SUPPLEMENTARY analysis. Its agreement with the primary ordering is therefore weaker evidence than stage 3 presented it as, and it selects nothing.",
+      "not_affected": "the grid, the objective, the selection rule and the selected parameters were all fixed before the search and are untouched by this correction."
+    },
+    "2_attribution": {
+      "withdrawn": "the cause lies in the market itself, not in the fitting process",
+      "replacement": "a transfer failure across periods was observed. This round cannot separate the contributions of a change in the data-generating mechanism, finite-sample variation in either period, uncertainty in the estimated parameters, and model misspecification. The market statistics do differ sharply between the two periods; that is an observation, not an attribution."
+    },
+    "3_fitted_versus_held_out": {
+      "fitted_targets": [
+        "rv21_q10",
+        "rv21_q50",
+        "rv21_q90",
+        "acf_absret_lag1",
+        "acf_absret_lag5",
+        "acf_absret_lag10",
+        "acf_absret_lag21",
+        "acf_absret_lag63"
+      ],
+      "note": "the RV_21 quantiles and the absolute-return ACF are the objective itself and must never be cited as held-out evidence",
+      "boundary_crossing_is_not_enough": "stage 3 reported that no held-out statistic moved from inside the simulated range to outside. That test cannot see a centre that drifted while staying inside a wide band, so the centre error is checked here as well, scaled by the baseline's own band.",
+      "centre_error_check": {
+        "sv_only": {
+          "n_held_out_checked": 24,
+          "centre_error_worse": [
+            {
+              "statistic": "tail_above_p3_count",
+              "baseline_centre_error": 0.0,
+              "selected_centre_error": 0.2727272727272727,
+              "change": 0.2727272727272727
+            },
+            {
+              "statistic": "agg21d_excess_kurtosis",
+              "baseline_centre_error": 0.036902273858609606,
+              "selected_centre_error": 0.1130060935573417,
+              "change": 0.07610381969873209
+            }
+          ],
+          "centre_error_better": 10,
+          "essentially_unchanged": 12
+        },
+        "sv_jump": {
+          "n_held_out_checked": 24,
+          "centre_error_worse": [
+            {
+              "statistic": "tail_above_p3_count",
+              "baseline_centre_error": 0.0,
+              "selected_centre_error": 0.2727272727272727,
+              "change": 0.2727272727272727
+            },
+            {
+              "statistic": "agg21d_excess_kurtosis",
+              "baseline_centre_error": 0.05058309538449226,
+              "selected_centre_error": 0.17209413748220942,
+              "change": 0.12151104209771715
+            },
+            {
+              "statistic": "tail_above_p2_count",
+              "baseline_centre_error": 0.5238095238095238,
+              "selected_centre_error": 0.5714285714285714,
+              "change": 0.04761904761904756
+            },
+            {
+              "statistic": "acf_ret_lag1",
+              "baseline_centre_error": 1.6556912734093026,
+              "selected_centre_error": 1.6801099810024611,
+              "change": 0.024418707593158562
+            }
+          ],
+          "centre_error_better": 12,
+          "essentially_unchanged": 8
+        }
+      }
+    },
+    "4_uncertainty_and_scope": {
+      "structural_claims_restricted": "stage 3's statement that the two target groups cannot be satisfied together holds FOR THIS GRID AND THIS OBJECTIVE. A different target set, a different weighting or a wider grid could change it. It is not a proof about the model family.",
+      "three_uncertainties_are_different": {
+        "simulation_standard_error": "how much a reported loss or median moves if the same model is simulated again. Reported as loss_mc_se, and it is the only one stage 3 quantified.",
+        "market_sample_uncertainty": "how much the SAMPLE statistic would move on another draw of the same length from the same market. NOT quantified: one history, no replicate.",
+        "parameter_uncertainty": "how much the selected (A, rho) would move on another sample. NOT quantified. Every simulated range in stages 3 and 4 is conditional on the selected parameters and contains none of it."
+      }
+    }
+  },
+  "code_identity": {
+    "git_head": "4b8450604ff06c41aefc1afac5968065addf8896",
+    "git_branch": "main",
+    "working_tree_is_dirty": true,
+    "uncommitted_paths": [
+      "README.md",
+      "docs/CROSS_MARKET_SCAN_SPEC.md",
+      "docs/DATA_SOURCE_INVENTORY.md",
+      "docs/DECK_FINAL_6PAGE_SPEC.md",
+      "docs/DECK_FINAL_TUNING_SPEC.md",
+      "docs/MARKET_DATA_DICTIONARY.md",
+      "docs/MARKET_STAGE1_PROTOCOL.md",
+      "gitignore",
+      "outputs/mixed_noise_bootstrap.csv",
+      "outputs/mixed_noise_metrics.csv",
+      "outputs/mixed_noise_parameter_summary.csv",
+      "outputs/mixed_noise_protocol.json",
+      "outputs/mixed_noise_report.md",
+      "outputs/mixed_noise_subgroups.csv",
+      "outputs/mixed_noise_summary.json",
+      "outputs/mixed_noise_thresholds.csv",
+      "src/strategy_survivorship/config.py",
+      "src/strategy_survivorship/market_data.py",
+      "src/strategy_survivorship/market_diagnostics.py",
+      "src/strategy_survivorship/market_stage2.py",
+      "src/strategy_survivorship/market_stage3.py",
+      "src/strategy_survivorship/market_stage4.py",
+      "src/strategy_survivorship/mixed_noise.py",
+      "src/strategy_survivorship/plots_market.py",
+      "src/strategy_survivorship/plots_market_stage2.py",
+      "src/strategy_survivorship/plots_market_stage3.py",
+      "src/strategy_survivorship/plots_market_stage4.py",
+      "src/strategy_survivorship/report_market_stage1.py",
+      "src/strategy_survivorship/report_market_stage2.py",
+      "src/strategy_survivorship/report_market_stage3.py",
+      "src/strategy_survivorship/report_market_stage4.py",
+      "src/strategy_survivorship/report_mixed_noise.py",
+      "src/strategy_survivorship/run_market_stage1.py",
+      "src/strategy_survivorship/run_market_stage2.py",
+      "src/strategy_survivorship/run_market_stage3.py",
+      "src/strategy_survivorship/run_market_stage4.py",
+      "src/strategy_survivorship/run_mixed_noise.py",
+      "tests/test_market_stage1.py",
+      "tests/test_market_stage2.py",
+      "tests/test_market_stage3.py",
+      "tests/test_market_stage4.py",
+      "tests/test_mixed_noise.py"
+    ],
+    "source_sha256": {
+      "market_data.py": "23673cec96e4e4f797459d9baab26496b62f7a242e872fcabbdd5784c0cb600a",
+      "market_diagnostics.py": "8469443498e6bd68a4026aef77b7c54fad4e19c3d71c3f396e9c92b5392d416e",
+      "market_stage2.py": "080233dd2b8546b90da08f8b03fe1621d5ee9b518decb1d4a733cfc163e1acd3",
+      "market_stage3.py": "4629f551cd4565695aae6750431fd5dab155ceafb5eca2ae5fb3404c7e0a2fd0",
+      "market_stage4.py": "3a9e69eb9216d499d17c319902ae836218d8c4cf7c514e72ca7f016171dc24ae",
+      "run_market_stage4.py": "37c776302e48a01e30111194c11e433d37b2bf48cc69b112168c43219a11bbd5",
+      "noise.py": "eede267ad0c6a990bf8daec67ecd0a83a434ae0a7af0510236f453cd990d9db4",
+      "config.py": "56cad25e53e6fd63b73698964c7106025cf4a070890c5ade415c8f5e03865d06"
+    },
+    "python": "3.13.13",
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "pythonhashseed_env": "not set (and no longer relied on)"
+  },
+  "random_streams": {
+    "mechanism": "numpy SeedSequence([entropy, tag, ...]); the tag is blake2b(coordinates) truncated to 31 bits, deterministic across processes",
+    "calibration_reference": "SeedSequence([20260919, tag(rule, branch, eval_year)])",
+    "calibration_screening": "SeedSequence([20260917, tag(rule, branch, eval_year)]) -- ONE stream reused for every grid cell, which is the common-random-numbers design",
+    "calibration_finalists": "SeedSequence([20260918, tag(rule, branch, eval_year), candidate_index]) -- independent of the screening stream",
+    "evaluation_reference": "SeedSequence([20260921, tag('evalref', branch, year)])",
+    "evaluation": "SeedSequence([20260920, tag(label, year, branch)])",
+    "never_derived_from": "the return data, the wall clock, or the process"
+  },
+  "simulation_budget": {
+    "screen_paths": 400,
+    "final_paths": 2000,
+    "eval_paths": 2000,
+    "n_finalists": 3,
+    "grid_cells_per_calibration": 40,
+    "calibrations": 16,
+    "evaluations": 32
+  },
+  "reproducibility": {
+    "ran": true,
+    "process_1": {
+      "tag": 1913729623,
+      "mean": -3.121560926233211e-05,
+      "sd": 0.011173823764142728,
+      "first": -0.005318325901812394
+    },
+    "process_2": {
+      "tag": 1913729623,
+      "mean": -3.121560926233211e-05,
+      "sd": 0.011173823764142728,
+      "first": -0.005318325901812394
+    },
+    "identical": true,
+    "note": "two fresh interpreters, no PYTHONHASHSEED set"
+  },
+  "time_boundary_checks": [
+    {
+      "rule": "rolling3y",
+      "branch": "sv_only",
+      "eval_year": 2021,
+      "n_returns_perturbed": 753,
+      "identical": true,
+      "fields": {
+        "A": true,
+        "rho": true,
+        "sigma_annual": true,
+        "window_n_returns": true,
+        "calibration_loss": true,
+        "seed_tag": true,
+        "standardising_scales": true
+      }
+    }
+  ],
+  "holdout_perturbation_check": {
+    "holdout_returns_corrupted": 502,
+    "development_frame_identical": true,
+    "calibration_identical": true,
+    "standardising_scales_identical": true,
+    "note": "the holdout was loaded with the CSV and excluded before any analysis; it was never read as data"
+  },
+  "development_scope_returns": 1759,
+  "evaluation_reference": {
+    "2020|sv_only": {
+      "expanding_sigma_annual": 0.12800611779874022,
+      "n_days": 253,
+      "scales_floored": []
+    },
+    "2020|sv_jump": {
+      "expanding_sigma_annual": 0.12800611779874022,
+      "n_days": 253,
+      "scales_floored": []
+    },
+    "2021|sv_only": {
+      "expanding_sigma_annual": 0.20491959836521506,
+      "n_days": 252,
+      "scales_floored": []
+    },
+    "2021|sv_jump": {
+      "expanding_sigma_annual": 0.20491959836521506,
+      "n_days": 252,
+      "scales_floored": []
+    },
+    "2022|sv_only": {
+      "expanding_sigma_annual": 0.1923686721294862,
+      "n_days": 251,
+      "scales_floored": []
+    },
+    "2022|sv_jump": {
+      "expanding_sigma_annual": 0.1923686721294862,
+      "n_days": 251,
+      "scales_floored": []
+    },
+    "2023|sv_only": {
+      "expanding_sigma_annual": 0.20150379648559902,
+      "n_days": 250,
+      "scales_floored": []
+    },
+    "2023|sv_jump": {
+      "expanding_sigma_annual": 0.20150379648559902,
+      "n_days": 250,
+      "scales_floored": []
+    }
+  }
+}

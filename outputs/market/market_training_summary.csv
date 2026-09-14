@@ -1,0 +1,12 @@
+key,group,statistic,value,units
+training_returns.n,training_returns,n,1258.0,count
+training_returns.mean,training_returns,mean,0.0006679689877431175,decimal return
+training_returns.sd_ddof1,training_returns,sd_ddof1,0.012118087297484372,decimal return
+training_returns.skewness,training_returns,skewness,-0.7389961323250119,dimensionless
+training_returns.excess_kurtosis,training_returns,excess_kurtosis,20.36735027053842,dimensionless
+training_returns.min,training_returns,min,-0.11984050283657066,decimal return
+training_returns.max,training_returns,max,0.09382765710199337,decimal return
+training_rv21.q10,training_rv21,q10,0.0627230515935854,"annualised volatility, decimal"
+training_rv21.q50,training_rv21,q50,0.11036933306935298,"annualised volatility, decimal"
+training_rv21.q90,training_rv21,q90,0.2417833548174438,"annualised volatility, decimal"
+training_rv21.mean,training_rv21,mean,0.14720206089759078,"annualised volatility, decimal"

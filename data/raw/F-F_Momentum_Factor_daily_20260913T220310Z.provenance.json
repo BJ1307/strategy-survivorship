@@ -1,0 +1,29 @@
+{
+  "key": "ff_momentum",
+  "role": "cross-market, a long-short FACTOR RETURN rather than a price index",
+  "provider": "Kenneth R. French data library (Tuck School of Business)",
+  "series_id": "F-F_Momentum_Factor_daily",
+  "series_page": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html",
+  "download_url": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/ftp/F-F_Momentum_Factor_daily_CSV.zip",
+  "export_fields": "YYYYMMDD, Mom",
+  "frequency": "daily, US trading days",
+  "units": "daily factor RETURN in PERCENT; 0.55 means 0.55%, i.e. 0.0055. Converted to a decimal once on load and never again.",
+  "calendar": "nyse",
+  "definition": "MOM = average return of the two high-prior-return value-weight portfolios minus the average of the two low-prior-return portfolios, prior return measured from day -250 to -21. A zero-investment long-short portfolio return, NOT a price index and NOT net of any cost.",
+  "missing_codes": "-99.99 and -999",
+  "redistribution": "free for research use under the library's terms; kept local with the rest and not redistributed here.",
+  "downloaded_at_utc": "2026-09-13T22:03:10.213388+00:00",
+  "raw_file": "data/raw/F-F_Momentum_Factor_daily_20260913T220310Z.zip",
+  "raw_bytes": 85202,
+  "raw_sha256": "b039d986db27fc831bcf1f52ba2134916e96fbeba4762fefc942429b0a568a96",
+  "zip_members": [
+    "F-F_Momentum_Factor_daily.csv"
+  ],
+  "rows_in_file": 26195,
+  "rows_with_a_value": 26195,
+  "rows_blank": 0,
+  "date_range_in_file": [
+    "1926-11-03",
+    "2026-07-31"
+  ]
+}

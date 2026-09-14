@@ -1,0 +1,119 @@
+{
+  "DGS2": {
+    "status": "obtained_and_verified",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2",
+    "raw_file": "data/raw/DGS2_20260914T014818Z.csv",
+    "raw_bytes": 208852,
+    "raw_sha256": "5594fe6fc64ea03222351f3e3e41ae52841f357b874275f4ae34e73f5bdb62ec",
+    "downloaded_at_utc": "2026-09-14T01:48:18.693841+00:00"
+  },
+  "DGS10": {
+    "status": "obtained_and_verified",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10",
+    "raw_file": "data/raw/DGS10_20260914T014818Z.csv",
+    "raw_bytes": 268679,
+    "raw_sha256": "51cf02cc3952dd14161d22fd7aaba4dc54d1182c87692b034bb0a9d5aa476b4c",
+    "downloaded_at_utc": "2026-09-14T01:48:18.799675+00:00"
+  },
+  "DGS30": {
+    "status": "obtained_and_verified",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS30",
+    "raw_file": "data/raw/DGS30_20260914T014818Z.csv",
+    "raw_bytes": 206273,
+    "raw_sha256": "9343918d2bfa19d68e82cdbf9b2c57494ce3d115d2da83ef4ab4447e50ed2936",
+    "downloaded_at_utc": "2026-09-14T01:48:18.897531+00:00"
+  },
+  "DCOILBRENTEU": {
+    "status": "obtained_and_verified",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DCOILBRENTEU",
+    "raw_file": "data/raw/DCOILBRENTEU_20260914T014818Z.csv",
+    "raw_bytes": 174106,
+    "raw_sha256": "90b25160f3193d9c1440e8bb45e4fb621f69bb19a4c5736928fdb0c7f2bdc7fb",
+    "downloaded_at_utc": "2026-09-14T01:48:18.998410+00:00"
+  },
+  "DCOILWTICO": {
+    "status": "obtained_and_verified",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DCOILWTICO",
+    "raw_file": "data/raw/DCOILWTICO_20260914T014818Z.csv",
+    "raw_bytes": 179182,
+    "raw_sha256": "fa61efee3e74b112d237305f50ec7623933221f53d8f140c69def467a7e972d6",
+    "downloaded_at_utc": "2026-09-14T01:48:19.096674+00:00"
+  },
+  "DEXUSEU": {
+    "status": "obtained_and_verified",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXUSEU",
+    "raw_file": "data/raw/DEXUSEU_20260914T014818Z.csv",
+    "raw_bytes": 128311,
+    "raw_sha256": "9ec250f51460ee38326879d0d987ff14f598fff918cc5a53c0096fa25c23546d",
+    "downloaded_at_utc": "2026-09-14T01:48:19.205168+00:00"
+  },
+  "DEXJPUS": {
+    "status": "obtained_and_verified",
+    "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXJPUS",
+    "raw_file": "data/raw/DEXJPUS_20260914T014818Z.csv",
+    "raw_bytes": 256547,
+    "raw_sha256": "ded15c63243b4ba5dc1b3eaf51fcfdcd09911033711984c59c3834a82048d34d",
+    "downloaded_at_utc": "2026-09-14T01:48:19.334012+00:00"
+  },
+  "CBOE_OVX": {
+    "status": "obtained_and_verified",
+    "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/OVX_History.csv",
+    "raw_file": "data/raw/CBOE_OVX_20260914T014635Z.csv",
+    "raw_bytes": 89705,
+    "raw_sha256": "06e3a16671f19cce1b06fbc5b059f4a33d5192122d1054d9c6b153421022cdc4",
+    "downloaded_at_utc": "2026-09-14T01:48:01.829066+00:00"
+  },
+  "CBOE_GVZ": {
+    "status": "obtained_and_verified",
+    "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/GVZ_History.csv",
+    "raw_file": "data/raw/CBOE_GVZ_20260914T014635Z.csv",
+    "raw_bytes": 89598,
+    "raw_sha256": "5ba0197cd0d43ef0518deb61378dbf4f99465ace59ce9c3bf988062f681fe067",
+    "downloaded_at_utc": "2026-09-14T01:48:01.971944+00:00"
+  },
+  "CBOE_VIX": {
+    "status": "obtained_and_verified",
+    "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
+    "raw_file": "data/raw/CBOE_VIX_20260914T014635Z.csv",
+    "raw_bytes": 472564,
+    "raw_sha256": "cb3515efe5577d39df5c59ab44fb69171e28927e0fd01b50ce101076e7951e93",
+    "downloaded_at_utc": "2026-09-14T01:48:02.108843+00:00"
+  },
+  "GLD_HISTORICAL": {
+    "status": "obtained_and_verified",
+    "url": "https://api.spdrgoldshares.com/api/v1/historical-archive?exchange=NYSE&lang=en&product=gld",
+    "raw_file": "data/raw/GLD_HISTORICAL_20260914T014635Z.xlsx",
+    "raw_bytes": 539313,
+    "raw_sha256": "d00908d12445a700d518406d29720430293ec8cd2a3e1a97a9b7f9e4f5774a4a",
+    "downloaded_at_utc": "2026-09-14T01:48:02.288053+00:00"
+  },
+  "STOXX_hbrbcpe": {
+    "status": "obtained_and_verified",
+    "url": "https://www.stoxx.com/document/Indices/Current/HistoricalData/hbrbcpe.txt",
+    "raw_file": "data/raw/STOXX_hbrbcpe_20260914T014635Z.txt",
+    "raw_bytes": 688500,
+    "raw_sha256": "e9e14193ff1cb742d2f023b91c57641f249ab1285d3145464ebadbf8a98d34b9",
+    "downloaded_at_utc": "2026-09-14T01:48:02.857504+00:00"
+  },
+  "AQR_TSMOM_monthly": {
+    "status": "obtained_and_verified",
+    "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Time-Series-Momentum-Factors-Monthly.xlsx",
+    "raw_file": "data/raw/AQR_TSMOM_monthly_20260914T014635Z.xlsx",
+    "raw_bytes": 139830,
+    "raw_sha256": "33470930e2269c0d97be4732ec2d9c27ddbc69ac8133b059a263e27400263eeb",
+    "downloaded_at_utc": "2026-09-14T01:48:03.073164+00:00"
+  },
+  "AQR_Commodities_long_run_monthly": {
+    "status": "obtained_and_verified",
+    "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Commodities-for-the-Long-Run-Index-Level-Data-Monthly.xlsx",
+    "raw_file": "data/raw/AQR_Commodities_long_run_monthly_20260914T014635Z.xlsx",
+    "raw_bytes": 454950,
+    "raw_sha256": "eeb89c65fa7dca2bfbbebb7af2cbecade7b470d6a4da52883e9413a162b5fe75",
+    "downloaded_at_utc": "2026-09-14T01:48:03.272383+00:00"
+  },
+  "_access_notes": {
+    "fred_user_agent": "FRED refuses a spoofed desktop-browser User-Agent: every DGS/DCOIL/DEX request returned http=000 with one, and all seven succeeded immediately with curl's default agent. Cboe, SPDR and STOXX require the opposite -- a browser agent and a Referer. Recorded so the next run does not rediscover it.",
+    "retries": "three attempts per source with a linear backoff, then the source is recorded as failed and the run continues.",
+    "euro_stoxx_correction": "the previous round concluded Euro Stoxx 50 was unavailable from three GUESSED FRED ids returning 404. That inference was wrong: the official STOXX historical price file hbrbcpe.txt is public and carries the Blue-Chip Euro-Zone (SX5E) column from 2016-10-04."
+  }
+}

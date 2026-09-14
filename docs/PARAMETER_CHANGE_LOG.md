@@ -25,8 +25,10 @@ entries already in the working tree predate this work and are untouched.
 - A generator parameter change is recorded here **with the reason and the effect**,
   before the round that uses it is reported.
 - A seed or stream-derivation change counts as a change: it moves results.
-- Raw market data and every per-day derived series stay out of Git under the
-  redistribution rules already recorded in `MARKET_DATA_DICTIONARY.md`.
+- Raw market data and every per-day derived series are tracked in this repository by
+  an explicit decision of the owner, taken after commit `739519c`. The third-party
+  terms that still apply are in `DATA_LICENCE_NOTICE.md`; presence here grants no
+  redistribution right.
 
 ## Cross-asset round (2026-09-15)
 

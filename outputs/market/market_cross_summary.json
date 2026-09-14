@@ -1,0 +1,383 @@
+{
+  "protocol": {
+    "purpose": "find which real objects the existing controllable-Sharpe generator already resembles, so the NEXT small calibration has a target. This stage fits nothing.",
+    "objects": {
+      "sp500": {
+        "label": "S&P 500",
+        "kind": "price_index",
+        "calendar": "nyse",
+        "chosen_because": "the object stages 1-4 calibrated against"
+      },
+      "nasdaq100": {
+        "label": "Nasdaq-100",
+        "kind": "price_index",
+        "calendar": "nyse",
+        "chosen_because": "same country and calendar, different composition -- separates composition from window"
+      },
+      "nikkei225": {
+        "label": "Nikkei 225",
+        "kind": "price_index",
+        "calendar": "jpx",
+        "chosen_because": "a different exchange calendar and a different crisis timing"
+      },
+      "ff_momentum": {
+        "label": "Momentum factor (daily)",
+        "kind": "factor_return",
+        "calendar": "nyse",
+        "chosen_because": "a long-short STRATEGY return rather than a price index; chosen for the type it adds, not for how it fits"
+      }
+    },
+    "objects_fixed_before_results": true,
+    "models": {
+      "gaussian": "iid normal",
+      "stoch_vol": "pure SV at the recorded A = 1, rho = 0.98",
+      "sv_jump": "SV + jumps, additionally kappa = 5, lambda = 2/yr"
+    },
+    "no_search": "every shape parameter is the value already in config.py; the only quantity estimated per object is its overall scale",
+    "transforms": {
+      "price_index": "simple daily return P_t/P_(t-1) - 1 between consecutive trading days, decimals",
+      "factor_return": "the published daily factor return, percent converted to decimal once on load; never differenced and never compounded into a price first",
+      "forbidden": "no forward fill, no monthly series interpolated to daily, no winsorising"
+    },
+    "periods": {
+      "describe": [
+        "2017-01-01",
+        "2021-12-31"
+      ],
+      "contrast": [
+        "2022-01-01",
+        "2023-12-31"
+      ],
+      "describe_role": "description AND the scale estimate",
+      "contrast_role": "a frozen-parameter development contrast. It is development data that has already been examined, not a new independent test.",
+      "excluded": "2024-2025 takes no part in any statistic, figure or choice this round"
+    },
+    "scale_handling": {
+      "per_object": "sigma_annual = sd(returns in the describe window) * sqrt(252), estimated separately for each object",
+      "frozen": "the SAME scale is used for the contrast period. The later period's realised volatility never rescales a main result.",
+      "level_versus_shape": "the RV_21 quantiles are reported TWICE and the two must not be confused. As LEVELS they compare the market and the simulation at the same frozen sigma_annual. As SHAPE they are divided by the series' OWN annualised sd -- and for a simulation that ratio is formed INSIDE each path before any quantile is taken across paths, because dividing every path by one common number is a different quantity.",
+      "cross_market_shape": "scale-free statistics (tails, ACF, W1 on standardised returns, concentration, lead-lag) are compared directly; the volatility range is compared through the per-path shape ratio above.",
+      "no_unified_leaderboard": "stage 4's per-branch standardised total loss is NOT reused here and no object is ranked by a single total score."
+    },
+    "diagnostics": {
+      "volatility_range": [
+        "rv21_q10",
+        "rv21_q50",
+        "rv21_q90"
+      ],
+      "distribution_and_tails": [
+        "W1 on standardised daily returns with a simulation-to-simulation reference",
+        "tail frequency AND raw count at 2 sd, each side",
+        "tail frequency AND raw count at 3 sd, each side",
+        "tail frequency AND raw count at 5 sd, each side"
+      ],
+      "volatility_persistence": [
+        "acf_absret_lag1",
+        "acf_absret_lag5",
+        "acf_absret_lag10",
+        "acf_absret_lag21",
+        "acf_absret_lag63"
+      ],
+      "auxiliary_mechanism": [
+        "concentration_max_exceed_63d",
+        "leadlag_ret_vs_future_sq_lag1",
+        "leadlag_ret_vs_future_sq_lag5",
+        "leadlag_ret_vs_future_sq_lag21"
+      ],
+      "nothing_else": "no statistic was added or removed after seeing a result"
+    },
+    "simulation": {
+      "paths_per_cell": 2000,
+      "length": "matched to that object's window",
+      "entropy": 20260922,
+      "tag": "blake2b(object, model, period) -- stable across processes",
+      "initialisation": "stationary; no path is rescaled after the draw"
+    },
+    "figures": [
+      "one cross-market gap overview table",
+      "one figure on the volatility-persistence gap, which stages 2-4 identified as the core mismatch"
+    ],
+    "stopping_condition": "stop once every object has been contrasted against the three fixed models over both periods and the gap table exists. No re-run with different settings, whatever the result.",
+    "range_semantics": "a simulated range is the spread of a statistic under a FIXED model; it is not a market-parameter confidence interval, being inside it does not make a model correct, and being outside it does not identify a missing mechanism.",
+    "not_in_this_stage": [
+      "GAN",
+      "change-point detection",
+      "a leverage term",
+      "a new jump mechanism",
+      "any window or parameter search",
+      "declaring a best-fitting market on a total score"
+    ]
+  },
+  "code_identity": {
+    "git_head": "4b8450604ff06c41aefc1afac5968065addf8896",
+    "git_branch": "main",
+    "working_tree_is_dirty": true,
+    "uncommitted_paths": [
+      "README.md",
+      "docs/CROSS_MARKET_SCAN_SPEC.md",
+      "docs/DATA_SOURCE_INVENTORY.md",
+      "docs/DECK_FINAL_6PAGE_SPEC.md",
+      "docs/DECK_FINAL_TUNING_SPEC.md",
+      "docs/MARKET_DATA_DICTIONARY.md",
+      "docs/MARKET_STAGE1_PROTOCOL.md",
+      "docs/PARAMETER_CHANGE_LOG.md",
+      "gitignore",
+      "outputs/mixed_noise_bootstrap.csv",
+      "outputs/mixed_noise_metrics.csv",
+      "outputs/mixed_noise_parameter_summary.csv",
+      "outputs/mixed_noise_protocol.json",
+      "outputs/mixed_noise_report.md",
+      "outputs/mixed_noise_subgroups.csv",
+      "outputs/mixed_noise_summary.json",
+      "outputs/mixed_noise_thresholds.csv",
+      "src/strategy_survivorship/config.py",
+      "src/strategy_survivorship/market_cross.py",
+      "src/strategy_survivorship/market_data.py",
+      "src/strategy_survivorship/market_diagnostics.py",
+      "src/strategy_survivorship/market_stage2.py",
+      "src/strategy_survivorship/market_stage3.py",
+      "src/strategy_survivorship/market_stage4.py",
+      "src/strategy_survivorship/mixed_noise.py",
+      "src/strategy_survivorship/plots_market.py",
+      "src/strategy_survivorship/plots_market_cross.py",
+      "src/strategy_survivorship/plots_market_stage2.py",
+      "src/strategy_survivorship/plots_market_stage3.py",
+      "src/strategy_survivorship/plots_market_stage4.py",
+      "src/strategy_survivorship/report_market_cross.py",
+      "src/strategy_survivorship/report_market_stage1.py",
+      "src/strategy_survivorship/report_market_stage2.py",
+      "src/strategy_survivorship/report_market_stage3.py",
+      "src/strategy_survivorship/report_market_stage4.py",
+      "src/strategy_survivorship/report_mixed_noise.py",
+      "src/strategy_survivorship/run_market_cross.py",
+      "src/strategy_survivorship/run_market_stage1.py",
+      "src/strategy_survivorship/run_market_stage2.py",
+      "src/strategy_survivorship/run_market_stage3.py",
+      "src/strategy_survivorship/run_market_stage4.py",
+      "src/strategy_survivorship/run_mixed_noise.py",
+      "tests/test_market_cross.py",
+      "tests/test_market_stage1.py",
+      "tests/test_market_stage2.py",
+      "tests/test_market_stage3.py",
+      "tests/test_market_stage4.py",
+      "tests/test_mixed_noise.py"
+    ],
+    "source_sha256": {
+      "market_data.py": "46ec6098e231d2831f5905ab89e967045f24f6573067ca5f99b4e11f08b04169",
+      "market_diagnostics.py": "8469443498e6bd68a4026aef77b7c54fad4e19c3d71c3f396e9c92b5392d416e",
+      "market_stage2.py": "080233dd2b8546b90da08f8b03fe1621d5ee9b518decb1d4a733cfc163e1acd3",
+      "market_stage3.py": "4629f551cd4565695aae6750431fd5dab155ceafb5eca2ae5fb3404c7e0a2fd0",
+      "market_stage4.py": "3a9e69eb9216d499d17c319902ae836218d8c4cf7c514e72ca7f016171dc24ae",
+      "run_market_stage4.py": "37c776302e48a01e30111194c11e433d37b2bf48cc69b112168c43219a11bbd5",
+      "noise.py": "eede267ad0c6a990bf8daec67ecd0a83a434ae0a7af0510236f453cd990d9db4",
+      "config.py": "56cad25e53e6fd63b73698964c7106025cf4a070890c5ade415c8f5e03865d06"
+    },
+    "python": "3.13.13",
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "pythonhashseed_env": "not set (and no longer relied on)"
+  },
+  "objects": [
+    {
+      "object": "sp500",
+      "status": "ok",
+      "kind": "price_index",
+      "calendar": "nyse",
+      "raw_file": "data/raw/SP500_20260913T031157Z.csv",
+      "describe_n": 1258,
+      "contrast_n": 501,
+      "describe_sd_daily": 0.012118087297484372,
+      "sigma_annual_from_describe": 0.19236867212948663,
+      "defects": "none"
+    },
+    {
+      "object": "nasdaq100",
+      "status": "ok",
+      "kind": "price_index",
+      "calendar": "nyse",
+      "raw_file": "data/raw/NASDAQ100_20260913T220232Z.csv",
+      "describe_n": 1258,
+      "contrast_n": 501,
+      "describe_sd_daily": 0.01424702327788501,
+      "sigma_annual_from_describe": 0.22616448309739204,
+      "defects": "1 price(s) printed on a day the calendar says the exchange was closed (2019-04-19) -- dropped at the analysis layer, the next return re-formed from the adjacent valid closes"
+    },
+    {
+      "object": "nikkei225",
+      "status": "ok",
+      "kind": "price_index",
+      "calendar": "jpx",
+      "raw_file": "data/raw/NIKKEI225_20260913T220233Z.csv",
+      "describe_n": 1220,
+      "contrast_n": 490,
+      "describe_sd_daily": 0.011666025020918767,
+      "sigma_annual_from_describe": 0.18519240596404887,
+      "defects": "none"
+    },
+    {
+      "object": "ff_momentum",
+      "status": "ok",
+      "kind": "factor_return",
+      "calendar": "nyse",
+      "raw_file": "data/raw/F-F_Momentum_Factor_daily_20260913T220310Z.zip",
+      "describe_n": 1259,
+      "contrast_n": 501,
+      "describe_sd_daily": 0.011879352238161002,
+      "sigma_annual_from_describe": 0.18857887055227532,
+      "defects": "none"
+    }
+  ],
+  "scales_from_describe_window": {
+    "sp500": 0.19236867212948663,
+    "nasdaq100": 0.22616448309739204,
+    "nikkei225": 0.18519240596404887,
+    "ff_momentum": 0.18857887055227532
+  },
+  "sources": {
+    "sp500": {
+      "role": "primary",
+      "provider": "Federal Reserve Bank of St. Louis (FRED); index by S&P Dow Jones Indices LLC",
+      "series_id": "SP500",
+      "series_page": "https://fred.stlouisfed.org/series/SP500",
+      "export_fields": "observation_date, SP500",
+      "frequency": "daily, business days (Mon-Fri), blank on US market holidays",
+      "units": "index level, points (S&P 500 PRICE index; dividends excluded)",
+      "redistribution": "S&P Dow Jones Indices data; FRED states it may not be redistributed. Raw and per-day derived files stay local."
+    },
+    "nasdaq100": {
+      "role": "cross-market, price index",
+      "provider": "Federal Reserve Bank of St. Louis (FRED); index by Nasdaq, Inc.",
+      "series_id": "NASDAQ100",
+      "series_page": "https://fred.stlouisfed.org/series/NASDAQ100",
+      "export_fields": "observation_date, NASDAQ100",
+      "frequency": "daily, business days, blank on US market holidays",
+      "units": "index level, points (PRICE index; dividends excluded)",
+      "calendar": "nyse",
+      "redistribution": "Nasdaq index data via FRED; kept local with the rest."
+    },
+    "nikkei225": {
+      "role": "cross-market, price index, different exchange calendar",
+      "provider": "Federal Reserve Bank of St. Louis (FRED); index by Nikkei Inc.",
+      "series_id": "NIKKEI225",
+      "series_page": "https://fred.stlouisfed.org/series/NIKKEI225",
+      "export_fields": "observation_date, NIKKEI225",
+      "frequency": "daily, business days, blank on Japanese market holidays",
+      "units": "index level, points (PRICE index; dividends excluded)",
+      "calendar": "jpx",
+      "calendar_note": "an encoded JPX rule set now provides the expected trading days INDEPENDENTLY of the observed dates: New Year and year end, the fixed and nth-weekday national holidays, the listed equinoxes, the 2019 abdication and enthronement days (2019-04-30, 05-01, 05-02, 10-22) and the 2020-2021 Olympic moves. It is a rule set written here, not an authoritative exchange calendar, so it is cross-checked against the source file's blanks and the disagreements are reported. Over 2017-2023 the two agree on all 114 weekday closures, including the 2019 Golden Week.",
+      "redistribution": "Nikkei index data via FRED; kept local with the rest."
+    },
+    "ff_momentum": {
+      "role": "cross-market, a long-short FACTOR RETURN rather than a price index",
+      "provider": "Kenneth R. French data library (Tuck School of Business)",
+      "series_id": "F-F_Momentum_Factor_daily",
+      "series_page": "https://mba.tuck.dartmouth.edu/pages/faculty/ken.french/data_library.html",
+      "export_fields": "YYYYMMDD, Mom",
+      "frequency": "daily, US trading days",
+      "units": "daily factor RETURN in PERCENT; 0.55 means 0.55%, i.e. 0.0055. Converted to a decimal once on load and never again.",
+      "calendar": "nyse",
+      "definition": "MOM = average return of the two high-prior-return value-weight portfolios minus the average of the two low-prior-return portfolios, prior return measured from day -250 to -21. A zero-investment long-short portfolio return, NOT a price index and NOT net of any cost.",
+      "missing_codes": "-99.99 and -999",
+      "redistribution": "free for research use under the library's terms; kept local with the rest and not redistributed here."
+    }
+  },
+  "cleaning_reports": {
+    "sp500": {
+      "rows_in_file": 2610,
+      "rows_in_window": 1825,
+      "trading_days_expected": 1760,
+      "trading_days_observed": 1760,
+      "blank_weekdays": 65,
+      "blank_weekdays_matching_a_holiday": 65,
+      "blank_on_an_expected_trading_day": [],
+      "weekday_absent_from_file": [],
+      "unexpected_value_on_a_holiday": [],
+      "duplicate_dates": [],
+      "nonpositive_prices": [],
+      "out_of_order": false,
+      "coverage_requested": [
+        "2017-01-01",
+        "2023-12-31"
+      ],
+      "coverage_available": [
+        "2017-01-03",
+        "2023-12-29"
+      ],
+      "covers_request": true,
+      "dropped_nontrading_observations": [],
+      "defects": [],
+      "return_definition": "P_t / P_(t-1) - 1, consecutive trading days on the nyse calendar"
+    },
+    "nasdaq100": {
+      "rows_in_file": 10616,
+      "rows_in_window": 1825,
+      "trading_days_expected": 1760,
+      "trading_days_observed": 1761,
+      "blank_weekdays": 64,
+      "blank_weekdays_matching_a_holiday": 64,
+      "blank_on_an_expected_trading_day": [],
+      "weekday_absent_from_file": [],
+      "unexpected_value_on_a_holiday": [
+        "2019-04-19"
+      ],
+      "duplicate_dates": [],
+      "nonpositive_prices": [],
+      "out_of_order": false,
+      "coverage_requested": [
+        "2017-01-01",
+        "2023-12-31"
+      ],
+      "coverage_available": [
+        "2017-01-03",
+        "2023-12-29"
+      ],
+      "covers_request": true,
+      "dropped_nontrading_observations": [
+        "2019-04-19"
+      ],
+      "defects": [
+        "1 price(s) printed on a day the calendar says the exchange was closed (2019-04-19) -- dropped at the analysis layer, the next return re-formed from the adjacent valid closes"
+      ],
+      "return_definition": "P_t / P_(t-1) - 1, consecutive trading days on the nyse calendar"
+    },
+    "nikkei225": {
+      "rows_in_file": 20175,
+      "rows_in_window": 1825,
+      "trading_days_expected": 1711,
+      "trading_days_observed": 1711,
+      "blank_weekdays": 114,
+      "blank_weekdays_matching_a_holiday": 114,
+      "blank_on_an_expected_trading_day": [],
+      "weekday_absent_from_file": [],
+      "unexpected_value_on_a_holiday": [],
+      "duplicate_dates": [],
+      "nonpositive_prices": [],
+      "out_of_order": false,
+      "coverage_requested": [
+        "2017-01-01",
+        "2023-12-31"
+      ],
+      "coverage_available": [
+        "2017-01-04",
+        "2023-12-29"
+      ],
+      "covers_request": true,
+      "dropped_nontrading_observations": [],
+      "defects": [],
+      "return_definition": "P_t / P_(t-1) - 1, consecutive trading days on the jpx calendar"
+    },
+    "ff_momentum": {
+      "rows_in_window": 1760,
+      "missing_coded_values": 0,
+      "trading_days_expected": 1760,
+      "trading_days_observed": 1760,
+      "expected_trading_days_absent": [],
+      "values_on_a_non_trading_day": [],
+      "calendar_used": "nyse",
+      "return_definition": "the published daily factor return, converted from percent to decimal once; NOT differenced, NOT compounded into a price",
+      "gap_note": "a factor return is already a one-day quantity, so the gap column is 1 by construction; the DATE SET is what is checked",
+      "defects": []
+    }
+  },
+  "unavailable": []
+}

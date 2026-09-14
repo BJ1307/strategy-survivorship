@@ -1,0 +1,181 @@
+{
+  "protocol": {
+    "question": "What does real daily index-return noise actually look like, measured under conventions fixed in advance?",
+    "object": "S&P 500 daily closing PRICE index (dividends excluded)",
+    "what_it_is_not": [
+      "not a strategy return series",
+      "not a sample of an effective strategy",
+      "not a total-return or excess-return series",
+      "not used to estimate, claim or imply a true Sharpe ratio"
+    ],
+    "source_priority": [
+      "an S&P 500 daily closing price series already in this repository with a clear permitted source and the same definition -- checked: the repository contains no market data, so this branch does not apply",
+      "FRED series SP500"
+    ],
+    "auxiliary": "VIX (FRED VIXCLS); optional, non-blocking, stored and described only. A level of 20 means about 20% annualised implied volatility, not a 20% return; it looks forward about 30 calendar days while RV_21 looks back 21 trading days, so the two are not expected to agree point by point.",
+    "return_definition": "r_t = P_t / P_(t-1) - 1, stored as a decimal, formed only between consecutive trading days; no risk-free rate is subtracted",
+    "calendar_window": [
+      "2017-01-01",
+      "2025-12-31"
+    ],
+    "periods": {
+      "training": [
+        "2017-01-01",
+        "2021-12-31"
+      ],
+      "validation": [
+        "2022-01-01",
+        "2023-12-31"
+      ],
+      "holdout_test": [
+        "2024-01-01",
+        "2025-12-31"
+      ]
+    },
+    "diagnosed_this_stage": [
+      "training"
+    ],
+    "split_status": "research design; NOT a claim that the three periods are independent or identically distributed",
+    "checks_run_on": "the whole span (format, dates, missing values); a defect anywhere invalidates the file",
+    "cleaning": [
+      "dates unique and ascending, prices strictly positive",
+      "non-trading days are NOT filled: no zero-return holidays, no forward fill",
+      "a blank on a day the NYSE calendar says was open, or a weekday missing from the file, is reported as a defect rather than repaired",
+      "genuine extreme returns are kept; nothing is winsorised, deleted or smoothed"
+    ],
+    "trading_calendar": "explicit NYSE rule set for the window, encoded and tested, plus the ad-hoc closures 2018-12-05, 2025-01-09",
+    "diagnostics": {
+      "realised_vol": "RV_21 = sqrt(252) * std(r_{t-20..t}), ddof=1, complete windows only; an estimate from past returns, not an observable latent variance",
+      "moments": "mean, sd (ddof=1), skewness g1 = m3/m2^1.5, excess kurtosis g2 = m4/m2^2 - 3 (plain moment estimators); RV_21 quantiles 10/50/90 by linear interpolation",
+      "tails": "frequency of z < -c and z > +c at c = 2,3,4,5 with z = (r - mean_train)/sd_train, a DIAGNOSTIC COORDINATE only",
+      "dependence": "autocorrelation at lags 1,5,10,21,63 of the return, the centred absolute return and the centred squared return; plus corr(r_t, (r_{t+h} - rbar)^2) at h = 1,5,21"
+    },
+    "sample_bounds": "every statistic is computed by a function that takes explicit bounds; a rolling window or a lagged pair never crosses a period boundary, so RV_21 starts on the 21st trading day of the period",
+    "not_claimed": [
+      "no observation is labelled a true jump",
+      "a non-zero finite-sample correlation is not announced as a mechanism",
+      "no significance testing and no multi-model search this round",
+      "no simulation comparison has been run, so nothing here says whether the model matches or fails to match the market"
+    ],
+    "stage_2_plan": "call these same functions on simulated paths at a matched sample length and compare the training-period numbers"
+  },
+  "sources": {
+    "sp500": {
+      "key": "sp500",
+      "role": "primary",
+      "provider": "Federal Reserve Bank of St. Louis (FRED); index by S&P Dow Jones Indices LLC",
+      "series_id": "SP500",
+      "series_page": "https://fred.stlouisfed.org/series/SP500",
+      "export_fields": "observation_date, SP500",
+      "frequency": "daily, business days (Mon-Fri), blank on US market holidays",
+      "units": "index level, points (S&P 500 PRICE index; dividends excluded)",
+      "redistribution": "S&P Dow Jones Indices data; FRED states it may not be redistributed. Raw and per-day derived files stay local.",
+      "downloaded_at_utc": "2026-09-13T03:11:58.805936+00:00",
+      "raw_file": "data/raw/SP500_20260913T031157Z.csv",
+      "raw_bytes": 48941,
+      "raw_sha256": "7f08dc75562f523eb5f934b380b30fb8c005629babd5835c566bbb40bedbdf47",
+      "rows_in_file": 2610,
+      "rows_with_a_value": 2514,
+      "rows_blank": 96,
+      "date_range_in_file": [
+        "2016-09-12",
+        "2026-09-11"
+      ],
+      "reused_existing_snapshot": false
+    },
+    "vix": {
+      "key": "vix",
+      "role": "auxiliary, optional; failure here does not block the S&P 500 work",
+      "provider": "Federal Reserve Bank of St. Louis (FRED); index by Cboe",
+      "series_id": "VIXCLS",
+      "series_page": "https://fred.stlouisfed.org/series/VIXCLS",
+      "export_fields": "observation_date, VIXCLS",
+      "frequency": "daily, business days (Mon-Fri), blank on US market holidays",
+      "units": "annualised implied volatility in PERCENT: a level of 20 means about 20% annualised implied volatility, NOT a 20% return. It looks forward about 30 calendar days, while RV_21 looks back over 21 trading days, so the two are not expected to agree point by point.",
+      "redistribution": "Cboe index data via FRED; kept local with the rest.",
+      "downloaded_at_utc": "2026-09-13T03:11:58.992241+00:00",
+      "raw_file": "data/raw/VIXCLS_20260913T031158Z.csv",
+      "raw_bytes": 161187,
+      "raw_sha256": "1a13cfab725900bd492fde9f666599a26279a52733a8b2173ca031e3217af5e7",
+      "rows_in_file": 9573,
+      "rows_with_a_value": 9271,
+      "rows_blank": 302,
+      "date_range_in_file": [
+        "1990-01-02",
+        "2026-09-10"
+      ],
+      "reused_existing_snapshot": false,
+      "rows_in_window": 2289,
+      "note": "annualised implied volatility in PERCENT: a level of 20 means about 20% annualised implied volatility, NOT a 20% return. It looks forward about 30 calendar days, while RV_21 looks back over 21 trading days, so the two are not expected to agree point by point."
+    }
+  },
+  "cleaning": {
+    "rows_in_file": 2610,
+    "rows_in_window": 2348,
+    "trading_days_expected": 2262,
+    "trading_days_observed": 2262,
+    "blank_weekdays": 86,
+    "blank_weekdays_matching_a_holiday": 86,
+    "blank_on_an_expected_trading_day": [],
+    "weekday_absent_from_file": [],
+    "unexpected_value_on_a_holiday": [],
+    "duplicate_dates": [],
+    "nonpositive_prices": [],
+    "out_of_order": false,
+    "coverage_requested": [
+      "2017-01-01",
+      "2025-12-31"
+    ],
+    "coverage_available": [
+      "2017-01-03",
+      "2025-12-31"
+    ],
+    "covers_request": true,
+    "defects": []
+  },
+  "returns_per_period": {
+    "training": 1258,
+    "validation": 501,
+    "holdout_test": 502
+  },
+  "periods_diagnosed": [
+    "training"
+  ],
+  "periods_not_opened_this_stage": [
+    "validation",
+    "holdout_test"
+  ],
+  "training": {
+    "label": "training",
+    "start": "2017-01-01",
+    "end": "2021-12-31",
+    "first_observation": "2017-01-04",
+    "last_observation": "2021-12-31",
+    "n_returns": 1258,
+    "returns_moments": {
+      "n": 1258,
+      "mean": 0.0006679689877431175,
+      "sd_ddof1": 0.012118087297484372,
+      "skewness": -0.7389961323250119,
+      "excess_kurtosis": 20.36735027053842,
+      "min": -0.11984050283657066,
+      "max": 0.09382765710199337
+    },
+    "realised_vol": {
+      "window_trading_days": 21,
+      "ddof": 1,
+      "annualisation": "sqrt(252)",
+      "n_values": 1238,
+      "first_value_on": "2017-02-02",
+      "q10": 0.0627230515935854,
+      "q50": 0.11036933306935298,
+      "q90": 0.2417833548174438,
+      "mean": 0.14720206089759078
+    },
+    "standardisation": {
+      "loc": 0.0006679689877431175,
+      "scale": 0.012118087297484372,
+      "status": "diagnostic coordinate only; not a drift removal and not a Sharpe estimate"
+    }
+  }
+}

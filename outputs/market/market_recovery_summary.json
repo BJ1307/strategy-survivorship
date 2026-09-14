@@ -1,0 +1,152 @@
+{
+  "protocol": {
+    "question": "when the true data-generating mechanism is known, is the existing calibration procedure sound?",
+    "scope": "pure SV only. No jumps, no leverage term, no monitor, no market data.",
+    "scenarios": {
+      "A1.0_rho0.98": {
+        "A": 1.0,
+        "rho": 0.98
+      },
+      "A1.4_rho0.96": {
+        "A": 1.4,
+        "rho": 0.96
+      }
+    },
+    "true_scale": {
+      "sigma_annual": 0.192,
+      "status": "a DESIGN value for this simulation study, not an estimate from any market",
+      "drift": 0.0
+    },
+    "budget": {
+      "outer_replicates_per_scenario": 20,
+      "total_fits": 40,
+      "days_per_series": 1258,
+      "screen_paths": 400,
+      "final_paths": 2000,
+      "eval_paths": 2000,
+      "n_finalists": 3,
+      "fixed_in_advance": "the budget is not extended and the truth, the loss and the grid are not changed on the strength of a result"
+    },
+    "replication_semantics": "the evaluation series is an INDEPENDENT REPLICATION from the same DGP, drawn on its own stream. It is not a continuation conditioned on the training period's end state, and nothing here is a conditional forecast.",
+    "information_isolation": {
+      "the_fitter_never_sees": "the true A, the true rho, the true scale or the latent volatility path",
+      "scale": "estimated from the pseudo-TRAINING returns only, and the fixed baseline and the fitted shape share that one estimate",
+      "streams": {
+        "pseudo_training_data": 20260941,
+        "pseudo_evaluation_data": 20260942,
+        "calibration_reference": 20260943,
+        "calibration_screening": 20260944,
+        "calibration_finalists": 20260945,
+        "evaluation_reference": 20260946,
+        "evaluation_simulation": 20260947
+      },
+      "seed_derivation": "blake2b(coordinates); never Python's per-process string hash",
+      "common_random_numbers": "the four versions share one evaluation stream inside a replicate, so their differences are not simulation noise between them"
+    },
+    "unchanged_from_the_earlier_stages": "the 8 targets, their transforms, the two equal-weight groups, the baseline-reference scale rule, the 40-cell grid, 400-path screening and the top-3 plus fixed baseline 2000-path re-check. Verified against the code, 13 of 13 descriptions matched.",
+    "true_parameters_in_the_search": "both true pairs happen to be grid points, so their screening rank is well defined. The truth is NOT inserted into the finalists if the original rule does not select it; it is carried only as an evaluation reference.",
+    "versions_compared": {
+      "fixed_baseline": "A=1.0, rho=0.98, estimated scale",
+      "selected": "the calibrated A and rho, estimated scale",
+      "true_shape": "the true A and rho, estimated scale",
+      "true_everything": "the true A, rho AND the true scale -- an ORACLE REFERENCE, not a lower bound of the loss: the objective matches simulated medians to one sample and nothing makes the truth minimise it at n = 1258"
+    },
+    "evaluation_scales": "one reference per replicate, built at the BASELINE with the estimated scale, on its own stream, BEFORE the evaluation data is used. Shared by all four versions.",
+    "secondary_energy_score": "a pre-specified energy score over the JOINT distribution of the 8 statistics, in the same transform and scale, estimated from two independent halves of the simulated paths. Evaluation only: it selects nothing and does not replace the loss.",
+    "held_out_diagnostics": [
+      "tail_below_m3_count",
+      "tail_above_p3_count",
+      "acf_sqret_lag1",
+      "acf_sqret_lag5",
+      "acf_sqret_lag21"
+    ],
+    "three_uncertainties": {
+      "inner_simulation_error": "how much a reported loss moves if the same configuration is simulated again; quantified as loss_mc_se",
+      "outer_pseudo_history_variation": "how much the answer moves across the 20 pseudo-histories; this is what the outer spread shows",
+      "real_market_uncertainty": "NOT addressed here at all. These are simulated histories from a known DGP."
+    },
+    "what_20_replicates_support": "a preliminary diagnosis for these two fixed scenarios. It is not a confidence statement about the S&P 500 or about any future period."
+  },
+  "code_identity": {
+    "git_head": "4b8450604ff06c41aefc1afac5968065addf8896",
+    "git_branch": "main",
+    "working_tree_is_dirty": true,
+    "uncommitted_paths": [
+      "README.md",
+      "docs/CROSS_ASSET_FINDINGS.md",
+      "docs/CROSS_MARKET_SCAN_SPEC.md",
+      "docs/DATA_REQUEST_FOR_SUPERVISOR.md",
+      "docs/DATA_SOURCE_INVENTORY.md",
+      "docs/DECK_FINAL_6PAGE_SPEC.md",
+      "docs/DECK_FINAL_TUNING_SPEC.md",
+      "docs/MARKET_DATA_DICTIONARY.md",
+      "docs/MARKET_STAGE1_PROTOCOL.md",
+      "docs/PARAMETER_CHANGE_LOG.md",
+      "gitignore",
+      "outputs/mixed_noise_bootstrap.csv",
+      "outputs/mixed_noise_metrics.csv",
+      "outputs/mixed_noise_parameter_summary.csv",
+      "outputs/mixed_noise_protocol.json",
+      "outputs/mixed_noise_report.md",
+      "outputs/mixed_noise_subgroups.csv",
+      "outputs/mixed_noise_summary.json",
+      "outputs/mixed_noise_thresholds.csv",
+      "src/strategy_survivorship/config.py",
+      "src/strategy_survivorship/market_assets.py",
+      "src/strategy_survivorship/market_cross.py",
+      "src/strategy_survivorship/market_data.py",
+      "src/strategy_survivorship/market_diagnostics.py",
+      "src/strategy_survivorship/market_recovery.py",
+      "src/strategy_survivorship/market_stage2.py",
+      "src/strategy_survivorship/market_stage3.py",
+      "src/strategy_survivorship/market_stage4.py",
+      "src/strategy_survivorship/mixed_noise.py",
+      "src/strategy_survivorship/plots_market.py",
+      "src/strategy_survivorship/plots_market_assets.py",
+      "src/strategy_survivorship/plots_market_cross.py",
+      "src/strategy_survivorship/plots_market_recovery.py",
+      "src/strategy_survivorship/plots_market_stage2.py",
+      "src/strategy_survivorship/plots_market_stage3.py",
+      "src/strategy_survivorship/plots_market_stage4.py",
+      "src/strategy_survivorship/report_market_cross.py",
+      "src/strategy_survivorship/report_market_recovery.py",
+      "src/strategy_survivorship/report_market_stage1.py",
+      "src/strategy_survivorship/report_market_stage2.py",
+      "src/strategy_survivorship/report_market_stage3.py",
+      "src/strategy_survivorship/report_market_stage4.py",
+      "src/strategy_survivorship/report_mixed_noise.py",
+      "src/strategy_survivorship/run_market_assets.py",
+      "src/strategy_survivorship/run_market_cross.py",
+      "src/strategy_survivorship/run_market_recovery.py",
+      "src/strategy_survivorship/run_market_stage1.py",
+      "src/strategy_survivorship/run_market_stage2.py",
+      "src/strategy_survivorship/run_market_stage3.py",
+      "src/strategy_survivorship/run_market_stage4.py",
+      "src/strategy_survivorship/run_mixed_noise.py",
+      "tests/test_market_cross.py",
+      "tests/test_market_recovery.py",
+      "tests/test_market_stage1.py",
+      "tests/test_market_stage2.py",
+      "tests/test_market_stage3.py",
+      "tests/test_market_stage4.py",
+      "tests/test_mixed_noise.py"
+    ],
+    "source_sha256": {
+      "market_data.py": "a7f66ca97551f021f92c2a72f4412d010c13bdacf88120c902688e8c6b849821",
+      "market_diagnostics.py": "8469443498e6bd68a4026aef77b7c54fad4e19c3d71c3f396e9c92b5392d416e",
+      "market_stage2.py": "080233dd2b8546b90da08f8b03fe1621d5ee9b518decb1d4a733cfc163e1acd3",
+      "market_stage3.py": "4629f551cd4565695aae6750431fd5dab155ceafb5eca2ae5fb3404c7e0a2fd0",
+      "market_stage4.py": "3a9e69eb9216d499d17c319902ae836218d8c4cf7c514e72ca7f016171dc24ae",
+      "run_market_stage4.py": "37c776302e48a01e30111194c11e433d37b2bf48cc69b112168c43219a11bbd5",
+      "noise.py": "eede267ad0c6a990bf8daec67ecd0a83a434ae0a7af0510236f453cd990d9db4",
+      "config.py": "56cad25e53e6fd63b73698964c7106025cf4a070890c5ade415c8f5e03865d06"
+    },
+    "python": "3.13.13",
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "pythonhashseed_env": "not set (and no longer relied on)"
+  },
+  "written_at_utc": "2026-09-14T02:37:15.729716+00:00",
+  "wall_seconds": 524.0479969978333,
+  "n_rows": 160
+}

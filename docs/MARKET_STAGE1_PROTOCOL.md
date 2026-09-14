@@ -55,12 +55,14 @@ for the simulator's latent variance, and its percentage changes are never treate
 as equity returns.
 
 **Redistribution.** FRED states that the S&P 500 data is provided by S&P Dow Jones
-Indices and may not be redistributed. Raw snapshots and every per-day derived
-series therefore stay local and out of Git. What is deliverable **in Git** is the
-download program, the data dictionary and the aggregate statistics. The provenance
-record (hashes, ranges, counts) is deliverable too, but **out of band**: it sits under
-`data/`, which `.gitignore` seals in full, so it is supplied on request rather than
-committed.
+Indices and may not be redistributed. Raw snapshots, every per-day derived series and
+the provenance records are nevertheless **tracked in this repository**, by an explicit
+decision of the repository owner; see [`DATA_LICENCE_NOTICE.md`](DATA_LICENCE_NOTICE.md)
+for the per-provider terms, what their presence does and does not grant, and the removal
+route for rights holders. This protocol's own deliverables — the download program, the
+data dictionary and the aggregate statistics — are unchanged by that decision. (Through
+commit `739519c` the data was excluded; this paragraph was updated in the same commit
+that added it.)
 
 ## 3. Return definition
 

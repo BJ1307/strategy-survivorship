@@ -199,7 +199,8 @@ def build(out: Path) -> str:
     A("`--reuse-snapshot` re-runs everything from the local raw file, which is the "
       "file of record: FRED's `SP500` keeps only a rolling ten-year window, so a "
       "download made later will not contain the earliest dates of this study. The "
-      "raw snapshot and every per-day derived file stay out of Git, because FRED "
+      "raw snapshot and every per-day derived file are tracked in this repository "
+      "by the owner's explicit decision, although FRED "
       "states the S&P 500 data comes from S&P Dow Jones Indices and may not be "
       "redistributed.")
     return "\n".join(L) + "\n"

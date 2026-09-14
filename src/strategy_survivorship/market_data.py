@@ -15,10 +15,10 @@ quantity and the two are never mixed.
 Redistribution
 --------------
 FRED states that the S&P 500 data comes from S&P Dow Jones Indices and may not be
-redistributed.  Raw snapshots and every per-day derived series stay under
-``data/`` and ``outputs/market/``, both of which are kept out of Git.  The
-downloader, the data dictionary, the provenance record and aggregate statistics
-are the deliverables.
+redistributed.  Raw snapshots and every per-day derived series sit under ``data/``
+and ``outputs/market/``, which are TRACKED in this repository by an explicit decision
+of its owner.  Presence there grants no redistribution right and alters none of the
+providers' terms; see ``docs/DATA_LICENCE_NOTICE.md`` before adding a new source.
 """
 
 from __future__ import annotations
@@ -49,7 +49,8 @@ SOURCES: dict[str, dict] = {
         "frequency": "daily, business days (Mon-Fri), blank on US market holidays",
         "units": "index level, points (S&P 500 PRICE index; dividends excluded)",
         "redistribution": "S&P Dow Jones Indices data; FRED states it may not be "
-                          "redistributed. Raw and per-day derived files stay local.",
+                          "redistributed. Published here anyway by the owner's decision; "
+                          "see docs/DATA_LICENCE_NOTICE.md.",
     },
     "nasdaq100": {
         "role": "cross-market, price index",

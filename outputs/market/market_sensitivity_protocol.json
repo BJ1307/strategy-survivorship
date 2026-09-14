@@ -1,0 +1,50 @@
+{
+  "question": "holding the pseudo-history and every weight fixed, how much does the selection move when only the internal simulation seeds change?",
+  "histories": [
+    {
+      "scenario": "A1.0_rho0.98",
+      "replicate": 0
+    },
+    {
+      "scenario": "A1.0_rho0.98",
+      "replicate": 1
+    },
+    {
+      "scenario": "A1.4_rho0.96",
+      "replicate": 0
+    },
+    {
+      "scenario": "A1.4_rho0.96",
+      "replicate": 1
+    }
+  ],
+  "history_choice": "replicates 0 and 1 of each scenario, chosen BY INDEX before the check was run and not by how they performed",
+  "held_fixed_per_history": [
+    "the pseudo-training returns",
+    "the training scale estimate",
+    "the calibration reference weights",
+    "the pseudo-evaluation returns",
+    "the evaluation reference weights",
+    "the evaluation simulation stream"
+  ],
+  "varied": "the screening stream and the finalist stream only, five independent seed sets",
+  "budget": {
+    "seed_sets": [
+      0,
+      1,
+      2,
+      3,
+      4
+    ],
+    "fits": 20,
+    "grid_cells": 40,
+    "screen_paths": 400,
+    "final_paths": 2000,
+    "eval_paths": 2000,
+    "n_finalists": 3,
+    "stop_rule": "stop at twenty fits. No extra runs to obtain a stabler or more decisive answer."
+  },
+  "selection_rule": "unchanged: the best three screened cells plus the fixed baseline, re-scored on an independent stream, lowest loss wins. The true parameters get no extra chance of being scored.",
+  "what_this_is_not": "twenty fits on four histories are NOT twenty independent market histories, and this design does NOT decompose the total error into its sources. It isolates internal simulation noise at a fixed history and nothing else.",
+  "separate_artefacts": "written as market_sensitivity_*; the recovery run is not overwritten"
+}

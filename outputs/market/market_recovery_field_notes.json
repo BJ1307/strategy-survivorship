@@ -1,0 +1,41 @@
+{
+  "purpose": "what the original recovery fields meant, and what replaced them. The original CSVs, losses, parameter selections and simulation outputs are UNCHANGED; only the reporting is corrected.",
+  "corrected_fields": {
+    "true_would_be_finalist": {
+      "original_meaning": "the true (A, rho) cell had a screening rank <= 3, i.e. it WOULD have entered the finalists through the screen",
+      "what_it_was_wrongly_read_as": "the truth was actually scored in the final re-check",
+      "why_that_is_wrong": "the fixed baseline is appended to the candidate set whenever the screen does not already contain it, so in the A=1.0, rho=0.98 scenario the truth IS the baseline and was scored in every replicate regardless of its screening rank",
+      "replacement_fields": {
+        "truth_in_screen_top3": "unchanged in meaning, renamed so it cannot be misread",
+        "truth_actually_scored_in_finalists": "queried from market_recovery_finalists.csv: was a row with the true (A, rho) actually scored?"
+      },
+      "corrected_counts": {
+        "A1.0_rho0.98": {"screen_top3": 9, "actually_scored": 20, "of": 20,
+                         "note": "the truth is the fixed baseline in this scenario"},
+        "A1.4_rho0.96": {"screen_top3": 11, "actually_scored": 11, "of": 20,
+                         "note": "the truth is not the baseline, so only the screen could admit it"}
+      }
+    },
+    "training_loss": {
+      "original_meaning": "the final re-check loss of the SELECTED configuration on the pseudo-training returns",
+      "added": "training_loss_baseline, the same quantity for the fixed baseline, read from market_recovery_finalists.csv; and training_improvement = baseline - selected",
+      "caveat": "both are final-re-check numbers on 2000 paths. They contain the selection (the minimum over candidates is biased low) and the finite simulation error of that re-check; neither is a clean measure of fit quality."
+    }
+  },
+  "withdrawn_statements": [
+    "'the parameters are unbiased' -- the mean selection error is -0.05 and -0.04 in A with a Monte-Carlo standard error of about 0.04 and 0.03 over 20 replicates. That is consistent with zero and does not establish unbiasedness.",
+    "'the procedure captured 70% of the available improvement' -- that was a ratio of two medians; the two paired means carry standard errors of 0.30 and 0.32, so their ratio is not a supportable point estimate.",
+    "'screening noise has been separately identified' -- this design varies the pseudo-history and the internal simulation together, so the two are not separated by it.",
+    "'selection noise is insufficient to explain the 2022 reversal' -- the two magnitudes come from different designs on different data and were never compared on a common footing; the comparison is withdrawn.",
+    "'the four versions share one evaluation stream, so a difference between them is not simulation noise' -- common random numbers REDUCE the noise of a paired comparison; they do not remove the finite simulation error, which is why each paired mean is reported with its own Monte-Carlo standard error.",
+    "'the chosen A spans a wide range while the evaluation losses stay narrow, so the distribution is stable and the parameters are unidentified' -- comparing the spread of a parameter with the spread of a loss does not establish either claim; the two are on different scales and neither spread was given a reference."
+  ],
+  "energy_score_definition": {
+    "fixed_before_the_run": true,
+    "transform_and_standardisation": "identical to J -- log for the three realised-volatility quantiles, raw for the five absolute-return autocorrelations, each divided by the same reference scale",
+    "weighting": "NOT identical to J. J applies two groups of equal total weight, so each realised-volatility target carries 1/6 and each autocorrelation target 1/10. The energy score uses a plain Euclidean norm over the eight standardised components, i.e. 1/8 each.",
+    "scope": "it evaluates the joint distribution of the eight-dimensional statistic summary only. It does not verify the full return process.",
+    "not_changed_after_seeing_results": true
+  },
+  "range_semantics": "every 2.5-97.5% figure over the 20 replicates is an EMPIRICAL RANGE across 20 simulated pseudo-histories under a fixed known DGP. It is not a confidence interval for any real-market parameter."
+}

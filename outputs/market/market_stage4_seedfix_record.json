@@ -1,0 +1,73 @@
+{
+  "defect": "market_stage4._tag derived the random-stream label from Python's built-in hash(str(...)). CPython randomises string hashing per process unless PYTHONHASHSEED is set; it is set nowhere in this repository and nowhere in the run environment (checked). Three separate interpreters produced three different labels for the same coordinates, so every run of stage 4 drew a DIFFERENT random stream. Results were internally consistent inside one process -- which is why the time-boundary check still passed -- but they did not reproduce across runs, and the docstring calling the tag 'stable' was wrong.",
+  "fix": "the label is now blake2b(coordinates, digest_size=4), deterministic across processes, Python versions and platforms. Nothing else changed: the grid, the objective, the window rules, the budget, the selection rule and every metric are exactly as before.",
+  "verification": "two fresh interpreters now produce an identical label and identical simulated values; the check runs inside run_market_stage4 and fails the run if it does not hold.",
+  "rerun": "one re-run at the original grid, metrics and budget. The pre-fix artefacts are preserved unchanged under outputs/market/stage4_prehashfix/.",
+  "what_moved": {
+    "cells_total": 16,
+    "cells_whose_selected_parameters_moved": 3,
+    "which": [
+      {
+        "eval_year": 2022,
+        "rule": "rolling3y",
+        "branch": "sv_only",
+        "A_prefix": 1.4,
+        "A_postfix": 1.6
+      },
+      {
+        "eval_year": 2023,
+        "rule": "rolling3y",
+        "branch": "sv_jump",
+        "A_prefix": 1.4,
+        "A_postfix": 1.2
+      },
+      {
+        "eval_year": 2023,
+        "rule": "rolling3y",
+        "branch": "sv_only",
+        "A_prefix": 1.4,
+        "A_postfix": 1.2
+      }
+    ],
+    "cells_whose_sign_flipped": 2,
+    "sign_flips": [
+      {
+        "eval_year": 2021,
+        "rule": "rolling3y",
+        "branch": "sv_jump",
+        "loss_difference_prefix": 0.044009189004408,
+        "loss_difference_postfix": -0.0132486946699974
+      },
+      {
+        "eval_year": 2023,
+        "rule": "rolling3y",
+        "branch": "sv_only",
+        "loss_difference_prefix": 0.1895525993195841,
+        "loss_difference_postfix": -0.024699942891007
+      }
+    ]
+  },
+  "what_did_not_move": {
+    "2020_cells_won_by_recalibration": [
+      4,
+      4
+    ],
+    "cells_won_overall": [
+      5,
+      7
+    ],
+    "mean_loss_difference": [
+      0.5950930317721121,
+      0.7372608935915397
+    ],
+    "mean_without_2022": [
+      0.018598259902796444,
+      0.02736661420724577
+    ],
+    "2022_mean": [
+      2.3245773473800595,
+      2.866943731744421
+    ],
+    "reading": "every headline conclusion survives: 2020 is the only year all four cells favour re-estimating, 2022 is by far the worst, the four-year average is positive, and removing 2022 leaves it at roughly zero. Both sign flips are on cells whose difference is small enough to be inside or near the Monte-Carlo error, so they are not a change of finding."
+  }
+}

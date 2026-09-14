@@ -1,0 +1,5 @@
+object,status,kind,calendar,raw_file,describe_n,contrast_n,describe_sd_daily,sigma_annual_from_describe,defects
+sp500,ok,price_index,nyse,data/raw/SP500_20260913T031157Z.csv,1258,501,0.012118087297484372,0.19236867212948663,none
+nasdaq100,ok,price_index,nyse,data/raw/NASDAQ100_20260913T220232Z.csv,1258,501,0.01424702327788501,0.22616448309739204,"1 price(s) printed on a day the calendar says the exchange was closed (2019-04-19) -- dropped at the analysis layer, the next return re-formed from the adjacent valid closes"
+nikkei225,ok,price_index,jpx,data/raw/NIKKEI225_20260913T220233Z.csv,1220,490,0.011666025020918767,0.18519240596404887,none
+ff_momentum,ok,factor_return,nyse,data/raw/F-F_Momentum_Factor_daily_20260913T220310Z.zip,1259,501,0.011879352238161002,0.18857887055227532,none

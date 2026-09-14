@@ -1,0 +1,245 @@
+{
+  "protocol": {
+    "question": "does re-estimating A and rho before each year describe the following year's statistics better than leaving them fixed?",
+    "status": "RETROSPECTIVE replay on history that has already been examined. Re-running a calibration on data we have already studied is not the same as having run it live, and nothing here is evidence about a future year.",
+    "development_scope": [
+      "2017-01-01",
+      "2023-12-31"
+    ],
+    "holdout": "2024-2025 is not read, not plotted and not measured. The returns frame is truncated at the development end on load.",
+    "evaluation_years": [
+      2020,
+      2021,
+      2022,
+      2023
+    ],
+    "window_rules": {
+      "rolling3y": "the three calendar years before the evaluation year",
+      "expanding": "2017 through the year before the evaluation year",
+      "note": "for 2020 the two rules coincide (2017-2019), so that year carries no information about the choice between them"
+    },
+    "cadence": "calibrate once before each year, frozen inside the year. Neither the window length nor the update frequency is searched.",
+    "branches": {
+      "sv_only": "pure SV, kappa = 0",
+      "sv_jump": "SV + jumps at the recorded kappa and lambda"
+    },
+    "grid": {
+      "A": [
+        0.6,
+        0.8,
+        1.0,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2.0
+      ],
+      "rho": [
+        0.9,
+        0.94,
+        0.96,
+        0.98,
+        0.99
+      ],
+      "note": "the stage-3 grid, unchanged. It is NOT widened if a result is poor."
+    },
+    "comparison": {
+      "recalibrated": "A and rho re-estimated on the window",
+      "fixed_baseline": "A = 1.0, rho = 0.98",
+      "shared": "both use the SAME overall scale, estimated from that window. The scale is never derived from the evaluation year."
+    },
+    "objective": "the stage-3 objective, unchanged: RV_21 quantiles compared in logs and the centred-absolute-return ACF at lags [1, 5, 10, 21, 63], two groups of equal total weight. A finite-sample simulated-moment distance, not a likelihood and not a test.",
+    "lengths": {
+      "calibration": "the simulated length matches the history window",
+      "evaluation": "the simulated length matches the evaluation year"
+    },
+    "standardising_references": {
+      "calibration": "built at EACH origin from then-available information: the baseline parameters, the window's own scale estimate and the window's length. Fixed across candidates inside that calibration. The stage-2 full-training reference is NOT carried into early windows -- it contains information from after them.",
+      "evaluation": "ONE reference per (year, branch), shared by every method scored that year: baseline parameters, the scale from the EXPANDING window ending before the year, and a length equal to the year's trading-day count, which is a calendar fact. A single shared reference is what makes the methods comparable; it cannot favour one of them."
+    },
+    "statistics_inside_the_year": "every evaluation statistic is computed inside the evaluation year, identically for the market and for every simulated path. RV_21 therefore begins on the 21st trading day of the year. No statistic crosses the boundary, so no embargo is imposed.",
+    "initialisation": "the log-variance AR(1) starts from its stationary law. This is a check on whether the distribution SHAPE transfers after a rolling re-fit; it is not a conditional forecast and the latent state is never filtered on the real path.",
+    "budgets_and_seeds": {
+      "screen_paths": 400,
+      "final_paths": 2000,
+      "eval_paths": 2000,
+      "n_finalists": 3,
+      "screening": "common random numbers across every cell of one calibration",
+      "final": "fresh streams, independent of the screen",
+      "seeds": "derived from the protocol coordinates (rule, branch, year), never from the data"
+    },
+    "auxiliary": {
+      "list": [
+        "skewness",
+        "excess_kurtosis",
+        "tail_below_m2_count",
+        "tail_above_p2_count",
+        "tail_below_m3_count",
+        "tail_above_p3_count",
+        "acf_ret_lag1",
+        "acf_ret_lag5",
+        "acf_sqret_lag1",
+        "acf_sqret_lag5",
+        "leadlag_ret_vs_future_sq_lag1",
+        "leadlag_ret_vs_future_sq_lag5",
+        "concentration_max_exceed_63d"
+      ],
+      "rule": "reported every year, NEVER added to the objective whatever they show"
+    },
+    "reporting_limits": [
+      "four years and two overlapping window rules are not independent replicates; no significance statement is made from them",
+      "a failure is not attributed to a regime change by default",
+      "the main window rule is not swapped on the strength of the replay",
+      "every simulated range is conditional on the model AND the parameters, and carries no parameter-estimation uncertainty"
+    ],
+    "relation_to_the_monitoring_project": "a generator that re-estimates well does NOT imply the monitor's two-year 15% cumulative false-alarm control still holds. Using such updates in a real monitor would require recalibrating the whole rule INCLUDING the update action; a budget is not re-issued at each update."
+  },
+  "stage3_corrections": {
+    "provenance": "recomputed from outputs/market/market_stage3_*, which are unchanged. Stage 3's numbers all stand; what is corrected is how they were described.",
+    "1_order_of_operations": {
+      "what_stage_3_implied": "that both validation loss definitions were fixed before any validation number existed",
+      "what_actually_happened": "the smoke run of run_market_stage3 executed the WHOLE pipeline, including the validation period, and printed validation losses. The validation-length standardisation was added AFTER that output had been seen, and the code comment claiming otherwise was wrong.",
+      "status_now": "loss_frozen_training_scales remains the pre-specified primary result. loss_validation_length_scales is a POST-HOC SUPPLEMENTARY analysis. Its agreement with the primary ordering is therefore weaker evidence than stage 3 presented it as, and it selects nothing.",
+      "not_affected": "the grid, the objective, the selection rule and the selected parameters were all fixed before the search and are untouched by this correction."
+    },
+    "2_attribution": {
+      "withdrawn": "the cause lies in the market itself, not in the fitting process",
+      "replacement": "a transfer failure across periods was observed. This round cannot separate the contributions of a change in the data-generating mechanism, finite-sample variation in either period, uncertainty in the estimated parameters, and model misspecification. The market statistics do differ sharply between the two periods; that is an observation, not an attribution."
+    },
+    "3_fitted_versus_held_out": {
+      "fitted_targets": [
+        "rv21_q10",
+        "rv21_q50",
+        "rv21_q90",
+        "acf_absret_lag1",
+        "acf_absret_lag5",
+        "acf_absret_lag10",
+        "acf_absret_lag21",
+        "acf_absret_lag63"
+      ],
+      "note": "the RV_21 quantiles and the absolute-return ACF are the objective itself and must never be cited as held-out evidence",
+      "boundary_crossing_is_not_enough": "stage 3 reported that no held-out statistic moved from inside the simulated range to outside. That test cannot see a centre that drifted while staying inside a wide band, so the centre error is checked here as well, scaled by the baseline's own band.",
+      "centre_error_check": {
+        "sv_only": {
+          "n_held_out_checked": 24,
+          "centre_error_worse": [
+            {
+              "statistic": "tail_above_p3_count",
+              "baseline_centre_error": 0.0,
+              "selected_centre_error": 0.2727272727272727,
+              "change": 0.2727272727272727
+            },
+            {
+              "statistic": "agg21d_excess_kurtosis",
+              "baseline_centre_error": 0.036902273858609606,
+              "selected_centre_error": 0.1130060935573417,
+              "change": 0.07610381969873209
+            }
+          ],
+          "centre_error_better": 10,
+          "essentially_unchanged": 12
+        },
+        "sv_jump": {
+          "n_held_out_checked": 24,
+          "centre_error_worse": [
+            {
+              "statistic": "tail_above_p3_count",
+              "baseline_centre_error": 0.0,
+              "selected_centre_error": 0.2727272727272727,
+              "change": 0.2727272727272727
+            },
+            {
+              "statistic": "agg21d_excess_kurtosis",
+              "baseline_centre_error": 0.05058309538449226,
+              "selected_centre_error": 0.17209413748220942,
+              "change": 0.12151104209771715
+            },
+            {
+              "statistic": "tail_above_p2_count",
+              "baseline_centre_error": 0.5238095238095238,
+              "selected_centre_error": 0.5714285714285714,
+              "change": 0.04761904761904756
+            },
+            {
+              "statistic": "acf_ret_lag1",
+              "baseline_centre_error": 1.6556912734093026,
+              "selected_centre_error": 1.6801099810024611,
+              "change": 0.024418707593158562
+            }
+          ],
+          "centre_error_better": 12,
+          "essentially_unchanged": 8
+        }
+      }
+    },
+    "4_uncertainty_and_scope": {
+      "structural_claims_restricted": "stage 3's statement that the two target groups cannot be satisfied together holds FOR THIS GRID AND THIS OBJECTIVE. A different target set, a different weighting or a wider grid could change it. It is not a proof about the model family.",
+      "three_uncertainties_are_different": {
+        "simulation_standard_error": "how much a reported loss or median moves if the same model is simulated again. Reported as loss_mc_se, and it is the only one stage 3 quantified.",
+        "market_sample_uncertainty": "how much the SAMPLE statistic would move on another draw of the same length from the same market. NOT quantified: one history, no replicate.",
+        "parameter_uncertainty": "how much the selected (A, rho) would move on another sample. NOT quantified. Every simulated range in stages 3 and 4 is conditional on the selected parameters and contains none of it."
+      }
+    }
+  },
+  "time_boundary_checks": [
+    {
+      "rule": "rolling3y",
+      "branch": "sv_only",
+      "eval_year": 2021,
+      "n_returns_perturbed": 753,
+      "identical": true,
+      "fields": {
+        "A": true,
+        "rho": true,
+        "sigma_annual": true,
+        "window_n_returns": true,
+        "calibration_loss": true,
+        "seed_tag": true,
+        "standardising_scales": true
+      }
+    }
+  ],
+  "development_scope_returns": 1759,
+  "evaluation_reference": {
+    "2020|sv_only": {
+      "expanding_sigma_annual": 0.12800611779874022,
+      "n_days": 253,
+      "scales_floored": []
+    },
+    "2020|sv_jump": {
+      "expanding_sigma_annual": 0.12800611779874022,
+      "n_days": 253,
+      "scales_floored": []
+    },
+    "2021|sv_only": {
+      "expanding_sigma_annual": 0.20491959836521506,
+      "n_days": 252,
+      "scales_floored": []
+    },
+    "2021|sv_jump": {
+      "expanding_sigma_annual": 0.20491959836521506,
+      "n_days": 252,
+      "scales_floored": []
+    },
+    "2022|sv_only": {
+      "expanding_sigma_annual": 0.1923686721294862,
+      "n_days": 251,
+      "scales_floored": []
+    },
+    "2022|sv_jump": {
+      "expanding_sigma_annual": 0.1923686721294862,
+      "n_days": 251,
+      "scales_floored": []
+    },
+    "2023|sv_only": {
+      "expanding_sigma_annual": 0.20150379648559902,
+      "n_days": 250,
+      "scales_floored": []
+    },
+    "2023|sv_jump": {
+      "expanding_sigma_annual": 0.20150379648559902,
+      "n_days": 250,
+      "scales_floored": []
+    }
+  }
+}

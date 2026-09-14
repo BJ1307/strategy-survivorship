@@ -1,0 +1,68 @@
+{
+  "question": "when the true data-generating mechanism is known, is the existing calibration procedure sound?",
+  "scope": "pure SV only. No jumps, no leverage term, no monitor, no market data.",
+  "scenarios": {
+    "A1.0_rho0.98": {
+      "A": 1.0,
+      "rho": 0.98
+    },
+    "A1.4_rho0.96": {
+      "A": 1.4,
+      "rho": 0.96
+    }
+  },
+  "true_scale": {
+    "sigma_annual": 0.192,
+    "status": "a DESIGN value for this simulation study, not an estimate from any market",
+    "drift": 0.0
+  },
+  "budget": {
+    "outer_replicates_per_scenario": 20,
+    "total_fits": 40,
+    "days_per_series": 1258,
+    "screen_paths": 400,
+    "final_paths": 2000,
+    "eval_paths": 2000,
+    "n_finalists": 3,
+    "fixed_in_advance": "the budget is not extended and the truth, the loss and the grid are not changed on the strength of a result"
+  },
+  "replication_semantics": "the evaluation series is an INDEPENDENT REPLICATION from the same DGP, drawn on its own stream. It is not a continuation conditioned on the training period's end state, and nothing here is a conditional forecast.",
+  "information_isolation": {
+    "the_fitter_never_sees": "the true A, the true rho, the true scale or the latent volatility path",
+    "scale": "estimated from the pseudo-TRAINING returns only, and the fixed baseline and the fitted shape share that one estimate",
+    "streams": {
+      "pseudo_training_data": 20260941,
+      "pseudo_evaluation_data": 20260942,
+      "calibration_reference": 20260943,
+      "calibration_screening": 20260944,
+      "calibration_finalists": 20260945,
+      "evaluation_reference": 20260946,
+      "evaluation_simulation": 20260947
+    },
+    "seed_derivation": "blake2b(coordinates); never Python's per-process string hash",
+    "common_random_numbers": "the four versions share one evaluation stream inside a replicate, so their differences are not simulation noise between them"
+  },
+  "unchanged_from_the_earlier_stages": "the 8 targets, their transforms, the two equal-weight groups, the baseline-reference scale rule, the 40-cell grid, 400-path screening and the top-3 plus fixed baseline 2000-path re-check. Verified against the code, 13 of 13 descriptions matched.",
+  "true_parameters_in_the_search": "both true pairs happen to be grid points, so their screening rank is well defined. The truth is NOT inserted into the finalists if the original rule does not select it; it is carried only as an evaluation reference.",
+  "versions_compared": {
+    "fixed_baseline": "A=1.0, rho=0.98, estimated scale",
+    "selected": "the calibrated A and rho, estimated scale",
+    "true_shape": "the true A and rho, estimated scale",
+    "true_everything": "the true A, rho AND the true scale -- an ORACLE REFERENCE, not a lower bound of the loss: the objective matches simulated medians to one sample and nothing makes the truth minimise it at n = 1258"
+  },
+  "evaluation_scales": "one reference per replicate, built at the BASELINE with the estimated scale, on its own stream, BEFORE the evaluation data is used. Shared by all four versions.",
+  "secondary_energy_score": "a pre-specified energy score over the JOINT distribution of the 8 statistics, in the same transform and scale, estimated from two independent halves of the simulated paths. Evaluation only: it selects nothing and does not replace the loss.",
+  "held_out_diagnostics": [
+    "tail_below_m3_count",
+    "tail_above_p3_count",
+    "acf_sqret_lag1",
+    "acf_sqret_lag5",
+    "acf_sqret_lag21"
+  ],
+  "three_uncertainties": {
+    "inner_simulation_error": "how much a reported loss moves if the same configuration is simulated again; quantified as loss_mc_se",
+    "outer_pseudo_history_variation": "how much the answer moves across the 20 pseudo-histories; this is what the outer spread shows",
+    "real_market_uncertainty": "NOT addressed here at all. These are simulated histories from a known DGP."
+  },
+  "what_20_replicates_support": "a preliminary diagnosis for these two fixed scenarios. It is not a confidence statement about the S&P 500 or about any future period."
+}

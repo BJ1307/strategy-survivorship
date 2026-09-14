@@ -29,8 +29,7 @@ OUT = Path("outputs/market")
 
 def _needs(path: Path):
     if not path.exists():
-        pytest.skip(f"{path} not present; run run_market_stage1 first "
-                    "(market data is deliberately not in Git)")
+        pytest.skip(f"{path} not present; run run_market_stage1 first")
 
 
 # --------------------------------------------------------------- calendar ---
@@ -369,22 +368,41 @@ def test_the_report_makes_no_forbidden_claim():
         assert phrase in low, phrase
 
 
-def test_market_data_is_not_tracked_by_git():
-    """The licensed series must stay out of Git; the code must stay in it.
+def test_every_snapshot_is_traceable_to_its_provider():
+    """The licensed series are now TRACKED, so the guard has to change with them.
 
-    The probed paths are FILES INSIDE the ignored directories, not the directories
-    themselves.  `git check-ignore outputs/market` consults the filesystem to decide
-    whether the final path component is a directory, so a directory-only pattern does
-    not match when the directory is absent -- which is exactly the state of a fresh
-    clone, where this test would otherwise fail.  A file path makes the ignored
-    directory a leading component, which git resolves without touching the disk, and
-    it tests the thing that actually matters: that a data file there would be ignored.
+    The old test asserted `data/` and `outputs/market/` were git-ignored.  That was
+    the policy through commit 739519c; the owner then chose to publish the data, and a
+    test asserting the previous policy would simply fail.  Deleting it outright would
+    lose the only automated check on the licensing story, so it is replaced by the
+    invariant DATA_LICENCE_NOTICE.md actually promises: every published snapshot can
+    be traced back to what its provider served.
     """
-    import subprocess
-    for p in ("data/raw/snapshot.csv", "outputs/market/per_day_series.csv"):
-        r = subprocess.run(["git", "check-ignore", "-q", p], capture_output=True)
-        assert r.returncode == 0, f"{p} is NOT git-ignored"
-    r = subprocess.run(["git", "check-ignore", "-q",
-                        "src/strategy_survivorship/market_data.py"],
-                       capture_output=True)
-    assert r.returncode != 0, "the downloader must remain trackable"
+    notice = Path("docs/DATA_LICENCE_NOTICE.md")
+    assert notice.exists(), "publishing licensed data without the notice is not allowed"
+
+    raw = Path("data/raw")
+    if not raw.exists():
+        pytest.skip("no snapshots present in this checkout")
+    # Two provenance shapes coexist, both legitimate: the earlier acquisition rounds
+    # wrote ONE SIDECAR PER FILE (`SP500_*.provenance.json`), the later batch wrote a
+    # single combined `acquisition.provenance.json` covering fourteen sources.  A file
+    # is traceable if EITHER carries it; checking only the combined record would fail
+    # the five older snapshots that are in fact fully documented.
+    prov = raw / "acquisition.provenance.json"
+    assert prov.exists(), "published snapshots must carry their acquisition record"
+    record = json.loads(prov.read_text(encoding="utf-8"))
+    # Compared on STEMS, because a sidecar is named for the file without its extension:
+    # `SP500_<ts>.provenance.json` documents `SP500_<ts>.csv`.
+    recorded = {Path(v["raw_file"]).stem
+                for k, v in record.items()
+                if not k.startswith("_") and isinstance(v, dict) and v.get("raw_file")}
+    recorded |= {f.name[: -len(".provenance.json")]
+                 for f in raw.glob("*.provenance.json")
+                 if f.name != "acquisition.provenance.json"}
+    published = {f.stem for f in raw.iterdir()
+                 if f.is_file() and not f.name.endswith(".provenance.json")}
+    untraceable = sorted(published - recorded)
+    assert not untraceable, (
+        f"published without a provenance record, so they cannot be traced back to a "
+        f"provider: {untraceable}")

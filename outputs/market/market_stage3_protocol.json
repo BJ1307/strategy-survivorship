@@ -1,0 +1,146 @@
+{
+  "question": "with the overall scale frozen at the training estimate, can moving ONLY A and rho close the realised-volatility and absolute-return-autocorrelation gaps, and does it survive on 2022-2023?",
+  "what_moves": [
+    "noise_sv_amplitude A",
+    "noise_sv_rho rho"
+  ],
+  "what_is_frozen": {
+    "sigma_annual": 0.1923686721294862,
+    "sigma_annual_provenance": "sd(S&P training returns) * sqrt(252) = 0.012118087297484344 * sqrt(252); the exact value is used, not a rounded 19.2%",
+    "kappa": {
+      "sv_only": 0.0,
+      "sv_jump": 5.0
+    },
+    "lambda_per_year": 2.0,
+    "student_t_df": 5.0,
+    "note": "no monitor, no EWMA, no earlier stage's configuration or output is touched, and mixed_noise is left exactly as it is"
+  },
+  "branches": {
+    "sv_only": "pure SV, kappa = 0",
+    "sv_jump": "SV + jumps, kappa and lambda at their stage-2 values"
+  },
+  "grid": {
+    "A": [
+      0.6,
+      0.8,
+      1.0,
+      1.2,
+      1.4,
+      1.6,
+      1.8,
+      2.0
+    ],
+    "rho": [
+      0.9,
+      0.94,
+      0.96,
+      0.98,
+      0.99
+    ],
+    "points_per_branch": 40,
+    "boundary_rule": "if the best cell sits on an edge of this grid that is RECORDED as a boundary result. The grid is not expanded to chase it."
+  },
+  "objective": {
+    "kind": "finite-sample simulated-moment distance. NOT a likelihood, NOT a probability that the model is correct, NOT a calibrated significance test",
+    "group_1": {
+      "targets": [
+        "rv21_q10",
+        "rv21_q50",
+        "rv21_q90"
+      ],
+      "expression": "log of the realised-volatility quantile, so the comparison is proportional and the large quantile cannot dominate"
+    },
+    "group_2": {
+      "targets": [
+        "acf_absret_lag1",
+        "acf_absret_lag5",
+        "acf_absret_lag10",
+        "acf_absret_lag21",
+        "acf_absret_lag63"
+      ],
+      "expression": "plain difference; already dimensionless"
+    },
+    "weights": "the two groups carry equal total weight; inside a group the targets are averaged, so the group weight does not depend on how many targets it happens to contain",
+    "standardising_scales": {
+      "rv21_q10": 0.17299984313397102,
+      "rv21_q50": 0.14534178299841316,
+      "rv21_q90": 0.15737353865164272,
+      "acf_absret_lag1": 0.06427296501686082,
+      "acf_absret_lag5": 0.060573042466417454,
+      "acf_absret_lag10": 0.059956395230605336,
+      "acf_absret_lag21": 0.05416011124403457,
+      "acf_absret_lag63": 0.04561853401757275
+    },
+    "scale_provenance": "across-path standard deviation of each target under the STAGE 2 same-length reference simulation (sv_jump, matched scale, 2000 paths x 1258 days), fixed before this search. It is deliberately NOT recomputed per candidate: that would reward a candidate whose simulated spread happened to be wide",
+    "scale_floor": 0.0001,
+    "scales_that_hit_the_floor": [],
+    "comparison_point": "the simulated MEDIAN across paths against the single sample value, at the same sample length",
+    "alternative_scales_not_used": {
+      "source": "the stage-2 stoch_vol matched baseline",
+      "values": {
+        "rv21_q10": 0.17378331706284827,
+        "rv21_q50": 0.15002580659673984,
+        "rv21_q90": 0.17980342229961074,
+        "acf_absret_lag1": 0.06235003948430168,
+        "acf_absret_lag5": 0.062142491720156665,
+        "acf_absret_lag10": 0.062364760883580304,
+        "acf_absret_lag21": 0.059933750779069,
+        "acf_absret_lag63": 0.053133305921585834
+      },
+      "why_recorded": "one common scale set keeps the two branches comparable; the alternative differs by at most ~15%, and the branch ranking is re-checked against it"
+    }
+  },
+  "budget_and_seeds": {
+    "screening_paths_per_cell": 400,
+    "screening_streams": "COMMON RANDOM NUMBERS: every grid cell in a branch draws the same xi, z, K, w, so candidates are compared on the same noise",
+    "screening_entropy": 20260914,
+    "final_paths_per_candidate": 2000,
+    "final_streams": "fresh and INDEPENDENT of the screening stream",
+    "final_entropy": 20260915,
+    "validation_entropy": 20260916,
+    "days_per_path": 1258,
+    "initialisation": "the log-variance AR(1) starts from its stationary law",
+    "no_post_hoc_rescaling": "no path is rescaled after the draw to force a target mean, variance or Sharpe ratio"
+  },
+  "selection_rule": {
+    "1": "screen all 40 cells per branch",
+    "2": "carry the best 3 cells per branch, plus the stage-2 baseline A=1.0, rho=0.98",
+    "3": "re-evaluate each finalist on 2000 INDEPENDENT paths",
+    "4": "estimate the Monte-Carlo standard error of the loss by resampling paths",
+    "5": "select the lowest re-check loss. Any finalist within ONE Monte-Carlo standard error of the best is reported as part of a near-optimal SET; a unique optimum is not manufactured when the data cannot separate them"
+  },
+  "held_out_this_stage": {
+    "training_statistics_not_in_the_objective": [
+      "skewness",
+      "excess_kurtosis",
+      "tail_below_m2_count",
+      "tail_above_p2_count",
+      "tail_below_m3_count",
+      "tail_above_p3_count",
+      "tail_below_m5_count",
+      "tail_above_p5_count",
+      "acf_ret_lag1",
+      "acf_ret_lag5",
+      "acf_ret_lag21",
+      "acf_sqret_lag1",
+      "acf_sqret_lag5",
+      "acf_sqret_lag21",
+      "leadlag_ret_vs_future_sq_lag1",
+      "leadlag_ret_vs_future_sq_lag5",
+      "leadlag_ret_vs_future_sq_lag21",
+      "agg5d_sd",
+      "agg5d_skewness",
+      "agg5d_excess_kurtosis",
+      "agg21d_sd",
+      "agg21d_skewness",
+      "agg21d_excess_kurtosis",
+      "concentration_max_exceed_63d",
+      "w1_vs_market_standardised"
+    ],
+    "auxiliary": "P(RV_21 still above the training threshold 5 trading days later | above it today). Threshold fixed on the training sample; identical algorithm for market and simulation; state frequency, effective counts and the 16-day window overlap are all reported. This is a summary of a noisy observable, not a latent-state identification",
+    "validation": "2022-01-01 to 2023-12-31, read only AFTER the selected configuration is written to disk. All training parameters including the overall scale are frozen; the simulated length and every statistic window match the validation sample",
+    "holdout": "2024-2025 is not read",
+    "no_second_pass": "the objective, the grid and the parameters are not revised in the light of the validation result. A validation failure is a deliverable conclusion"
+  },
+  "range_semantics": "every simulated range is conditional on the chosen model AND the chosen parameters. It does not include parameter estimation uncertainty, and per-statistic coverage is not an overall pass rate"
+}

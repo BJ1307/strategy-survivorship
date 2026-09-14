@@ -1,0 +1,647 @@
+{
+  "protocol": {
+    "question": "with the overall scale frozen at the training estimate, can moving ONLY A and rho close the realised-volatility and absolute-return-autocorrelation gaps, and does it survive on 2022-2023?",
+    "what_moves": [
+      "noise_sv_amplitude A",
+      "noise_sv_rho rho"
+    ],
+    "what_is_frozen": {
+      "sigma_annual": 0.1923686721294862,
+      "sigma_annual_provenance": "sd(S&P training returns) * sqrt(252) = 0.012118087297484344 * sqrt(252); the exact value is used, not a rounded 19.2%",
+      "kappa": {
+        "sv_only": 0.0,
+        "sv_jump": 5.0
+      },
+      "lambda_per_year": 2.0,
+      "student_t_df": 5.0,
+      "note": "no monitor, no EWMA, no earlier stage's configuration or output is touched, and mixed_noise is left exactly as it is"
+    },
+    "branches": {
+      "sv_only": "pure SV, kappa = 0",
+      "sv_jump": "SV + jumps, kappa and lambda at their stage-2 values"
+    },
+    "grid": {
+      "A": [
+        0.6,
+        0.8,
+        1.0,
+        1.2,
+        1.4,
+        1.6,
+        1.8,
+        2.0
+      ],
+      "rho": [
+        0.9,
+        0.94,
+        0.96,
+        0.98,
+        0.99
+      ],
+      "points_per_branch": 40,
+      "boundary_rule": "if the best cell sits on an edge of this grid that is RECORDED as a boundary result. The grid is not expanded to chase it."
+    },
+    "objective": {
+      "kind": "finite-sample simulated-moment distance. NOT a likelihood, NOT a probability that the model is correct, NOT a calibrated significance test",
+      "group_1": {
+        "targets": [
+          "rv21_q10",
+          "rv21_q50",
+          "rv21_q90"
+        ],
+        "expression": "log of the realised-volatility quantile, so the comparison is proportional and the large quantile cannot dominate"
+      },
+      "group_2": {
+        "targets": [
+          "acf_absret_lag1",
+          "acf_absret_lag5",
+          "acf_absret_lag10",
+          "acf_absret_lag21",
+          "acf_absret_lag63"
+        ],
+        "expression": "plain difference; already dimensionless"
+      },
+      "weights": "the two groups carry equal total weight; inside a group the targets are averaged, so the group weight does not depend on how many targets it happens to contain",
+      "standardising_scales": {
+        "rv21_q10": 0.17299984313397102,
+        "rv21_q50": 0.14534178299841316,
+        "rv21_q90": 0.15737353865164272,
+        "acf_absret_lag1": 0.06427296501686082,
+        "acf_absret_lag5": 0.060573042466417454,
+        "acf_absret_lag10": 0.059956395230605336,
+        "acf_absret_lag21": 0.05416011124403457,
+        "acf_absret_lag63": 0.04561853401757275
+      },
+      "scale_provenance": "across-path standard deviation of each target under the STAGE 2 same-length reference simulation (sv_jump, matched scale, 2000 paths x 1258 days), fixed before this search. It is deliberately NOT recomputed per candidate: that would reward a candidate whose simulated spread happened to be wide",
+      "scale_floor": 0.0001,
+      "scales_that_hit_the_floor": [],
+      "comparison_point": "the simulated MEDIAN across paths against the single sample value, at the same sample length",
+      "alternative_scales_not_used": {
+        "source": "the stage-2 stoch_vol matched baseline",
+        "values": {
+          "rv21_q10": 0.17378331706284827,
+          "rv21_q50": 0.15002580659673984,
+          "rv21_q90": 0.17980342229961074,
+          "acf_absret_lag1": 0.06235003948430168,
+          "acf_absret_lag5": 0.062142491720156665,
+          "acf_absret_lag10": 0.062364760883580304,
+          "acf_absret_lag21": 0.059933750779069,
+          "acf_absret_lag63": 0.053133305921585834
+        },
+        "why_recorded": "one common scale set keeps the two branches comparable; the alternative differs by at most ~15%, and the branch ranking is re-checked against it"
+      }
+    },
+    "budget_and_seeds": {
+      "screening_paths_per_cell": 400,
+      "screening_streams": "COMMON RANDOM NUMBERS: every grid cell in a branch draws the same xi, z, K, w, so candidates are compared on the same noise",
+      "screening_entropy": 20260914,
+      "final_paths_per_candidate": 2000,
+      "final_streams": "fresh and INDEPENDENT of the screening stream",
+      "final_entropy": 20260915,
+      "validation_entropy": 20260916,
+      "days_per_path": 1258,
+      "initialisation": "the log-variance AR(1) starts from its stationary law",
+      "no_post_hoc_rescaling": "no path is rescaled after the draw to force a target mean, variance or Sharpe ratio"
+    },
+    "selection_rule": {
+      "1": "screen all 40 cells per branch",
+      "2": "carry the best 3 cells per branch, plus the stage-2 baseline A=1.0, rho=0.98",
+      "3": "re-evaluate each finalist on 2000 INDEPENDENT paths",
+      "4": "estimate the Monte-Carlo standard error of the loss by resampling paths",
+      "5": "select the lowest re-check loss. Any finalist within ONE Monte-Carlo standard error of the best is reported as part of a near-optimal SET; a unique optimum is not manufactured when the data cannot separate them"
+    },
+    "held_out_this_stage": {
+      "training_statistics_not_in_the_objective": [
+        "skewness",
+        "excess_kurtosis",
+        "tail_below_m2_count",
+        "tail_above_p2_count",
+        "tail_below_m3_count",
+        "tail_above_p3_count",
+        "tail_below_m5_count",
+        "tail_above_p5_count",
+        "acf_ret_lag1",
+        "acf_ret_lag5",
+        "acf_ret_lag21",
+        "acf_sqret_lag1",
+        "acf_sqret_lag5",
+        "acf_sqret_lag21",
+        "leadlag_ret_vs_future_sq_lag1",
+        "leadlag_ret_vs_future_sq_lag5",
+        "leadlag_ret_vs_future_sq_lag21",
+        "agg5d_sd",
+        "agg5d_skewness",
+        "agg5d_excess_kurtosis",
+        "agg21d_sd",
+        "agg21d_skewness",
+        "agg21d_excess_kurtosis",
+        "concentration_max_exceed_63d",
+        "w1_vs_market_standardised"
+      ],
+      "auxiliary": "P(RV_21 still above the training threshold 5 trading days later | above it today). Threshold fixed on the training sample; identical algorithm for market and simulation; state frequency, effective counts and the 16-day window overlap are all reported. This is a summary of a noisy observable, not a latent-state identification",
+      "validation": "2022-01-01 to 2023-12-31, read only AFTER the selected configuration is written to disk. All training parameters including the overall scale are frozen; the simulated length and every statistic window match the validation sample",
+      "holdout": "2024-2025 is not read",
+      "no_second_pass": "the objective, the grid and the parameters are not revised in the light of the validation result. A validation failure is a deliverable conclusion"
+    },
+    "range_semantics": "every simulated range is conditional on the chosen model AND the chosen parameters. It does not include parameter estimation uncertainty, and per-statistic coverage is not an overall pass rate"
+  },
+  "recheck": {
+    "rho_marginal_vs_rv21": [
+      {
+        "A": 1.0,
+        "rho": 0.9,
+        "v_q10": 0.1683244966934285,
+        "v_q50": 0.6059803168329264,
+        "v_q90": 2.1752359182533745,
+        "v_q10_theory": 0.1683766970108444,
+        "v_q50_theory": 0.6065306597126334,
+        "v_q90_theory": 2.1848595898501846,
+        "rv21_q10_median": 0.09550496029052813,
+        "rv21_q50_median": 0.16229220973166447,
+        "rv21_q90_median": 0.2724957912139887,
+        "rv21_q90_over_q10": 2.878295341089911,
+        "sv_acf_abs_lag1": 0.24811898313601458,
+        "sv_acf_abs_lag63": 0.0003221015863116432
+      },
+      {
+        "A": 1.0,
+        "rho": 0.94,
+        "v_q10": 0.16623989197753544,
+        "v_q50": 0.602448085535978,
+        "v_q90": 2.1815015510260736,
+        "v_q10_theory": 0.1683766970108444,
+        "v_q50_theory": 0.6065306597126334,
+        "v_q90_theory": 2.1848595898501846,
+        "rv21_q10_median": 0.08790902212953447,
+        "rv21_q50_median": 0.15623172367497476,
+        "rv21_q90_median": 0.2743546218667835,
+        "rv21_q90_over_q10": 3.0857856173693587,
+        "sv_acf_abs_lag1": 0.260495350215868,
+        "sv_acf_abs_lag63": 0.004998040779258595
+      },
+      {
+        "A": 1.0,
+        "rho": 0.96,
+        "v_q10": 0.16887933851840145,
+        "v_q50": 0.6123160576474123,
+        "v_q90": 2.1986639565151394,
+        "v_q10_theory": 0.1683766970108444,
+        "v_q50_theory": 0.6065306597126334,
+        "v_q90_theory": 2.1848595898501846,
+        "rv21_q10_median": 0.0856203214547897,
+        "rv21_q50_median": 0.1544724396325301,
+        "rv21_q90_median": 0.28030253711591574,
+        "rv21_q90_over_q10": 3.2886029239922845,
+        "sv_acf_abs_lag1": 0.2667301001273262,
+        "sv_acf_abs_lag63": 0.018962054525732297
+      },
+      {
+        "A": 1.0,
+        "rho": 0.98,
+        "v_q10": 0.16852445510137093,
+        "v_q50": 0.5969236423460624,
+        "v_q90": 2.1236007035183384,
+        "v_q10_theory": 0.1683766970108444,
+        "v_q50_theory": 0.6065306597126334,
+        "v_q90_theory": 2.1848595898501846,
+        "rv21_q10_median": 0.0823063626894798,
+        "rv21_q50_median": 0.15116205489348328,
+        "rv21_q90_median": 0.2688615009357216,
+        "rv21_q90_over_q10": 3.2501792906902556,
+        "sv_acf_abs_lag1": 0.272996101852769,
+        "sv_acf_abs_lag63": 0.0713145902518905
+      },
+      {
+        "A": 1.0,
+        "rho": 0.99,
+        "v_q10": 0.15963808732944826,
+        "v_q50": 0.5810203752382335,
+        "v_q90": 2.1249834048315175,
+        "v_q10_theory": 0.1683766970108444,
+        "v_q50_theory": 0.6065306597126334,
+        "v_q90_theory": 2.1848595898501846,
+        "rv21_q10_median": 0.07858395448869869,
+        "rv21_q50_median": 0.144409648165334,
+        "rv21_q90_median": 0.26865603349844974,
+        "rv21_q90_over_q10": 3.299697122923292,
+        "sv_acf_abs_lag1": 0.27614087106834834,
+        "sv_acf_abs_lag63": 0.1395728057674959
+      }
+    ],
+    "latent_median_vs_rv21_median": [
+      {
+        "A": 0.6,
+        "latent_instantaneous_median_vol": 0.17581172852835358,
+        "median_of_rv21_median": 0.17299131123123745,
+        "ratio": 0.9839577409270436
+      },
+      {
+        "A": 1.0,
+        "latent_instantaneous_median_vol": 0.1498168724928502,
+        "median_of_rv21_median": 0.14846799925092607,
+        "ratio": 0.9909965198213005
+      },
+      {
+        "A": 1.4,
+        "latent_instantaneous_median_vol": 0.11785012596073131,
+        "median_of_rv21_median": 0.1236912837732019,
+        "ratio": 1.0495642899390445
+      },
+      {
+        "A": 1.8,
+        "latent_instantaneous_median_vol": 0.08557675548539821,
+        "median_of_rv21_median": 0.0893386239870054,
+        "ratio": 1.0439589989158804
+      },
+      {
+        "A": 2.0,
+        "latent_instantaneous_median_vol": 0.0707684796018878,
+        "median_of_rv21_median": 0.07923734724750417,
+        "ratio": 1.1196700521652927
+      }
+    ],
+    "scale_invariance": {
+      "same_noise_paths": true,
+      "scale_ratio": 1.9236867212948618,
+      "numerically_invariant": [
+        "acf_absret_lag1",
+        "acf_absret_lag10",
+        "acf_absret_lag21",
+        "acf_absret_lag5",
+        "acf_absret_lag63",
+        "acf_ret_lag1",
+        "acf_ret_lag10",
+        "acf_ret_lag21",
+        "acf_ret_lag5",
+        "acf_ret_lag63",
+        "acf_sqret_lag1",
+        "acf_sqret_lag10",
+        "acf_sqret_lag21",
+        "acf_sqret_lag5",
+        "acf_sqret_lag63",
+        "agg1d_excess_kurtosis",
+        "agg1d_n_blocks",
+        "agg1d_skewness",
+        "agg21d_n_blocks",
+        "agg5d_n_blocks",
+        "concentration_max_exceed_63d",
+        "excess_kurtosis",
+        "leadlag_ret_vs_future_sq_lag1",
+        "leadlag_ret_vs_future_sq_lag21",
+        "leadlag_ret_vs_future_sq_lag5",
+        "skewness",
+        "tail_above_p2_count",
+        "tail_above_p2_freq",
+        "tail_above_p3_count",
+        "tail_above_p3_freq",
+        "tail_above_p5_count",
+        "tail_above_p5_freq",
+        "tail_below_m2_count",
+        "tail_below_m2_freq",
+        "tail_below_m3_count",
+        "tail_below_m3_freq",
+        "tail_below_m5_count",
+        "tail_below_m5_freq"
+      ],
+      "exactly_proportional": [
+        {
+          "statistic": "agg1d_sd",
+          "median_ratio": 1.923686721294862
+        },
+        {
+          "statistic": "rv21_q10",
+          "median_ratio": 1.923686721294862
+        },
+        {
+          "statistic": "rv21_q50",
+          "median_ratio": 1.9236867212948618
+        },
+        {
+          "statistic": "rv21_q90",
+          "median_ratio": 1.923686721294862
+        },
+        {
+          "statistic": "sd_daily",
+          "median_ratio": 1.923686721294862
+        }
+      ],
+      "genuinely_different": [
+        {
+          "statistic": "agg21d_excess_kurtosis",
+          "median_ratio": 1.0265765168739223
+        },
+        {
+          "statistic": "agg21d_sd",
+          "median_ratio": 1.9249465020809327
+        },
+        {
+          "statistic": "agg21d_skewness",
+          "median_ratio": 1.0656587988135038
+        },
+        {
+          "statistic": "agg5d_excess_kurtosis",
+          "median_ratio": 1.0050779540824246
+        },
+        {
+          "statistic": "agg5d_sd",
+          "median_ratio": 1.924102567660254
+        },
+        {
+          "statistic": "agg5d_skewness",
+          "median_ratio": 1.0249008396499604
+        }
+      ],
+      "reading": "with the noise held fixed, every standardised single-day statistic is invariant and the level statistics are exactly proportional; only the COMPOUNDED aggregates change, because prod(1+r)-1 is not linear in r"
+    },
+    "stage2_flipped_verdict": {
+      "cells": [
+        {
+          "statistic": "concentration_max_exceed_63d",
+          "scenario": "sv_jump",
+          "scale": "native",
+          "real": 16.0,
+          "p2.5": 2.0,
+          "p97.5": 16.0,
+          "inside": true
+        },
+        {
+          "statistic": "concentration_max_exceed_63d",
+          "scenario": "sv_jump",
+          "scale": "matched",
+          "real": 16.0,
+          "p2.5": 2.0,
+          "p97.5": 14.0,
+          "inside": false
+        }
+      ],
+      "explanation": "the statistic is exactly scale-invariant on fixed noise, so this was not a scale effect. Stage 2 drew a DIFFERENT random stream for each scale (seed_for(scenario, scale)), and the real value sat on the boundary of a discrete statistic's 97.5% point. It is Monte-Carlo variation on a boundary case."
+    },
+    "w1_reference": {
+      "rows": [
+        {
+          "generator": "stoch_vol",
+          "reference_pairs": 1000,
+          "reference_construction": "W1 between two DISJOINT halves of the path set, path i against path i+1000, standardised daily returns, 1258 days each",
+          "reference_p05": 0.031789941177975824,
+          "reference_p50": 0.0561975121413547,
+          "reference_p95": 0.11327022906973118,
+          "reference_min": 0.0211970669950091,
+          "reference_max": 0.1822408256337178,
+          "vs_market_p05": 0.11326713019859189,
+          "vs_market_p50": 0.1799097963925401,
+          "vs_market_p95": 0.22750231625280692,
+          "share_of_vs_market_below_reference_p95": 0.05
+        },
+        {
+          "generator": "sv_jump",
+          "reference_pairs": 1000,
+          "reference_construction": "W1 between two DISJOINT halves of the path set, path i against path i+1000, standardised daily returns, 1258 days each",
+          "reference_p05": 0.0390135559944079,
+          "reference_p50": 0.0688369218579178,
+          "reference_p95": 0.13180762932039408,
+          "reference_min": 0.0299184489079767,
+          "reference_max": 0.2317844626925759,
+          "vs_market_p05": 0.0857427206347869,
+          "vs_market_p50": 0.1350914249953156,
+          "vs_market_p95": 0.19059953164858043,
+          "share_of_vs_market_below_reference_p95": 0.461
+        }
+      ],
+      "correction": "stage 2 said every generator sits further from the sample than two of its own samples sit from each other. That compares MEDIANS. The two distributions overlap substantially for SV+jumps, so a single distance cannot be used as a rejection."
+    },
+    "return_lag1_acf_range": {
+      "rows": [
+        {
+          "generator": "gaussian",
+          "population_value": 0.0,
+          "sim_median": -0.00100622024123735,
+          "sim_p2.5": -0.05729148714708166,
+          "sim_p97.5": 0.05297515424099803,
+          "sim_min": -0.098830541099641,
+          "sim_max": 0.0814155426501214,
+          "n_paths": 2000
+        },
+        {
+          "generator": "student_t",
+          "population_value": 0.0,
+          "sim_median": 0.0004228098153201,
+          "sim_p2.5": -0.05403611320165919,
+          "sim_p97.5": 0.05446124907537491,
+          "sim_min": -0.0800550502942667,
+          "sim_max": 0.0906682021369986,
+          "n_paths": 2000
+        },
+        {
+          "generator": "stoch_vol",
+          "population_value": 0.0,
+          "sim_median": -0.0044174324614808,
+          "sim_p2.5": -0.08264177676528439,
+          "sim_p97.5": 0.07824657023826576,
+          "sim_min": -0.1874229767265681,
+          "sim_max": 0.211606146712909,
+          "n_paths": 2000
+        },
+        {
+          "generator": "jump",
+          "population_value": 0.0,
+          "sim_median": -0.00179341117604125,
+          "sim_p2.5": -0.052656733872604396,
+          "sim_p97.5": 0.05551409008374426,
+          "sim_min": -0.0957592076367272,
+          "sim_max": 0.0901110951703857,
+          "n_paths": 2000
+        },
+        {
+          "generator": "sv_jump",
+          "population_value": 0.0,
+          "sim_median": 0.0008784830870119499,
+          "sim_p2.5": -0.0736691672924895,
+          "sim_p97.5": 0.07143892397106506,
+          "sim_min": -0.1511353754105255,
+          "sim_max": 0.1647406434819058,
+          "n_paths": 2000
+        }
+      ],
+      "reading": "the population value is exactly zero for every generator; the finite-sample spread at n=1258 is roughly +-0.06 to +-0.08, with extremes near +-0.2 over 2000 paths. Zero population correlation and a zero sample statistic are different claims."
+    },
+    "wording_corrections": [
+      "stage 2 wrote that 1,258 days 'cannot identify' a leverage effect. The defensible statement is narrower: the per-statistic checks run so far provide no clear evidence that excludes a symmetric model. That is a statement about the checks performed, not a proof of non-identifiability.",
+      "the realised-volatility target is compared using RV_21 computed the SAME way on the market and on every simulated path. The latent instantaneous volatility median is a different quantity and is never used as a target."
+    ]
+  },
+  "selected": {
+    "frozen_at": "written before the validation period was read",
+    "sigma_annual": 0.1923686721294862,
+    "sigma_annual_provenance": "sd(S&P training returns) * sqrt(252), exact value",
+    "branches": {
+      "sv_only": {
+        "A": 1.4,
+        "rho": 0.98,
+        "loss": 1.5458159287865838,
+        "loss_mc_se": 0.028664056802647216,
+        "label": "sv_only A=1.4 rho=0.98",
+        "role": "screened finalist",
+        "on_grid_boundary": false,
+        "kappa": 0.0,
+        "lambda_per_year": 2.0,
+        "near_optimal_within_one_mc_se": [
+          {
+            "A": 1.4,
+            "rho": 0.98,
+            "loss": 1.5458159287865838
+          }
+        ]
+      },
+      "sv_jump": {
+        "A": 1.6,
+        "rho": 0.98,
+        "loss": 3.458999540082428,
+        "loss_mc_se": 0.06763980119647099,
+        "label": "sv_jump A=1.6 rho=0.98",
+        "role": "screened finalist",
+        "on_grid_boundary": false,
+        "kappa": 5.0,
+        "lambda_per_year": 2.0,
+        "near_optimal_within_one_mc_se": [
+          {
+            "A": 1.6,
+            "rho": 0.98,
+            "loss": 3.458999540082428
+          }
+        ]
+      }
+    },
+    "baseline_carried_for_comparison": {
+      "A": 1.0,
+      "rho": 0.98
+    },
+    "high_vol_threshold_annualised": 0.18140433494364097,
+    "threshold_provenance": "75th percentile of the market's TRAINING RV_21"
+  },
+  "validation_scale_note": {
+    "primary": "loss_frozen_training_scales -- the objective exactly as frozen; comparable only BETWEEN configurations inside validation, never against a training loss",
+    "secondary": "loss_validation_length_scales -- the same gaps standardised by a 501-day baseline reference, so the magnitude is readable. It selects nothing",
+    "validation_length_scales": {
+      "rv21_q10": 0.2602529421676494,
+      "rv21_q50": 0.22949066020008743,
+      "rv21_q90": 0.2572383639043436,
+      "acf_absret_lag1": 0.09015993258757785,
+      "acf_absret_lag5": 0.08552722779960718,
+      "acf_absret_lag10": 0.08249207013584431,
+      "acf_absret_lag21": 0.0736268642835604,
+      "acf_absret_lag63": 0.06081852122414337
+    },
+    "scales_that_hit_the_floor": []
+  },
+  "training_n_returns": 1258,
+  "validation_n_returns": 501,
+  "market_training": {
+    "sd_daily": 0.012118087297484344,
+    "skewness": -0.7389961323250143,
+    "excess_kurtosis": 20.367350270538573,
+    "rv21_q10": 0.06272305159358481,
+    "rv21_q50": 0.11036933306935255,
+    "rv21_q90": 0.24178335481744329,
+    "concentration_max_exceed_63d": 16.0,
+    "tail_below_m2_count": 37.0,
+    "tail_above_p2_count": 18.0,
+    "tail_below_m2_freq": 0.029411764705882353,
+    "tail_above_p2_freq": 0.014308426073131956,
+    "tail_below_m3_count": 11.0,
+    "tail_above_p3_count": 9.0,
+    "tail_below_m3_freq": 0.008744038155802861,
+    "tail_above_p3_freq": 0.007154213036565978,
+    "tail_below_m5_count": 3.0,
+    "tail_above_p5_count": 4.0,
+    "tail_below_m5_freq": 0.0023847376788553257,
+    "tail_above_p5_freq": 0.003179650238473768,
+    "acf_ret_lag1": -0.24396953335811908,
+    "acf_ret_lag5": 0.07865234975544919,
+    "acf_ret_lag10": -0.07868045072246492,
+    "acf_ret_lag21": 0.06479069799423903,
+    "acf_ret_lag63": 0.06187167625917269,
+    "acf_absret_lag1": 0.5007227427362637,
+    "acf_absret_lag5": 0.4146461452146091,
+    "acf_absret_lag10": 0.3659590462564185,
+    "acf_absret_lag21": 0.15840447240997177,
+    "acf_absret_lag63": 0.039974696337049836,
+    "acf_sqret_lag1": 0.5332894519731963,
+    "acf_sqret_lag5": 0.33648374197445374,
+    "acf_sqret_lag10": 0.25860000769071245,
+    "acf_sqret_lag21": 0.04858286728322976,
+    "acf_sqret_lag63": 0.037394822586824354,
+    "leadlag_ret_vs_future_sq_lag1": -0.09471016076162476,
+    "leadlag_ret_vs_future_sq_lag5": -0.06824443785000317,
+    "leadlag_ret_vs_future_sq_lag21": -0.05072095039065012,
+    "agg1d_sd": 0.012118087297484344,
+    "agg1d_skewness": -0.7389961323250143,
+    "agg1d_excess_kurtosis": 20.367350270538573,
+    "agg1d_n_blocks": 1258.0,
+    "agg5d_sd": 0.020960471928423846,
+    "agg5d_skewness": -1.0487041835443138,
+    "agg5d_excess_kurtosis": 5.931460248671447,
+    "agg5d_n_blocks": 251.0,
+    "agg21d_sd": 0.04209813495638222,
+    "agg21d_skewness": -0.59184386699657,
+    "agg21d_excess_kurtosis": 1.5622695674048126,
+    "agg21d_n_blocks": 59.0
+  },
+  "market_validation": {
+    "sd_daily": 0.012267871956501345,
+    "skewness": -0.06796916520845663,
+    "excess_kurtosis": 1.2747044815540773,
+    "rv21_q10": 0.10142530907495609,
+    "rv21_q50": 0.17720278034721954,
+    "rv21_q90": 0.2861472893125144,
+    "concentration_max_exceed_63d": 2.0,
+    "tail_below_m2_count": 15.0,
+    "tail_above_p2_count": 14.0,
+    "tail_below_m2_freq": 0.029940119760479042,
+    "tail_above_p2_freq": 0.027944111776447105,
+    "tail_below_m3_count": 3.0,
+    "tail_above_p3_count": 1.0,
+    "tail_below_m3_freq": 0.005988023952095809,
+    "tail_above_p3_freq": 0.001996007984031936,
+    "tail_below_m5_count": 0.0,
+    "tail_above_p5_count": 0.0,
+    "tail_below_m5_freq": 0.0,
+    "tail_above_p5_freq": 0.0,
+    "acf_ret_lag1": 0.015710754992876573,
+    "acf_ret_lag5": 0.010434384733112765,
+    "acf_ret_lag10": -0.05136062200714442,
+    "acf_ret_lag21": -0.0010051218704152007,
+    "acf_ret_lag63": 0.09085230949175627,
+    "acf_absret_lag1": 0.050493899503632776,
+    "acf_absret_lag5": 0.20268576874664132,
+    "acf_absret_lag10": 0.15515220151370876,
+    "acf_absret_lag21": 0.06706339274911567,
+    "acf_absret_lag63": 0.09074437280271534,
+    "acf_sqret_lag1": 0.0710152799537893,
+    "acf_sqret_lag5": 0.11394677506740501,
+    "acf_sqret_lag10": 0.11547252749443067,
+    "acf_sqret_lag21": 0.022677576490235208,
+    "acf_sqret_lag63": 0.10745149257763756,
+    "leadlag_ret_vs_future_sq_lag1": -0.002306844301550352,
+    "leadlag_ret_vs_future_sq_lag5": -0.12540398630140218,
+    "leadlag_ret_vs_future_sq_lag21": -0.005436194144654933,
+    "agg1d_sd": 0.012267871956501345,
+    "agg1d_skewness": -0.06796916520845663,
+    "agg1d_excess_kurtosis": 1.2747044815540773,
+    "agg1d_n_blocks": 501.0,
+    "agg5d_sd": 0.028579107779667635,
+    "agg5d_skewness": -0.4932473315799837,
+    "agg5d_excess_kurtosis": 0.5694353246746089,
+    "agg5d_n_blocks": 100.0,
+    "agg21d_sd": 0.05353565055313951,
+    "agg21d_skewness": 0.028507753069694327,
+    "agg21d_excess_kurtosis": -1.1579966558986414,
+    "agg21d_n_blocks": 23.0
+  },
+  "market_high_vol_persistence": {
+    "threshold": 0.18140433494364097,
+    "p_still_high": 0.8664495114006515,
+    "state_frequency": 0.25040387722132473,
+    "n_high_days": 307.0,
+    "window_overlap_days": 16.0
+  }
+}

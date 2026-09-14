@@ -223,9 +223,9 @@ def build(out: Path) -> str:
     ci = s["code_identity"]
     A(f"HEAD `{ci['git_head'][:12]}` on `{ci['git_branch']}`, working tree dirty: "
       f"`{ci['working_tree_is_dirty']}` — every source file used is fingerprinted in "
-      f"`market_cross_summary.json`. Raw snapshots and per-day derived series stay out "
-      f"of Git under the existing authorisation rules. Nothing was committed or "
-      f"pushed.")
+      f"`market_cross_summary.json`. Raw snapshots and per-day derived series are "
+      f"tracked in this repository by the owner's explicit decision; the providers' "
+      f"terms still apply and are set out in `docs/DATA_LICENCE_NOTICE.md`.\n")
     return "\n".join(L) + "\n"
 
 

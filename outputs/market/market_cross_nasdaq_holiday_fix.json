@@ -1,0 +1,31 @@
+{
+  "object": "nasdaq100",
+  "source_file": "data/raw/NASDAQ100_20260913T220232Z.csv",
+  "issue": "FRED NASDAQ100 prints a value on 2019-04-19, Good Friday, a day the encoded NYSE calendar and the SP500 series both say the exchange was closed",
+  "independent_checks": [
+    "the encoded NYSE rule set marks 2019-04-19 as Good Friday",
+    "the Gregorian computus puts Good Friday 2019 on 2019-04-19",
+    "FRED SP500 is blank on that date",
+    "FRED's NASDAQ100 series note does not mention holiday prints"
+  ],
+  "handling": "the RAW SNAPSHOT IS UNCHANGED. At the analysis layer the observation is removed and the next return is re-formed from the adjacent valid closes.",
+  "affected_returns": [
+    {
+      "date": "2019-04-19",
+      "return_before": -6.502187336332454e-07,
+      "return_after": null
+    },
+    {
+      "date": "2019-04-22",
+      "return_before": 0.003091792088523393,
+      "return_after": 0.003091139859448644
+    }
+  ],
+  "effect_on_counts": {
+    "observations_before": 1761,
+    "observations_after": 1760,
+    "returns_before": 1760,
+    "returns_after": 1759,
+    "expected_trading_days": 1760
+  }
+}

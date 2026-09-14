@@ -6,29 +6,29 @@ describes **fields**, not values. It carries no market data and is safe to track
 ## Redistribution
 
 FRED states that the S&P 500 series is provided by S&P Dow Jones Indices LLC and
-may not be redistributed. The raw snapshots and every per-day derived file are
-therefore kept out of Git:
+may not be redistributed. The other providers carry their own terms.
+
+The raw snapshots and every per-day derived file are nevertheless **tracked in this
+repository**, by an explicit decision of the repository owner:
 
 ```
-data/              ignored — raw snapshots and their provenance sidecars
-outputs/market/    ignored — cleaned series, per-day derivatives, summaries, figure, report
+data/              tracked — raw snapshots and their provenance sidecars
+outputs/market/    tracked — cleaned series, per-day derivatives, summaries, figures, reports
 ```
 
-What is tracked in Git: the downloader, this dictionary, the protocol, and the
-aggregate statistics quoted in the reports.
+Being here grants no right to use or redistribute them and alters none of the
+providers' terms. The full statement, the per-provider list and the removal route for
+rights holders are in [`DATA_LICENCE_NOTICE.md`](DATA_LICENCE_NOTICE.md). Read that
+before adding any new source.
 
-What is **not** in Git but is still handed over, out of band: the provenance record
-(hashes, ranges, counts — no observations). It lives at `data/raw/*.provenance.json`
-and `data/raw/acquisition.provenance.json`, and the `data/` rule in `.gitignore` seals
-the whole directory, sidecars included. Ask for it directly; it carries no market
-observations, only file hashes and coverage counts. (An earlier version of this
-paragraph said the provenance record was tracked, contradicting the table four lines
-above it. It never was.)
+The provenance records (`data/raw/*.provenance.json`, `acquisition.provenance.json`)
+are tracked along with everything else. They carry file hashes, source URLs, byte
+counts, row counts and date ranges — no market observations — so every snapshot can be
+traced back to what the provider actually served.
 
-Run `python -m strategy_survivorship.run_market_stage1` to rebuild everything from
-the source. **The local raw snapshot is the file of record**: FRED's `SP500` keeps
-only a rolling ten-year window, so a download made later will not contain the
-earliest dates of this study.
+(This section formerly said the data was kept out of Git, which was true until commit
+`739519c`. It was updated in the same commit that added the data, rather than being
+left to contradict the tree.)
 
 ## Sources
 

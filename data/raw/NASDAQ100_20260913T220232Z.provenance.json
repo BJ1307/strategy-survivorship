@@ -1,0 +1,24 @@
+{
+  "key": "nasdaq100",
+  "role": "cross-market, price index",
+  "provider": "Federal Reserve Bank of St. Louis (FRED); index by Nasdaq, Inc.",
+  "series_id": "NASDAQ100",
+  "series_page": "https://fred.stlouisfed.org/series/NASDAQ100",
+  "download_url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=NASDAQ100",
+  "export_fields": "observation_date, NASDAQ100",
+  "frequency": "daily, business days, blank on US market holidays",
+  "units": "index level, points (PRICE index; dividends excluded)",
+  "calendar": "nyse",
+  "redistribution": "Nasdaq index data via FRED; kept local with the rest.",
+  "downloaded_at_utc": "2026-09-13T22:02:33.125501+00:00",
+  "raw_file": "data/raw/NASDAQ100_20260913T220232Z.csv",
+  "raw_bytes": 207978,
+  "raw_sha256": "6739617594e497ca5b7d6913fdf48475e5c9cd39b5fd2c1d29891993d6aa382c",
+  "rows_in_file": 10616,
+  "rows_with_a_value": 10254,
+  "rows_blank": 362,
+  "date_range_in_file": [
+    "1986-01-02",
+    "2026-09-11"
+  ]
+}

@@ -1,0 +1,4 @@
+pair,lag_days,n_pairs,correlation,direction
+return_t vs centred_squared_return_t_plus_h,1,1257,-0.09471016076162486,x_t vs y_{t+h}
+return_t vs centred_squared_return_t_plus_h,5,1253,-0.06824443785000303,x_t vs y_{t+h}
+return_t vs centred_squared_return_t_plus_h,21,1237,-0.0507209503906501,x_t vs y_{t+h}

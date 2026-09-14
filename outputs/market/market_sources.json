@@ -1,0 +1,52 @@
+{
+  "sp500": {
+    "key": "sp500",
+    "role": "primary",
+    "provider": "Federal Reserve Bank of St. Louis (FRED); index by S&P Dow Jones Indices LLC",
+    "series_id": "SP500",
+    "series_page": "https://fred.stlouisfed.org/series/SP500",
+    "download_url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=SP500",
+    "export_fields": "observation_date, SP500",
+    "frequency": "daily, business days (Mon-Fri), blank on US market holidays",
+    "units": "index level, points (S&P 500 PRICE index; dividends excluded)",
+    "redistribution": "S&P Dow Jones Indices data; FRED states it may not be redistributed. Raw and per-day derived files stay local.",
+    "downloaded_at_utc": "2026-09-13T03:11:58.805936+00:00",
+    "raw_file": "data/raw/SP500_20260913T031157Z.csv",
+    "raw_bytes": 48941,
+    "raw_sha256": "7f08dc75562f523eb5f934b380b30fb8c005629babd5835c566bbb40bedbdf47",
+    "rows_in_file": 2610,
+    "rows_with_a_value": 2514,
+    "rows_blank": 96,
+    "date_range_in_file": [
+      "2016-09-12",
+      "2026-09-11"
+    ],
+    "reused_existing_snapshot": false
+  },
+  "vix": {
+    "key": "vix",
+    "role": "auxiliary, optional; failure here does not block the S&P 500 work",
+    "provider": "Federal Reserve Bank of St. Louis (FRED); index by Cboe",
+    "series_id": "VIXCLS",
+    "series_page": "https://fred.stlouisfed.org/series/VIXCLS",
+    "download_url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=VIXCLS",
+    "export_fields": "observation_date, VIXCLS",
+    "frequency": "daily, business days (Mon-Fri), blank on US market holidays",
+    "units": "annualised implied volatility in PERCENT: a level of 20 means about 20% annualised implied volatility, NOT a 20% return. It looks forward about 30 calendar days, while RV_21 looks back over 21 trading days, so the two are not expected to agree point by point.",
+    "redistribution": "Cboe index data via FRED; kept local with the rest.",
+    "downloaded_at_utc": "2026-09-13T03:11:58.992241+00:00",
+    "raw_file": "data/raw/VIXCLS_20260913T031158Z.csv",
+    "raw_bytes": 161187,
+    "raw_sha256": "1a13cfab725900bd492fde9f666599a26279a52733a8b2173ca031e3217af5e7",
+    "rows_in_file": 9573,
+    "rows_with_a_value": 9271,
+    "rows_blank": 302,
+    "date_range_in_file": [
+      "1990-01-02",
+      "2026-09-10"
+    ],
+    "reused_existing_snapshot": false,
+    "rows_in_window": 2289,
+    "note": "annualised implied volatility in PERCENT: a level of 20 means about 20% annualised implied volatility, NOT a 20% return. It looks forward about 30 calendar days, while RV_21 looks back over 21 trading days, so the two are not expected to agree point by point."
+  }
+}

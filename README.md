@@ -88,9 +88,15 @@ done
 
 真实数据阶段的口径写在 [`docs/MARKET_STAGE1_PROTOCOL.md`](docs/MARKET_STAGE1_PROTOCOL.md)，
 字段说明在 [`docs/MARKET_DATA_DICTIONARY.md`](docs/MARKET_DATA_DICTIONARY.md)。
-**市场数据与由它派生的每日序列、图和报告都不进 Git**（FRED 载明 S&P 数据不得再分发）。
-`data/` 整个目录被忽略，**provenance 记录也在其中**，因此同样不在 Git 里，按需另行提供。
-克隆后用下面的命令在本地重建：
+**市场数据、由它派生的每日序列、图和报告现在都在仓库里**（`data/` 与 `outputs/market/`），
+这是仓库所有者的明确决定，缘由与第三方条款记在
+[`docs/DATA_LICENCE_NOTICE.md`](docs/DATA_LICENCE_NOTICE.md)。
+其中部分数据**不属于本仓库可授权的范围**：FRED 载明 S&P 500 序列由 S&P Dow Jones Indices LLC
+提供且不得再分发，Nasdaq-100、日经、Cboe、SPDR、STOXX 各有其提供方条款。
+放在这里不等于授予你使用或再分发的权利。要复用请向原始提供方按其许可获取；
+`data/raw/*.provenance.json` 记录了每个文件的来源 URL、抓取时间和 SHA-256，可逐个追溯。
+
+数据已在仓库中，因此下面的命令是**重新生成**产物，不是获取数据的前提：
 
 ```bash
 .venv/bin/python -m strategy_survivorship.run_market_stage1

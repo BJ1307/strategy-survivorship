@@ -1,0 +1,49 @@
+{
+  "frozen_at": "written before the validation period was read",
+  "sigma_annual": 0.1923686721294862,
+  "sigma_annual_provenance": "sd(S&P training returns) * sqrt(252), exact value",
+  "branches": {
+    "sv_only": {
+      "A": 1.4,
+      "rho": 0.98,
+      "loss": 1.5458159287865838,
+      "loss_mc_se": 0.028664056802647216,
+      "label": "sv_only A=1.4 rho=0.98",
+      "role": "screened finalist",
+      "on_grid_boundary": false,
+      "kappa": 0.0,
+      "lambda_per_year": 2.0,
+      "near_optimal_within_one_mc_se": [
+        {
+          "A": 1.4,
+          "rho": 0.98,
+          "loss": 1.5458159287865838
+        }
+      ]
+    },
+    "sv_jump": {
+      "A": 1.6,
+      "rho": 0.98,
+      "loss": 3.458999540082428,
+      "loss_mc_se": 0.06763980119647099,
+      "label": "sv_jump A=1.6 rho=0.98",
+      "role": "screened finalist",
+      "on_grid_boundary": false,
+      "kappa": 5.0,
+      "lambda_per_year": 2.0,
+      "near_optimal_within_one_mc_se": [
+        {
+          "A": 1.6,
+          "rho": 0.98,
+          "loss": 3.458999540082428
+        }
+      ]
+    }
+  },
+  "baseline_carried_for_comparison": {
+    "A": 1.0,
+    "rho": 0.98
+  },
+  "high_vol_threshold_annualised": 0.18140433494364097,
+  "threshold_provenance": "75th percentile of the market's TRAINING RV_21"
+}

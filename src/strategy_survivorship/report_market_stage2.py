@@ -363,7 +363,8 @@ def build(out: Path) -> str:
     A("Per-path statistics are in `market_stage2_path_statistics.csv.gz`, so every "
       "median and range above can be recomputed without re-running the simulation. "
       "Seeds and the full configuration are in `market_stage2_summary.json`. As in "
-      "stage 1, the market data and everything derived from it stay out of Git.")
+      "stage 1, the market data and everything derived from it are tracked here; "
+      "the providers' terms still apply, see docs/DATA_LICENCE_NOTICE.md.")
     return "\n".join(L) + "\n"
 
 

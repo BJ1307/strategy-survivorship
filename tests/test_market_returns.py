@@ -26,14 +26,14 @@ RAW = Path("data/raw")
 def _needs_snapshots():
     """Every test above this line runs on synthetic frames and needs no data.
 
-    The agreement test below is the one exception: it compares two loaders against
-    real pinned snapshots, which are deliberately NOT in Git.  Without this guard the
-    repository fails four tests on a fresh clone -- and the README asks a new reader to
-    run pytest as a setup step, so that is the first thing they would see.
+    The agreement test below is the one exception: it compares two loaders against real
+    pinned snapshots.  Those are tracked now, but the guard stays: a partial checkout or
+    a sparse clone can still lack them, and the README asks a new reader to run pytest
+    as a setup step, so a hard failure there is the first thing they would see.
     """
     if not RAW.exists() or not any(RAW.glob("*.csv")):
-        pytest.skip(f"{RAW} has no snapshots; market data is deliberately not in Git. "
-                    f"Run the acquisition step first.")
+        pytest.skip(f"{RAW} has no snapshots in this checkout; "
+                    f"run the acquisition step first.")
 
 
 def _prices(days: list[str], values: list[float]) -> pd.DataFrame:

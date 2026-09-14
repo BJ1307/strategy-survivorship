@@ -1,0 +1,475 @@
+{
+  "categories": {
+    "return": "a return on a strategy, factor or investment vehicle",
+    "price_change": "a spot price, index level or FX rate change -- NOT an investment return: no financing, no roll, no carry, no dividend",
+    "market_state": "a level series describing market state; levels and changes only"
+  },
+  "assets": {
+    "ff_momentum": {
+      "label": "Momentum factor (daily)",
+      "category": "return",
+      "snapshot": "F-F_Momentum_Factor_daily",
+      "reader": "kenfrench",
+      "calendar": "nyse",
+      "units": "daily factor return, decimal",
+      "note": "a zero-investment long-short portfolio return, gross of costs"
+    },
+    "gld": {
+      "label": "SPDR Gold Shares (GLD)",
+      "category": "return",
+      "snapshot": "GLD_HISTORICAL",
+      "reader": "gld_xlsx",
+      "calendar": "nyse",
+      "units": "share closing price in USD; returns are decimals",
+      "convention": "Closing Price only, never mixed with NAV",
+      "note": "an investment vehicle. The sponsor fee is paid in gold, so ounces per share decline over time and a GLD return is NOT a pure gold price return. GLD pays no distributions, so no distribution adjustment is needed."
+    },
+    "sp500": {
+      "label": "S&P 500",
+      "category": "price_change",
+      "snapshot": "SP500",
+      "reader": "fred",
+      "series_id": "SP500",
+      "calendar": "nyse",
+      "units": "index points, price index, dividends excluded"
+    },
+    "nasdaq100": {
+      "label": "Nasdaq-100",
+      "category": "price_change",
+      "snapshot": "NASDAQ100",
+      "reader": "fred",
+      "series_id": "NASDAQ100",
+      "calendar": "nyse",
+      "units": "index points, price index, dividends excluded"
+    },
+    "nikkei225": {
+      "label": "Nikkei 225",
+      "category": "price_change",
+      "snapshot": "NIKKEI225",
+      "reader": "fred",
+      "series_id": "NIKKEI225",
+      "calendar": "jpx",
+      "units": "index points (JPY), price index, dividends excluded"
+    },
+    "sx5e": {
+      "label": "EURO STOXX 50",
+      "category": "price_change",
+      "snapshot": "STOXX_hbrbcpe",
+      "reader": "stoxx",
+      "column": 2,
+      "calendar": "source_grid",
+      "in_baseline": false,
+      "units": "index points (EUR), price index, dividends excluded",
+      "status": "source found and column confirmed, COVERAGE INSUFFICIENT",
+      "note": "the official STOXX file hbrbcpe.txt is public and its own header row names the columns SX5P | SX5E | SXXP | SXXE | ... so column index 2 is EURO STOXX 50 -- confirmed by the file, not inferred. But this archive ends on 2016-10-04 and does not reach the study window, so the object is NOT in the baseline. The previous round's conclusion that Euro Stoxx was unavailable was reached from GUESSED FRED ids returning 404, which was the wrong kind of inference; this is the right reason, and it is a coverage gap rather than an absence of a source.",
+      "what_is_needed": "the companion current-period STOXX file, or a licensed feed, covering 2017-2025"
+    },
+    "brent": {
+      "label": "Brent crude spot",
+      "category": "price_change",
+      "snapshot": "DCOILBRENTEU",
+      "reader": "fred",
+      "series_id": "DCOILBRENTEU",
+      "calendar": "source_grid",
+      "units": "USD per barrel, Europe Brent FOB spot",
+      "note": "a SPOT price. Not a futures return and not a continuous contract: no roll, no financing, no collateral yield."
+    },
+    "eurusd": {
+      "label": "EUR/USD spot",
+      "category": "price_change",
+      "snapshot": "DEXUSEU",
+      "reader": "fred",
+      "series_id": "DEXUSEU",
+      "calendar": "source_grid",
+      "units": "US dollars per one euro (FRED DEXUSEU quotes USD per EUR), so a rise means the euro appreciating",
+      "note": "a SPOT rate change. It contains no interest differential, so it is not an FX carry total return."
+    },
+    "usdjpy": {
+      "label": "USD/JPY spot",
+      "category": "price_change",
+      "snapshot": "DEXJPUS",
+      "reader": "fred",
+      "series_id": "DEXJPUS",
+      "calendar": "source_grid",
+      "units": "Japanese yen per one US dollar (FRED DEXJPUS quotes JPY per USD), so a rise means the dollar appreciating",
+      "note": "a SPOT rate change; not an FX carry total return."
+    },
+    "vix": {
+      "label": "VIX",
+      "category": "market_state",
+      "snapshot": "CBOE_VIX",
+      "reader": "cboe",
+      "column": "CLOSE",
+      "units": "percent, annualised implied volatility; a change is in VIX POINTS and is not a return"
+    },
+    "ovx": {
+      "label": "OVX (crude oil implied vol)",
+      "category": "market_state",
+      "snapshot": "CBOE_OVX",
+      "reader": "cboe",
+      "column": "OVX",
+      "units": "percent, annualised implied volatility; changes in points"
+    },
+    "gvz": {
+      "label": "GVZ (gold implied vol)",
+      "category": "market_state",
+      "snapshot": "CBOE_GVZ",
+      "reader": "cboe",
+      "column": "GVZ",
+      "units": "percent, annualised implied volatility; changes in points"
+    },
+    "dgs2": {
+      "label": "US 2y Treasury yield",
+      "category": "market_state",
+      "snapshot": "DGS2",
+      "reader": "fred",
+      "series_id": "DGS2",
+      "units": "percent per annum, a LEVEL; changes reported in basis points"
+    },
+    "dgs10": {
+      "label": "US 10y Treasury yield",
+      "category": "market_state",
+      "snapshot": "DGS10",
+      "reader": "fred",
+      "series_id": "DGS10",
+      "units": "percent per annum, a LEVEL; changes reported in basis points"
+    },
+    "dgs30": {
+      "label": "US 30y Treasury yield",
+      "category": "market_state",
+      "snapshot": "DGS30",
+      "reader": "fred",
+      "series_id": "DGS30",
+      "units": "percent per annum, a LEVEL; changes reported in basis points"
+    },
+    "wti": {
+      "label": "WTI crude spot",
+      "category": "market_state",
+      "snapshot": "DCOILWTICO",
+      "reader": "fred",
+      "series_id": "DCOILWTICO",
+      "units": "USD per barrel, Cushing OK spot",
+      "returns_computable": false,
+      "why_not": "the series prints -36.98 on 2020-04-20. A simple return across a sign change is not a meaningful quantity, so no return series is formed. The observation is NOT deleted, NOT winsorised and NOT log-transformed; the level series is reported instead and the negative print is shown."
+    }
+  },
+  "periods": {
+    "describe": [
+      "2017-01-01",
+      "2021-12-31"
+    ],
+    "contrast": [
+      "2022-01-01",
+      "2023-12-31"
+    ],
+    "excluded": "2024-2025 takes no part in any statistic or choice"
+  },
+  "models": "fixed Gaussian, fixed pure SV, fixed SV+jump at the recorded parameters; nothing searched",
+  "run_config": {
+    "paths_per_cell": 1500,
+    "entropy": 20260922,
+    "seed_tag": "blake2b(object, model, period), stable across processes",
+    "stream_isolation": "one stream per (object, model, period); the simulation-to-simulation W1 reference uses disjoint halves of the same path set",
+    "n_contrast_cells": 48,
+    "written_at_utc": "2026-09-14T02:23:52.775721+00:00"
+  },
+  "snapshots_used": {
+    "ff_momentum": {
+      "raw_file": "data/raw/F-F_Momentum_Factor_daily_20260913T220310Z.zip",
+      "pinned_by": "provenance",
+      "sha256": "b039d986db27fc831bcf1f52ba2134916e96fbeba4762fefc942429b0a568a96",
+      "downloaded_at_utc": "2026-09-13T22:03:10.213388+00:00"
+    },
+    "gld": {
+      "raw_file": "data/raw/GLD_HISTORICAL_20260914T014635Z.xlsx",
+      "pinned_by": "provenance",
+      "sha256": "d00908d12445a700d518406d29720430293ec8cd2a3e1a97a9b7f9e4f5774a4a",
+      "downloaded_at_utc": "2026-09-14T01:48:02.288053+00:00"
+    },
+    "sp500": {
+      "raw_file": "data/raw/SP500_20260913T031157Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "7f08dc75562f523eb5f934b380b30fb8c005629babd5835c566bbb40bedbdf47",
+      "downloaded_at_utc": "2026-09-13T03:11:58.805936+00:00"
+    },
+    "nasdaq100": {
+      "raw_file": "data/raw/NASDAQ100_20260913T220232Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "6739617594e497ca5b7d6913fdf48475e5c9cd39b5fd2c1d29891993d6aa382c",
+      "downloaded_at_utc": "2026-09-13T22:02:33.125501+00:00"
+    },
+    "nikkei225": {
+      "raw_file": "data/raw/NIKKEI225_20260913T220233Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "26e2904304c406e7af496133cb885704a70159dc866eabe12debd8855b65ef57",
+      "downloaded_at_utc": "2026-09-13T22:02:33.228421+00:00"
+    },
+    "brent": {
+      "raw_file": "data/raw/DCOILBRENTEU_20260914T014818Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "90b25160f3193d9c1440e8bb45e4fb621f69bb19a4c5736928fdb0c7f2bdc7fb",
+      "downloaded_at_utc": "2026-09-14T01:48:18.998410+00:00"
+    },
+    "eurusd": {
+      "raw_file": "data/raw/DEXUSEU_20260914T014818Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "9ec250f51460ee38326879d0d987ff14f598fff918cc5a53c0096fa25c23546d",
+      "downloaded_at_utc": "2026-09-14T01:48:19.205168+00:00"
+    },
+    "usdjpy": {
+      "raw_file": "data/raw/DEXJPUS_20260914T014818Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "ded15c63243b4ba5dc1b3eaf51fcfdcd09911033711984c59c3834a82048d34d",
+      "downloaded_at_utc": "2026-09-14T01:48:19.334012+00:00"
+    },
+    "vix": {
+      "raw_file": "data/raw/CBOE_VIX_20260914T014635Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "cb3515efe5577d39df5c59ab44fb69171e28927e0fd01b50ce101076e7951e93",
+      "downloaded_at_utc": "2026-09-14T01:48:02.108843+00:00"
+    },
+    "ovx": {
+      "raw_file": "data/raw/CBOE_OVX_20260914T014635Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "06e3a16671f19cce1b06fbc5b059f4a33d5192122d1054d9c6b153421022cdc4",
+      "downloaded_at_utc": "2026-09-14T01:48:01.829066+00:00"
+    },
+    "gvz": {
+      "raw_file": "data/raw/CBOE_GVZ_20260914T014635Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "5ba0197cd0d43ef0518deb61378dbf4f99465ace59ce9c3bf988062f681fe067",
+      "downloaded_at_utc": "2026-09-14T01:48:01.971944+00:00"
+    },
+    "dgs2": {
+      "raw_file": "data/raw/DGS2_20260914T014818Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "5594fe6fc64ea03222351f3e3e41ae52841f357b874275f4ae34e73f5bdb62ec",
+      "downloaded_at_utc": "2026-09-14T01:48:18.693841+00:00"
+    },
+    "dgs10": {
+      "raw_file": "data/raw/DGS10_20260914T014818Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "51cf02cc3952dd14161d22fd7aaba4dc54d1182c87692b034bb0a9d5aa476b4c",
+      "downloaded_at_utc": "2026-09-14T01:48:18.799675+00:00"
+    },
+    "dgs30": {
+      "raw_file": "data/raw/DGS30_20260914T014818Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "9343918d2bfa19d68e82cdbf9b2c57494ce3d115d2da83ef4ab4447e50ed2936",
+      "downloaded_at_utc": "2026-09-14T01:48:18.897531+00:00"
+    },
+    "wti": {
+      "raw_file": "data/raw/DCOILWTICO_20260914T014818Z.csv",
+      "pinned_by": "provenance",
+      "sha256": "fa61efee3e74b112d237305f50ec7623933221f53d8f140c69def467a7e972d6",
+      "downloaded_at_utc": "2026-09-14T01:48:19.096674+00:00"
+    }
+  },
+  "scales_from_describe_window": {
+    "ff_momentum": 0.18857887055227532,
+    "gld": 0.13390036298195174,
+    "sp500": 0.19236867212948663,
+    "nasdaq100": 0.22616448309739204,
+    "nikkei225": 0.18519240596404887,
+    "brent": 0.5633659968565148,
+    "eurusd": 0.06367572948883153,
+    "usdjpy": 0.06986094790984193
+  },
+  "code_identity": {
+    "git_head": "4b8450604ff06c41aefc1afac5968065addf8896",
+    "git_branch": "main",
+    "working_tree_is_dirty": true,
+    "uncommitted_paths": [
+      "README.md",
+      "docs/CROSS_ASSET_FINDINGS.md",
+      "docs/CROSS_MARKET_SCAN_SPEC.md",
+      "docs/DATA_REQUEST_FOR_SUPERVISOR.md",
+      "docs/DATA_SOURCE_INVENTORY.md",
+      "docs/DECK_FINAL_6PAGE_SPEC.md",
+      "docs/DECK_FINAL_TUNING_SPEC.md",
+      "docs/MARKET_DATA_DICTIONARY.md",
+      "docs/MARKET_STAGE1_PROTOCOL.md",
+      "docs/PARAMETER_CHANGE_LOG.md",
+      "gitignore",
+      "outputs/mixed_noise_bootstrap.csv",
+      "outputs/mixed_noise_metrics.csv",
+      "outputs/mixed_noise_parameter_summary.csv",
+      "outputs/mixed_noise_protocol.json",
+      "outputs/mixed_noise_report.md",
+      "outputs/mixed_noise_subgroups.csv",
+      "outputs/mixed_noise_summary.json",
+      "outputs/mixed_noise_thresholds.csv",
+      "src/strategy_survivorship/config.py",
+      "src/strategy_survivorship/market_assets.py",
+      "src/strategy_survivorship/market_cross.py",
+      "src/strategy_survivorship/market_data.py",
+      "src/strategy_survivorship/market_diagnostics.py",
+      "src/strategy_survivorship/market_stage2.py",
+      "src/strategy_survivorship/market_stage3.py",
+      "src/strategy_survivorship/market_stage4.py",
+      "src/strategy_survivorship/mixed_noise.py",
+      "src/strategy_survivorship/plots_market.py",
+      "src/strategy_survivorship/plots_market_cross.py",
+      "src/strategy_survivorship/plots_market_stage2.py",
+      "src/strategy_survivorship/plots_market_stage3.py",
+      "src/strategy_survivorship/plots_market_stage4.py",
+      "src/strategy_survivorship/report_market_cross.py",
+      "src/strategy_survivorship/report_market_stage1.py",
+      "src/strategy_survivorship/report_market_stage2.py",
+      "src/strategy_survivorship/report_market_stage3.py",
+      "src/strategy_survivorship/report_market_stage4.py",
+      "src/strategy_survivorship/report_mixed_noise.py",
+      "src/strategy_survivorship/run_market_assets.py",
+      "src/strategy_survivorship/run_market_cross.py",
+      "src/strategy_survivorship/run_market_stage1.py",
+      "src/strategy_survivorship/run_market_stage2.py",
+      "src/strategy_survivorship/run_market_stage3.py",
+      "src/strategy_survivorship/run_market_stage4.py",
+      "src/strategy_survivorship/run_mixed_noise.py",
+      "tests/test_market_cross.py",
+      "tests/test_market_stage1.py",
+      "tests/test_market_stage2.py",
+      "tests/test_market_stage3.py",
+      "tests/test_market_stage4.py",
+      "tests/test_mixed_noise.py"
+    ],
+    "source_sha256": {
+      "market_data.py": "a7f66ca97551f021f92c2a72f4412d010c13bdacf88120c902688e8c6b849821",
+      "market_diagnostics.py": "8469443498e6bd68a4026aef77b7c54fad4e19c3d71c3f396e9c92b5392d416e",
+      "market_stage2.py": "080233dd2b8546b90da08f8b03fe1621d5ee9b518decb1d4a733cfc163e1acd3",
+      "market_stage3.py": "4629f551cd4565695aae6750431fd5dab155ceafb5eca2ae5fb3404c7e0a2fd0",
+      "market_stage4.py": "3a9e69eb9216d499d17c319902ae836218d8c4cf7c514e72ca7f016171dc24ae",
+      "run_market_stage4.py": "37c776302e48a01e30111194c11e433d37b2bf48cc69b112168c43219a11bbd5",
+      "noise.py": "eede267ad0c6a990bf8daec67ecd0a83a434ae0a7af0510236f453cd990d9db4",
+      "config.py": "56cad25e53e6fd63b73698964c7106025cf4a070890c5ade415c8f5e03865d06"
+    },
+    "python": "3.13.13",
+    "numpy": "2.5.2",
+    "pandas": "3.0.5",
+    "pythonhashseed_env": "not set (and no longer relied on)"
+  },
+  "acquisition": {
+    "DGS2": {
+      "status": "obtained_and_verified",
+      "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS2",
+      "raw_file": "data/raw/DGS2_20260914T014818Z.csv",
+      "raw_bytes": 208852,
+      "raw_sha256": "5594fe6fc64ea03222351f3e3e41ae52841f357b874275f4ae34e73f5bdb62ec",
+      "downloaded_at_utc": "2026-09-14T01:48:18.693841+00:00"
+    },
+    "DGS10": {
+      "status": "obtained_and_verified",
+      "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS10",
+      "raw_file": "data/raw/DGS10_20260914T014818Z.csv",
+      "raw_bytes": 268679,
+      "raw_sha256": "51cf02cc3952dd14161d22fd7aaba4dc54d1182c87692b034bb0a9d5aa476b4c",
+      "downloaded_at_utc": "2026-09-14T01:48:18.799675+00:00"
+    },
+    "DGS30": {
+      "status": "obtained_and_verified",
+      "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DGS30",
+      "raw_file": "data/raw/DGS30_20260914T014818Z.csv",
+      "raw_bytes": 206273,
+      "raw_sha256": "9343918d2bfa19d68e82cdbf9b2c57494ce3d115d2da83ef4ab4447e50ed2936",
+      "downloaded_at_utc": "2026-09-14T01:48:18.897531+00:00"
+    },
+    "DCOILBRENTEU": {
+      "status": "obtained_and_verified",
+      "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DCOILBRENTEU",
+      "raw_file": "data/raw/DCOILBRENTEU_20260914T014818Z.csv",
+      "raw_bytes": 174106,
+      "raw_sha256": "90b25160f3193d9c1440e8bb45e4fb621f69bb19a4c5736928fdb0c7f2bdc7fb",
+      "downloaded_at_utc": "2026-09-14T01:48:18.998410+00:00"
+    },
+    "DCOILWTICO": {
+      "status": "obtained_and_verified",
+      "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DCOILWTICO",
+      "raw_file": "data/raw/DCOILWTICO_20260914T014818Z.csv",
+      "raw_bytes": 179182,
+      "raw_sha256": "fa61efee3e74b112d237305f50ec7623933221f53d8f140c69def467a7e972d6",
+      "downloaded_at_utc": "2026-09-14T01:48:19.096674+00:00"
+    },
+    "DEXUSEU": {
+      "status": "obtained_and_verified",
+      "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXUSEU",
+      "raw_file": "data/raw/DEXUSEU_20260914T014818Z.csv",
+      "raw_bytes": 128311,
+      "raw_sha256": "9ec250f51460ee38326879d0d987ff14f598fff918cc5a53c0096fa25c23546d",
+      "downloaded_at_utc": "2026-09-14T01:48:19.205168+00:00"
+    },
+    "DEXJPUS": {
+      "status": "obtained_and_verified",
+      "url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=DEXJPUS",
+      "raw_file": "data/raw/DEXJPUS_20260914T014818Z.csv",
+      "raw_bytes": 256547,
+      "raw_sha256": "ded15c63243b4ba5dc1b3eaf51fcfdcd09911033711984c59c3834a82048d34d",
+      "downloaded_at_utc": "2026-09-14T01:48:19.334012+00:00"
+    },
+    "CBOE_OVX": {
+      "status": "obtained_and_verified",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/OVX_History.csv",
+      "raw_file": "data/raw/CBOE_OVX_20260914T014635Z.csv",
+      "raw_bytes": 89705,
+      "raw_sha256": "06e3a16671f19cce1b06fbc5b059f4a33d5192122d1054d9c6b153421022cdc4",
+      "downloaded_at_utc": "2026-09-14T01:48:01.829066+00:00"
+    },
+    "CBOE_GVZ": {
+      "status": "obtained_and_verified",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/GVZ_History.csv",
+      "raw_file": "data/raw/CBOE_GVZ_20260914T014635Z.csv",
+      "raw_bytes": 89598,
+      "raw_sha256": "5ba0197cd0d43ef0518deb61378dbf4f99465ace59ce9c3bf988062f681fe067",
+      "downloaded_at_utc": "2026-09-14T01:48:01.971944+00:00"
+    },
+    "CBOE_VIX": {
+      "status": "obtained_and_verified",
+      "url": "https://cdn.cboe.com/api/global/us_indices/daily_prices/VIX_History.csv",
+      "raw_file": "data/raw/CBOE_VIX_20260914T014635Z.csv",
+      "raw_bytes": 472564,
+      "raw_sha256": "cb3515efe5577d39df5c59ab44fb69171e28927e0fd01b50ce101076e7951e93",
+      "downloaded_at_utc": "2026-09-14T01:48:02.108843+00:00"
+    },
+    "GLD_HISTORICAL": {
+      "status": "obtained_and_verified",
+      "url": "https://api.spdrgoldshares.com/api/v1/historical-archive?exchange=NYSE&lang=en&product=gld",
+      "raw_file": "data/raw/GLD_HISTORICAL_20260914T014635Z.xlsx",
+      "raw_bytes": 539313,
+      "raw_sha256": "d00908d12445a700d518406d29720430293ec8cd2a3e1a97a9b7f9e4f5774a4a",
+      "downloaded_at_utc": "2026-09-14T01:48:02.288053+00:00"
+    },
+    "STOXX_hbrbcpe": {
+      "status": "obtained_and_verified",
+      "url": "https://www.stoxx.com/document/Indices/Current/HistoricalData/hbrbcpe.txt",
+      "raw_file": "data/raw/STOXX_hbrbcpe_20260914T014635Z.txt",
+      "raw_bytes": 688500,
+      "raw_sha256": "e9e14193ff1cb742d2f023b91c57641f249ab1285d3145464ebadbf8a98d34b9",
+      "downloaded_at_utc": "2026-09-14T01:48:02.857504+00:00"
+    },
+    "AQR_TSMOM_monthly": {
+      "status": "obtained_and_verified",
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Time-Series-Momentum-Factors-Monthly.xlsx",
+      "raw_file": "data/raw/AQR_TSMOM_monthly_20260914T014635Z.xlsx",
+      "raw_bytes": 139830,
+      "raw_sha256": "33470930e2269c0d97be4732ec2d9c27ddbc69ac8133b059a263e27400263eeb",
+      "downloaded_at_utc": "2026-09-14T01:48:03.073164+00:00"
+    },
+    "AQR_Commodities_long_run_monthly": {
+      "status": "obtained_and_verified",
+      "url": "https://www.aqr.com/-/media/AQR/Documents/Insights/Data-Sets/Commodities-for-the-Long-Run-Index-Level-Data-Monthly.xlsx",
+      "raw_file": "data/raw/AQR_Commodities_long_run_monthly_20260914T014635Z.xlsx",
+      "raw_bytes": 454950,
+      "raw_sha256": "eeb89c65fa7dca2bfbbebb7af2cbecade7b470d6a4da52883e9413a162b5fe75",
+      "downloaded_at_utc": "2026-09-14T01:48:03.272383+00:00"
+    },
+    "_access_notes": {
+      "fred_user_agent": "FRED refuses a spoofed desktop-browser User-Agent: every DGS/DCOIL/DEX request returned http=000 with one, and all seven succeeded immediately with curl's default agent. Cboe, SPDR and STOXX require the opposite -- a browser agent and a Referer. Recorded so the next run does not rediscover it.",
+      "retries": "three attempts per source with a linear backoff, then the source is recorded as failed and the run continues.",
+      "euro_stoxx_correction": "the previous round concluded Euro Stoxx 50 was unavailable from three GUESSED FRED ids returning 404. That inference was wrong: the official STOXX historical price file hbrbcpe.txt is public and carries the Blue-Chip Euro-Zone (SX5E) column from 2016-10-04."
+    }
+  },
+  "forbidden_substitutions": [
+    "a Treasury yield is not a swaption volatility",
+    "an FX spot change is not an FX carry total return",
+    "GLD or crude is not a commodity QIS"
+  ]
+}

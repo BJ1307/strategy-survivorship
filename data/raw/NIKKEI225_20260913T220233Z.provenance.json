@@ -1,0 +1,25 @@
+{
+  "key": "nikkei225",
+  "role": "cross-market, price index, different exchange calendar",
+  "provider": "Federal Reserve Bank of St. Louis (FRED); index by Nikkei Inc.",
+  "series_id": "NIKKEI225",
+  "series_page": "https://fred.stlouisfed.org/series/NIKKEI225",
+  "download_url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=NIKKEI225",
+  "export_fields": "observation_date, NIKKEI225",
+  "frequency": "daily, business days, blank on Japanese market holidays",
+  "units": "index level, points (PRICE index; dividends excluded)",
+  "calendar": "source_blanks",
+  "calendar_note": "no encoded JPX calendar exists in this repository, so the file's own blank rows are taken as the non-trading marker. The weekday grid is still checked for completeness, but the blanks are NOT cross-validated against an independent holiday list the way the US ones are.",
+  "redistribution": "Nikkei index data via FRED; kept local with the rest.",
+  "downloaded_at_utc": "2026-09-13T22:02:33.228421+00:00",
+  "raw_file": "data/raw/NIKKEI225_20260913T220233Z.csv",
+  "raw_bytes": 383156,
+  "raw_sha256": "26e2904304c406e7af496133cb885704a70159dc866eabe12debd8855b65ef57",
+  "rows_in_file": 20175,
+  "rows_with_a_value": 19199,
+  "rows_blank": 976,
+  "date_range_in_file": [
+    "1949-05-16",
+    "2026-09-11"
+  ]
+}

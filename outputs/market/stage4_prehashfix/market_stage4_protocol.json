@@ -1,0 +1,95 @@
+{
+  "question": "does re-estimating A and rho before each year describe the following year's statistics better than leaving them fixed?",
+  "status": "RETROSPECTIVE replay on history that has already been examined. Re-running a calibration on data we have already studied is not the same as having run it live, and nothing here is evidence about a future year.",
+  "development_scope": [
+    "2017-01-01",
+    "2023-12-31"
+  ],
+  "holdout": "2024-2025 is not read, not plotted and not measured. The returns frame is truncated at the development end on load.",
+  "evaluation_years": [
+    2020,
+    2021,
+    2022,
+    2023
+  ],
+  "window_rules": {
+    "rolling3y": "the three calendar years before the evaluation year",
+    "expanding": "2017 through the year before the evaluation year",
+    "note": "for 2020 the two rules coincide (2017-2019), so that year carries no information about the choice between them"
+  },
+  "cadence": "calibrate once before each year, frozen inside the year. Neither the window length nor the update frequency is searched.",
+  "branches": {
+    "sv_only": "pure SV, kappa = 0",
+    "sv_jump": "SV + jumps at the recorded kappa and lambda"
+  },
+  "grid": {
+    "A": [
+      0.6,
+      0.8,
+      1.0,
+      1.2,
+      1.4,
+      1.6,
+      1.8,
+      2.0
+    ],
+    "rho": [
+      0.9,
+      0.94,
+      0.96,
+      0.98,
+      0.99
+    ],
+    "note": "the stage-3 grid, unchanged. It is NOT widened if a result is poor."
+  },
+  "comparison": {
+    "recalibrated": "A and rho re-estimated on the window",
+    "fixed_baseline": "A = 1.0, rho = 0.98",
+    "shared": "both use the SAME overall scale, estimated from that window. The scale is never derived from the evaluation year."
+  },
+  "objective": "the stage-3 objective, unchanged: RV_21 quantiles compared in logs and the centred-absolute-return ACF at lags [1, 5, 10, 21, 63], two groups of equal total weight. A finite-sample simulated-moment distance, not a likelihood and not a test.",
+  "lengths": {
+    "calibration": "the simulated length matches the history window",
+    "evaluation": "the simulated length matches the evaluation year"
+  },
+  "standardising_references": {
+    "calibration": "built at EACH origin from then-available information: the baseline parameters, the window's own scale estimate and the window's length. Fixed across candidates inside that calibration. The stage-2 full-training reference is NOT carried into early windows -- it contains information from after them.",
+    "evaluation": "ONE reference per (year, branch), shared by every method scored that year: baseline parameters, the scale from the EXPANDING window ending before the year, and a length equal to the year's trading-day count, which is a calendar fact. A single shared reference is what makes the methods comparable; it cannot favour one of them."
+  },
+  "statistics_inside_the_year": "every evaluation statistic is computed inside the evaluation year, identically for the market and for every simulated path. RV_21 therefore begins on the 21st trading day of the year. No statistic crosses the boundary, so no embargo is imposed.",
+  "initialisation": "the log-variance AR(1) starts from its stationary law. This is a check on whether the distribution SHAPE transfers after a rolling re-fit; it is not a conditional forecast and the latent state is never filtered on the real path.",
+  "budgets_and_seeds": {
+    "screen_paths": 400,
+    "final_paths": 2000,
+    "eval_paths": 2000,
+    "n_finalists": 3,
+    "screening": "common random numbers across every cell of one calibration",
+    "final": "fresh streams, independent of the screen",
+    "seeds": "derived from the protocol coordinates (rule, branch, year), never from the data"
+  },
+  "auxiliary": {
+    "list": [
+      "skewness",
+      "excess_kurtosis",
+      "tail_below_m2_count",
+      "tail_above_p2_count",
+      "tail_below_m3_count",
+      "tail_above_p3_count",
+      "acf_ret_lag1",
+      "acf_ret_lag5",
+      "acf_sqret_lag1",
+      "acf_sqret_lag5",
+      "leadlag_ret_vs_future_sq_lag1",
+      "leadlag_ret_vs_future_sq_lag5",
+      "concentration_max_exceed_63d"
+    ],
+    "rule": "reported every year, NEVER added to the objective whatever they show"
+  },
+  "reporting_limits": [
+    "four years and two overlapping window rules are not independent replicates; no significance statement is made from them",
+    "a failure is not attributed to a regime change by default",
+    "the main window rule is not swapped on the strength of the replay",
+    "every simulated range is conditional on the model AND the parameters, and carries no parameter-estimation uncertainty"
+  ],
+  "relation_to_the_monitoring_project": "a generator that re-estimates well does NOT imply the monitor's two-year 15% cumulative false-alarm control still holds. Using such updates in a real monitor would require recalibrating the whole rule INCLUDING the update action; a budget is not re-issued at each update."
+}

@@ -351,7 +351,8 @@ def build(out: Path) -> str:
       "training and validation comparisons and the auxiliary table are all in "
       "`outputs/market/market_stage3_*`. Every simulated range is conditional on the "
       "model **and** on the parameters shown; none of them carries "
-      "parameter-estimation uncertainty. Nothing was committed or pushed, and "
+      "parameter-estimation uncertainty. This round committed and pushed "
+      "nothing; the repository was published later, by a separate decision. "
       "`config.py`, the monitors, the EWMA code and `mixed_noise` are untouched.")
     return "\n".join(L) + "\n"
 

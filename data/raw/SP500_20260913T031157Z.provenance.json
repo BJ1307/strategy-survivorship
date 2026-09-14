@@ -1,0 +1,23 @@
+{
+  "key": "sp500",
+  "role": "primary",
+  "provider": "Federal Reserve Bank of St. Louis (FRED); index by S&P Dow Jones Indices LLC",
+  "series_id": "SP500",
+  "series_page": "https://fred.stlouisfed.org/series/SP500",
+  "download_url": "https://fred.stlouisfed.org/graph/fredgraph.csv?id=SP500",
+  "export_fields": "observation_date, SP500",
+  "frequency": "daily, business days (Mon-Fri), blank on US market holidays",
+  "units": "index level, points (S&P 500 PRICE index; dividends excluded)",
+  "redistribution": "S&P Dow Jones Indices data; FRED states it may not be redistributed. Raw and per-day derived files stay local.",
+  "downloaded_at_utc": "2026-09-13T03:11:58.805936+00:00",
+  "raw_file": "data/raw/SP500_20260913T031157Z.csv",
+  "raw_bytes": 48941,
+  "raw_sha256": "7f08dc75562f523eb5f934b380b30fb8c005629babd5835c566bbb40bedbdf47",
+  "rows_in_file": 2610,
+  "rows_with_a_value": 2514,
+  "rows_blank": 96,
+  "date_range_in_file": [
+    "2016-09-12",
+    "2026-09-11"
+  ]
+}
