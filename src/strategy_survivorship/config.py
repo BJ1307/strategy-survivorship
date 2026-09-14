@@ -84,6 +84,11 @@ STREAM_ORDER: tuple[str, ...] = (
     "stage3b_test",
     "stage3b_failure_time",
     "stage3b_bootstrap",
+    # mixed_noise: every simulated strategy draws its OWN (A, kappa).
+    # Appended, so every earlier experiment keeps its exact random sequence.
+    "mixed_noise_params",
+    "mixed_noise_paths",
+    "mixed_noise_bootstrap",
 )
 
 
@@ -281,6 +286,21 @@ class Stage1Config:
     stage3b_post_windows: tuple[int, ...] = (63, 126, 252)
     stage3b_test_paths: int = 10000
     stage3b_bootstrap_reps: int = 2000
+
+    # --- mixed_noise: strategies that differ from one another ---------------
+    # Each simulated strategy draws its own volatility-swing amplitude A and its
+    # own jump scale kappa, once, held for the whole observation window, drawn
+    # independently of the state and of every noise stream.  These ranges are a
+    # SIMULATION CHOICE made before the run; they are not estimated from any
+    # market and were not specified by the supervisor.
+    mixed_A_max: float = 1.0
+    mixed_kappa_max: float = 8.0
+    mixed_calibration_paths: int = 10000
+    mixed_test_paths: int = 10000
+    mixed_bootstrap_reps: int = 1000
+    # pre-registered subgroup cuts, for reading the frozen rule by parameter
+    mixed_subgroup_A_split: float = 0.5
+    mixed_subgroup_kappa_split: float = 4.0
 
     # --- reproducibility ----------------------------------------------------
     root_seed: int = 20260905

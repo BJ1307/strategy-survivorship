@@ -1,0 +1,51 @@
+{
+  "question": "Do the monitors still work when every strategy has different noise characteristics, instead of one fixed parameter point?",
+  "states": {
+    "valid_sharpe": 1.0,
+    "invalid_sharpe": 0.0,
+    "prior": 0.5,
+    "fixed_from_day_one": true
+  },
+  "horizon_days": 504,
+  "days_per_year": 252,
+  "annual_vol": 0.1,
+  "far_budget": 0.15,
+  "per_strategy_parameters": {
+    "A": "Uniform(0, 1)   volatility swing amplitude",
+    "kappa": "Uniform(0, 8)   jump scale",
+    "drawn": "once per strategy, held for the whole window, independent of the state and of every noise stream",
+    "status": "a simulation choice fixed before the run; not estimated from any market and not specified by the supervisor"
+  },
+  "held_fixed": {
+    "rho": 0.98,
+    "jump_intensity_per_year": 2.0,
+    "latent_AR1_init": "stationary"
+  },
+  "parameter_roles": {
+    "A": "how far the volatility level swings",
+    "rho": "how long a volatility level persists",
+    "kappa": "how large a jump is",
+    "K": "how many jumps land on a given day"
+  },
+  "normalisation": "divide by the THEORETICAL constant sqrt(1 + kappa_i^2 lambda/D) for that path's own kappa; never by a path's sample mean or sample variance",
+  "batches": {
+    "calibration_valid": 10000,
+    "test_valid": 10000,
+    "test_invalid": 10000
+  },
+  "batch_independence": "parameters and noise are drawn independently per batch; the two test batches are shared across methods so the comparisons are paired",
+  "thresholds": "one per method, calibrated on the whole mixed calibration population, then frozen; never chosen using true A, kappa, post-hoc groups or test results",
+  "detector_inputs": "returns only; no latent volatility, no jump labels, no true parameters",
+  "methods": [
+    "binary_gaussian",
+    "binary_student_t",
+    "trailing_sharpe_252",
+    "ewma_student_t",
+    "ewma_trunc_student_t"
+  ],
+  "pre_specified_comparisons": [
+    "binary_student_t - binary_gaussian",
+    "ewma_student_t - binary_student_t"
+  ],
+  "out_of_sample_scope": "the test batches are genuinely out of sample, but they come from the SAME generating family as calibration; this is not evidence about real strategy returns"
+}

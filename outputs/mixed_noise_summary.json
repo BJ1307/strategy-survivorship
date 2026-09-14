@@ -1,0 +1,1264 @@
+{
+  "experiment": "mixed_noise",
+  "protocol": {
+    "question": "Do the monitors still work when every strategy has different noise characteristics, instead of one fixed parameter point?",
+    "states": {
+      "valid_sharpe": 1.0,
+      "invalid_sharpe": 0.0,
+      "prior": 0.5,
+      "fixed_from_day_one": true
+    },
+    "horizon_days": 504,
+    "days_per_year": 252,
+    "annual_vol": 0.1,
+    "far_budget": 0.15,
+    "per_strategy_parameters": {
+      "A": "Uniform(0, 1)   volatility swing amplitude",
+      "kappa": "Uniform(0, 8)   jump scale",
+      "drawn": "once per strategy, held for the whole window, independent of the state and of every noise stream",
+      "status": "a simulation choice fixed before the run; not estimated from any market and not specified by the supervisor"
+    },
+    "held_fixed": {
+      "rho": 0.98,
+      "jump_intensity_per_year": 2.0,
+      "latent_AR1_init": "stationary"
+    },
+    "parameter_roles": {
+      "A": "how far the volatility level swings",
+      "rho": "how long a volatility level persists",
+      "kappa": "how large a jump is",
+      "K": "how many jumps land on a given day"
+    },
+    "normalisation": "divide by the THEORETICAL constant sqrt(1 + kappa_i^2 lambda/D) for that path's own kappa; never by a path's sample mean or sample variance",
+    "batches": {
+      "calibration_valid": 10000,
+      "test_valid": 10000,
+      "test_invalid": 10000
+    },
+    "batch_independence": "parameters and noise are drawn independently per batch; the two test batches are shared across methods so the comparisons are paired",
+    "thresholds": "one per method, calibrated on the whole mixed calibration population, then frozen; never chosen using true A, kappa, post-hoc groups or test results",
+    "detector_inputs": "returns only; no latent volatility, no jump labels, no true parameters",
+    "methods": [
+      "binary_gaussian",
+      "binary_student_t",
+      "trailing_sharpe_252",
+      "ewma_student_t",
+      "ewma_trunc_student_t"
+    ],
+    "pre_specified_comparisons": [
+      "binary_student_t - binary_gaussian",
+      "ewma_student_t - binary_student_t"
+    ],
+    "out_of_sample_scope": "the test batches are genuinely out of sample, but they come from the SAME generating family as calibration; this is not evidence about real strategy returns"
+  },
+  "config": {
+    "trading_days_per_year": 252,
+    "horizon_days": 504,
+    "sigma_annual": 0.1,
+    "sharpe_valid": 1.0,
+    "sharpe_invalid": 0.0,
+    "prior_valid": 0.5,
+    "student_t_df": 5.0,
+    "rolling_window": 252,
+    "rolling_ddof": 1,
+    "far_targets": [
+      0.05,
+      0.15
+    ],
+    "n_calibration": 5000,
+    "n_test_valid": 5000,
+    "n_test_invalid": 5000,
+    "eval_horizons": [
+      126,
+      252,
+      504
+    ],
+    "n_calibration_replications": 0,
+    "wilson_z": 1.959963984540054,
+    "shock_day": 252,
+    "shock_in_daily_sigma": 8.0,
+    "diagnostic_path_index": 0,
+    "prob_time_paths": 5000,
+    "prob_time_report_days": [
+      126,
+      252,
+      504
+    ],
+    "prob_time_long_days": [
+      1260,
+      2520
+    ],
+    "prob_thresholds": [
+      0.8,
+      0.9,
+      0.95
+    ],
+    "prob_coverage_target": 0.8,
+    "brier_days": [
+      252,
+      504
+    ],
+    "sensitivity_sharpe": [
+      1.0,
+      0.6
+    ],
+    "switch_fixed_T": [
+      0,
+      252,
+      756,
+      1260
+    ],
+    "switch_fixed_paths": 2000,
+    "switch_random_paths": 5000,
+    "switch_random_T_max": 1260,
+    "switch_post_window": 504,
+    "switch_post_horizons": [
+      126,
+      252,
+      504
+    ],
+    "switch_T_bin_edges": [
+      0,
+      252,
+      504,
+      756,
+      1008,
+      1261
+    ],
+    "switch_matched_pre_fa": 0.15,
+    "switch_matched_cal_paths": 4000,
+    "switch_matched_survival_floor": 0.5,
+    "switch_contfa_test_paths": 5000,
+    "switch_fixed_continuation_fa": 0.02,
+    "noise_scenarios": [
+      "gaussian",
+      "student_t",
+      "stoch_vol",
+      "jump"
+    ],
+    "noise_student_t_df": 5.0,
+    "noise_sv_rho": 0.98,
+    "noise_sv_amplitude": 1.0,
+    "noise_jump_lambda_annual": 2.0,
+    "noise_jump_kappa": 5.0,
+    "n_noise_calibration": 5000,
+    "n_noise_test_valid": 5000,
+    "n_noise_test_invalid": 5000,
+    "ewma_lambda": 0.94,
+    "ewma_student_t_df": 5.0,
+    "ewma_variance_floor_factor": 1e-08,
+    "ewma_truncation_c": 4.0,
+    "n_stage2b_calibration": 5000,
+    "n_stage2b_test_valid": 5000,
+    "n_stage2b_test_invalid": 5000,
+    "sv_control_rho": 0.0,
+    "bootstrap_reps": 2000,
+    "n_info_days": [
+      126,
+      252,
+      504
+    ],
+    "stage2c_coverage": [
+      [
+        "gaussian",
+        "gaussian",
+        []
+      ],
+      [
+        "student_t",
+        "student_t",
+        []
+      ],
+      [
+        "sv_rho098",
+        "stoch_vol",
+        []
+      ],
+      [
+        "jump_k5",
+        "jump",
+        []
+      ],
+      [
+        "sv_rho0",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_rho",
+            0.0
+          ]
+        ]
+      ]
+    ],
+    "stage2c_stress": [
+      [
+        "sv_rho090",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_rho",
+            0.9
+          ]
+        ]
+      ],
+      [
+        "sv_amp15",
+        "stoch_vol",
+        [
+          [
+            "noise_sv_amplitude",
+            1.5
+          ]
+        ]
+      ],
+      [
+        "jump_k8",
+        "jump",
+        [
+          [
+            "noise_jump_kappa",
+            8.0
+          ]
+        ]
+      ]
+    ],
+    "stage2c_calibration_paths": 10000,
+    "stage2c_test_paths": 10000,
+    "stage2c_stress_paths": 5000,
+    "stage2c_delta": 0.05,
+    "stage2c_report_days": [
+      63,
+      126,
+      252,
+      504
+    ],
+    "stage2c_bootstrap_reps": 2000,
+    "stage2d_scenarios": [
+      [
+        "gaussian_ctrl",
+        0.0,
+        0.0,
+        true
+      ],
+      [
+        "sv_ctrl",
+        1.0,
+        0.0,
+        true
+      ],
+      [
+        "jump_ctrl",
+        0.0,
+        5.0,
+        true
+      ],
+      [
+        "sv_jump",
+        1.0,
+        5.0,
+        false
+      ],
+      [
+        "sv_jump_big",
+        1.0,
+        8.0,
+        false
+      ]
+    ],
+    "stage2d_calibration_paths": 10000,
+    "stage2d_test_paths": 10000,
+    "stage2d_bootstrap_reps": 2000,
+    "stage2d_shock_day": 126,
+    "stage2d_shock_sigmas": 8.0,
+    "stage2d_shock_path_index": 0,
+    "stage2e_calibration_paths": 10000,
+    "stage2e_test_paths": 10000,
+    "stage2e_bootstrap_reps": 2000,
+    "stage2e_jump_window": 20,
+    "stage3a_sharpes": [
+      1.0,
+      0.6
+    ],
+    "stage3a_calibration_paths": 10000,
+    "stage3a_test_paths": 10000,
+    "stage3a_bootstrap_reps": 2000,
+    "stage3a_prob_level": 0.9,
+    "stage3a1_horizons": [
+      63,
+      126,
+      252,
+      504
+    ],
+    "stage3a1_calibration_paths": 10000,
+    "stage3a1_test_paths": 10000,
+    "stage3a1_bootstrap_reps": 2000,
+    "stage3a1_delta_denominator": 160,
+    "stage3b_fixed_failure_days": [
+      0,
+      126,
+      252
+    ],
+    "stage3b_random_failure_max": 252,
+    "stage3b_post_windows": [
+      63,
+      126,
+      252
+    ],
+    "stage3b_test_paths": 10000,
+    "stage3b_bootstrap_reps": 2000,
+    "mixed_A_max": 1.0,
+    "mixed_kappa_max": 8.0,
+    "mixed_calibration_paths": 10000,
+    "mixed_test_paths": 10000,
+    "mixed_bootstrap_reps": 1000,
+    "mixed_subgroup_A_split": 0.5,
+    "mixed_subgroup_kappa_split": 4.0,
+    "root_seed": 20260905,
+    "label": "stage1_benchmark",
+    "notes": [
+      "Benchmark DGP is fixed-volatility iid Gaussian only.",
+      "Student-t detector is deliberately mis-specified under this DGP."
+    ],
+    "derived": {
+      "sigma_daily": 0.00629940788348712,
+      "sqrt_D": 15.874507866387544,
+      "student_t_scale_a_nu": 0.7745966692414834,
+      "prior_log_odds": 0.0,
+      "daily_drift_valid": 0.0003968253968253968,
+      "daily_drift_invalid": 0.0,
+      "stream_order": [
+        "calibration_valid",
+        "test_valid",
+        "test_invalid",
+        "diagnostic",
+        "prob_time_valid",
+        "prob_time_invalid",
+        "switch_fixed",
+        "switch_random",
+        "switch_matched_cal",
+        "switch_random_T",
+        "switch_contfa_test",
+        "stage2a",
+        "stage2b",
+        "stage2b_persistence_control",
+        "stage2b_bootstrap",
+        "stage2c_calibration",
+        "stage2c_test",
+        "stage2c_stress",
+        "stage2c_bootstrap",
+        "stage2d_calibration",
+        "stage2d_test",
+        "stage2d_bootstrap",
+        "stage2d_shock",
+        "stage2e_calibration",
+        "stage2e_test",
+        "stage2e_bootstrap",
+        "stage2e1_bootstrap",
+        "stage3a_calibration",
+        "stage3a_test",
+        "stage3a_bootstrap",
+        "stage3a1_calibration",
+        "stage3a1_test",
+        "stage3a1_bootstrap",
+        "stage3b_test",
+        "stage3b_failure_time",
+        "stage3b_bootstrap",
+        "mixed_noise_params",
+        "mixed_noise_paths",
+        "mixed_noise_bootstrap"
+      ]
+    }
+  },
+  "environment": {
+    "python": "3.13.13",
+    "python_implementation": "CPython",
+    "platform": "macOS-14.2-arm64-arm-64bit-Mach-O",
+    "machine": "arm64",
+    "numpy": "2.5.2",
+    "scipy": "1.18.1",
+    "pandas": "3.0.5",
+    "matplotlib": "3.11.1"
+  },
+  "random_streams": {
+    "calibration_valid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        0
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "test_valid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        1
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "test_invalid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        2
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "diagnostic": {
+      "entropy": 20260905,
+      "spawn_key": [
+        3
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "prob_time_valid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        4
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "prob_time_invalid": {
+      "entropy": 20260905,
+      "spawn_key": [
+        5
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_fixed": {
+      "entropy": 20260905,
+      "spawn_key": [
+        6
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_random": {
+      "entropy": 20260905,
+      "spawn_key": [
+        7
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_matched_cal": {
+      "entropy": 20260905,
+      "spawn_key": [
+        8
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_random_T": {
+      "entropy": 20260905,
+      "spawn_key": [
+        9
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "switch_contfa_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        10
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2a": {
+      "entropy": 20260905,
+      "spawn_key": [
+        11
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b": {
+      "entropy": 20260905,
+      "spawn_key": [
+        12
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b_persistence_control": {
+      "entropy": 20260905,
+      "spawn_key": [
+        13
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2b_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        14
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        15
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        16
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_stress": {
+      "entropy": 20260905,
+      "spawn_key": [
+        17
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2c_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        18
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        19
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        20
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        21
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2d_shock": {
+      "entropy": 20260905,
+      "spawn_key": [
+        22
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2e_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        23
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2e_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        24
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2e_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        25
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage2e1_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        26
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3a_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        27
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3a_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        28
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3a_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        29
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3a1_calibration": {
+      "entropy": 20260905,
+      "spawn_key": [
+        30
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3a1_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        31
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3a1_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        32
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3b_test": {
+      "entropy": 20260905,
+      "spawn_key": [
+        33
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3b_failure_time": {
+      "entropy": 20260905,
+      "spawn_key": [
+        34
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "stage3b_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        35
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "mixed_noise_params": {
+      "entropy": 20260905,
+      "spawn_key": [
+        36
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "mixed_noise_paths": {
+      "entropy": 20260905,
+      "spawn_key": [
+        37
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    },
+    "mixed_noise_bootstrap": {
+      "entropy": 20260905,
+      "spawn_key": [
+        38
+      ],
+      "n_children_spawned": 0,
+      "pool_size": 4
+    }
+  },
+  "ranks": {
+    "n_rules": 5,
+    "delta": 0.05,
+    "delta_per_rule": 0.01,
+    "alpha": 0.15,
+    "n_calibration_paths": 10000,
+    "rank": 1417,
+    "beta_route": 1417,
+    "scope": "a cumulative false-alarm budget for the WHOLE mixture; it is not the same guarantee at every parameter point, and it is not an at-least-one-alarm guarantee across a portfolio of monitored strategies"
+  },
+  "report_days": [
+    63,
+    126,
+    252,
+    504
+  ],
+  "metrics": [
+    {
+      "method": "binary_gaussian",
+      "threshold": -1.3383273024,
+      "first_eligible_day": 1,
+      "n_test_valid": 10000,
+      "n_test_invalid": 10000,
+      "n_false_alarms": 1410,
+      "n_detections": 5670,
+      "detect_d63": 0.0145,
+      "far_d63": 0.0053,
+      "detect_d63_lo": 0.0123365382,
+      "detect_d63_hi": 0.0170363243,
+      "far_d63_lo": 0.0040545229,
+      "far_d63_hi": 0.0069254051,
+      "detect_d126": 0.0945,
+      "far_d126": 0.0277,
+      "detect_d126_lo": 0.0889213508,
+      "detect_d126_hi": 0.1003900719,
+      "far_d126_lo": 0.0246603363,
+      "far_d126_hi": 0.0311023885,
+      "detect_d252": 0.2966,
+      "far_d252": 0.0736,
+      "detect_d252_lo": 0.287727179,
+      "detect_d252_hi": 0.3056290316,
+      "far_d252_lo": 0.0686442656,
+      "far_d252_hi": 0.0788832082,
+      "detect_d504": 0.567,
+      "far_d504": 0.141,
+      "detect_d504_lo": 0.5572646642,
+      "detect_d504_hi": 0.57668388,
+      "far_d504_lo": 0.134316675,
+      "far_d504_hi": 0.1479590359,
+      "median_detect_days": 424,
+      "median_detect_note": "",
+      "undetected_at_H": 0.433,
+      "median_definition": "first day the cumulative detection rate over ALL invalid paths reaches one half"
+    },
+    {
+      "method": "binary_student_t",
+      "threshold": -1.4697273002,
+      "first_eligible_day": 1,
+      "n_test_valid": 10000,
+      "n_test_invalid": 10000,
+      "n_false_alarms": 1434,
+      "n_detections": 6164,
+      "detect_d63": 0.0145,
+      "far_d63": 0.0041,
+      "detect_d63_lo": 0.0123365382,
+      "detect_d63_hi": 0.0170363243,
+      "far_d63_lo": 0.0030238547,
+      "far_d63_hi": 0.0055569949,
+      "detect_d126": 0.1185,
+      "far_d126": 0.028,
+      "detect_d126_lo": 0.1123114289,
+      "detect_d126_hi": 0.1249815618,
+      "far_d126_lo": 0.0249433852,
+      "far_d126_hi": 0.0314191092,
+      "detect_d252": 0.3418,
+      "far_d252": 0.0778,
+      "detect_d252_lo": 0.3325659724,
+      "detect_d252_hi": 0.3511555247,
+      "far_d252_lo": 0.072710736,
+      "far_d252_hi": 0.0832135122,
+      "detect_d504": 0.6164,
+      "far_d504": 0.1434,
+      "detect_d504_lo": 0.6068264615,
+      "detect_d504_hi": 0.6258841437,
+      "far_d504_lo": 0.1366676002,
+      "far_d504_hi": 0.1504062674,
+      "median_detect_days": 374,
+      "median_detect_note": "",
+      "undetected_at_H": 0.3836,
+      "median_definition": "first day the cumulative detection rate over ALL invalid paths reaches one half"
+    },
+    {
+      "method": "trailing_sharpe_252",
+      "threshold": -0.9415813852,
+      "first_eligible_day": 252,
+      "n_test_valid": 10000,
+      "n_test_invalid": 10000,
+      "n_false_alarms": 1481,
+      "n_detections": 5599,
+      "detect_d63": 0.0,
+      "far_d63": 0.0,
+      "detect_d63_lo": 0.0,
+      "detect_d63_hi": 0.0003839984,
+      "far_d63_lo": 0.0,
+      "far_d63_hi": 0.0003839984,
+      "detect_d126": 0.0,
+      "far_d126": 0.0,
+      "detect_d126_lo": 0.0,
+      "detect_d126_hi": 0.0003839984,
+      "far_d126_lo": 0.0,
+      "far_d126_hi": 0.0003839984,
+      "detect_d252": 0.1741,
+      "far_d252": 0.0221,
+      "detect_d252_lo": 0.1667934241,
+      "detect_d252_hi": 0.181656866,
+      "far_d252_lo": 0.0193969071,
+      "far_d252_hi": 0.0251701185,
+      "detect_d504": 0.5599,
+      "far_d504": 0.1481,
+      "detect_d504_lo": 0.5501495974,
+      "detect_d504_hi": 0.5696043996,
+      "far_d504_lo": 0.1412733801,
+      "far_d504_hi": 0.1551968779,
+      "median_detect_days": 451,
+      "median_detect_note": "",
+      "undetected_at_H": 0.4401,
+      "median_definition": "first day the cumulative detection rate over ALL invalid paths reaches one half"
+    },
+    {
+      "method": "ewma_student_t",
+      "threshold": -1.7764164903,
+      "first_eligible_day": 1,
+      "n_test_valid": 10000,
+      "n_test_invalid": 10000,
+      "n_false_alarms": 1420,
+      "n_detections": 6264,
+      "detect_d63": 0.0181,
+      "far_d63": 0.0038,
+      "detect_d63_lo": 0.0156661155,
+      "detect_d63_hi": 0.0209039822,
+      "far_d63_lo": 0.0027699031,
+      "far_d63_hi": 0.0052111769,
+      "detect_d126": 0.1275,
+      "far_d126": 0.0265,
+      "detect_d126_lo": 0.121105618,
+      "detect_d126_hi": 0.1341804608,
+      "far_d126_lo": 0.0235291492,
+      "far_d126_hi": 0.0298344973,
+      "detect_d252": 0.3481,
+      "far_d252": 0.0768,
+      "detect_d252_lo": 0.3388233004,
+      "detect_d252_hi": 0.3574933583,
+      "far_d252_lo": 0.0717421088,
+      "far_d252_hi": 0.0821829074,
+      "detect_d504": 0.6264,
+      "far_d504": 0.142,
+      "detect_d504_lo": 0.6168716513,
+      "detect_d504_hi": 0.6358312739,
+      "far_d504_lo": 0.1352961467,
+      "far_d504_hi": 0.1489787961,
+      "median_detect_days": 364,
+      "median_detect_note": "",
+      "undetected_at_H": 0.3736,
+      "median_definition": "first day the cumulative detection rate over ALL invalid paths reaches one half"
+    },
+    {
+      "method": "ewma_trunc_student_t",
+      "threshold": -1.81254661,
+      "first_eligible_day": 1,
+      "n_test_valid": 10000,
+      "n_test_invalid": 10000,
+      "n_false_alarms": 1419,
+      "n_detections": 6333,
+      "detect_d63": 0.0163,
+      "far_d63": 0.0037,
+      "detect_d63_lo": 0.0139974377,
+      "detect_d63_hi": 0.0189740423,
+      "far_d63_lo": 0.002685648,
+      "far_d63_hi": 0.0050955087,
+      "detect_d126": 0.1282,
+      "far_d126": 0.0258,
+      "detect_d126_lo": 0.1217900712,
+      "detect_d126_hi": 0.13489547,
+      "far_d126_lo": 0.0228700652,
+      "far_d126_hi": 0.0290941188,
+      "detect_d252": 0.3537,
+      "far_d252": 0.077,
+      "detect_d252_lo": 0.3443868798,
+      "detect_d252_hi": 0.3631254781,
+      "far_d252_lo": 0.0719358137,
+      "far_d252_hi": 0.082389049,
+      "detect_d504": 0.6333,
+      "far_d504": 0.1419,
+      "detect_d504_lo": 0.6238053503,
+      "detect_d504_hi": 0.6426922757,
+      "far_d504_lo": 0.1351981943,
+      "far_d504_hi": 0.1488768253,
+      "median_detect_days": 362,
+      "median_detect_note": "",
+      "undetected_at_H": 0.3667,
+      "median_definition": "first day the cumulative detection rate over ALL invalid paths reaches one half"
+    }
+  ],
+  "subgroups": [
+    {
+      "method": "binary_gaussian",
+      "subgroup": "A < 0.5, kappa < 4",
+      "A_high": false,
+      "kappa_high": false,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2488,
+      "detect_d504": 0.5731511254019293,
+      "detect_d504_lo": 0.5536175662609645,
+      "detect_d504_hi": 0.5924591428777738,
+      "n_valid": 2486,
+      "far_d504": 0.1415929203539823,
+      "far_d504_lo": 0.1284407506356291,
+      "far_d504_hi": 0.15585102879194984
+    },
+    {
+      "method": "binary_gaussian",
+      "subgroup": "A < 0.5, kappa >= 4",
+      "A_high": false,
+      "kappa_high": true,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2483,
+      "detect_d504": 0.5698751510269835,
+      "detect_d504_lo": 0.5503083334643082,
+      "detect_d504_hi": 0.5892260943413765,
+      "n_valid": 2471,
+      "far_d504": 0.13921489275596924,
+      "far_d504_lo": 0.1261249746884444,
+      "far_d504_hi": 0.1534248349993118
+    },
+    {
+      "method": "binary_gaussian",
+      "subgroup": "A >= 0.5, kappa < 4",
+      "A_high": true,
+      "kappa_high": false,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2516,
+      "detect_d504": 0.568362480127186,
+      "detect_d504_lo": 0.5489189923100722,
+      "detect_d504_hi": 0.587597532884729,
+      "n_valid": 2496,
+      "far_d504": 0.14463141025641027,
+      "far_d504_lo": 0.13137873467985717,
+      "far_d504_hi": 0.15897626213786564
+    },
+    {
+      "method": "binary_gaussian",
+      "subgroup": "A >= 0.5, kappa >= 4",
+      "A_high": true,
+      "kappa_high": true,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2513,
+      "detect_d504": 0.5567051333068046,
+      "detect_d504_lo": 0.5372104652942647,
+      "detect_d504_hi": 0.5760267030625935,
+      "n_valid": 2547,
+      "far_d504": 0.1385944248135061,
+      "far_d504_lo": 0.12571905593598637,
+      "far_d504_hi": 0.15255831656244728
+    },
+    {
+      "method": "binary_student_t",
+      "subgroup": "A < 0.5, kappa < 4",
+      "A_high": false,
+      "kappa_high": false,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2488,
+      "detect_d504": 0.6045016077170418,
+      "detect_d504_lo": 0.585141698364864,
+      "detect_d504_hi": 0.6235393146904765,
+      "n_valid": 2486,
+      "far_d504": 0.1745776347546259,
+      "far_d504_lo": 0.16016067848541354,
+      "far_d504_hi": 0.1899987486267204
+    },
+    {
+      "method": "binary_student_t",
+      "subgroup": "A < 0.5, kappa >= 4",
+      "A_high": false,
+      "kappa_high": true,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2483,
+      "detect_d504": 0.6242448650825614,
+      "detect_d504_lo": 0.6050169260553495,
+      "detect_d504_hi": 0.643088958544384,
+      "n_valid": 2471,
+      "far_d504": 0.14366653176851477,
+      "far_d504_lo": 0.13038966347155354,
+      "far_d504_hi": 0.15804960453749792
+    },
+    {
+      "method": "binary_student_t",
+      "subgroup": "A >= 0.5, kappa < 4",
+      "A_high": true,
+      "kappa_high": false,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2516,
+      "detect_d504": 0.6164546899841018,
+      "detect_d504_lo": 0.5972908981927015,
+      "detect_d504_hi": 0.6352634150751867,
+      "n_valid": 2496,
+      "far_d504": 0.1438301282051282,
+      "far_d504_lo": 0.13061041825877337,
+      "far_d504_hi": 0.15814447708615956
+    },
+    {
+      "method": "binary_student_t",
+      "subgroup": "A >= 0.5, kappa >= 4",
+      "A_high": true,
+      "kappa_high": true,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2513,
+      "detect_d504": 0.6203740549144449,
+      "detect_d504_lo": 0.6012300232917102,
+      "detect_d504_hi": 0.6391506323430244,
+      "n_valid": 2547,
+      "far_d504": 0.11228896741264233,
+      "far_d504_lo": 0.10060683426359104,
+      "far_d504_hi": 0.12513885323472856
+    },
+    {
+      "method": "trailing_sharpe_252",
+      "subgroup": "A < 0.5, kappa < 4",
+      "A_high": false,
+      "kappa_high": false,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2488,
+      "detect_d504": 0.5486334405144695,
+      "detect_d504_lo": 0.5290197103625692,
+      "detect_d504_hi": 0.5680972226362625,
+      "n_valid": 2486,
+      "far_d504": 0.16009654062751408,
+      "far_d504_lo": 0.14620792233842797,
+      "far_d504_hi": 0.17503400091219404
+    },
+    {
+      "method": "trailing_sharpe_252",
+      "subgroup": "A < 0.5, kappa >= 4",
+      "A_high": false,
+      "kappa_high": true,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2483,
+      "detect_d504": 0.5722915827627869,
+      "detect_d504_lo": 0.552734651760157,
+      "detect_d504_hi": 0.5916251741252632,
+      "n_valid": 2471,
+      "far_d504": 0.14407122622420074,
+      "far_d504_lo": 0.13077758852518206,
+      "far_d504_hi": 0.1584698120585326
+    },
+    {
+      "method": "trailing_sharpe_252",
+      "subgroup": "A >= 0.5, kappa < 4",
+      "A_high": true,
+      "kappa_high": false,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2516,
+      "detect_d504": 0.559220985691574,
+      "detect_d504_lo": 0.5397455894174588,
+      "detect_d504_hi": 0.5785158190361772,
+      "n_valid": 2496,
+      "far_d504": 0.14783653846153846,
+      "far_d504_lo": 0.13445343101640142,
+      "far_d504_hi": 0.16230197169248053
+    },
+    {
+      "method": "trailing_sharpe_252",
+      "subgroup": "A >= 0.5, kappa >= 4",
+      "A_high": true,
+      "kappa_high": true,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2513,
+      "detect_d504": 0.5594906486271389,
+      "detect_d504_lo": 0.5400044407210773,
+      "detect_d504_hi": 0.5787952552041882,
+      "n_valid": 2547,
+      "far_d504": 0.14055751864939145,
+      "far_d504_lo": 0.12760014465018193,
+      "far_d504_hi": 0.15459750284826024
+    },
+    {
+      "method": "ewma_student_t",
+      "subgroup": "A < 0.5, kappa < 4",
+      "A_high": false,
+      "kappa_high": false,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2488,
+      "detect_d504": 0.5482315112540193,
+      "detect_d504_lo": 0.528616867242193,
+      "detect_d504_hi": 0.5676974464756565,
+      "n_valid": 2486,
+      "far_d504": 0.13998390989541432,
+      "far_d504_lo": 0.1268993423853773,
+      "far_d504_hi": 0.15417938105758916
+    },
+    {
+      "method": "ewma_student_t",
+      "subgroup": "A < 0.5, kappa >= 4",
+      "A_high": false,
+      "kappa_high": true,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2483,
+      "detect_d504": 0.6085380587998389,
+      "detect_d504_lo": 0.5891868354918632,
+      "detect_d504_hi": 0.6275539615895895,
+      "n_valid": 2471,
+      "far_d504": 0.14123836503439902,
+      "far_d504_lo": 0.1280628997073571,
+      "far_d504_hi": 0.15552757285371513
+    },
+    {
+      "method": "ewma_student_t",
+      "subgroup": "A >= 0.5, kappa < 4",
+      "A_high": true,
+      "kappa_high": false,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2516,
+      "detect_d504": 0.6649443561208267,
+      "detect_d504_lo": 0.6462617259470237,
+      "detect_d504_hi": 0.6831240761218281,
+      "n_valid": 2496,
+      "far_d504": 0.14783653846153846,
+      "far_d504_lo": 0.13445343101640142,
+      "far_d504_hi": 0.16230197169248053
+    },
+    {
+      "method": "ewma_student_t",
+      "subgroup": "A >= 0.5, kappa >= 4",
+      "A_high": true,
+      "kappa_high": true,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2513,
+      "detect_d504": 0.6828491842419419,
+      "detect_d504_lo": 0.664387055313074,
+      "detect_d504_hi": 0.7007531472130764,
+      "n_valid": 2547,
+      "far_d504": 0.13898704358068315,
+      "far_d504_lo": 0.12609520196697585,
+      "far_d504_hi": 0.15296622553145947
+    },
+    {
+      "method": "ewma_trunc_student_t",
+      "subgroup": "A < 0.5, kappa < 4",
+      "A_high": false,
+      "kappa_high": false,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2488,
+      "detect_d504": 0.5409967845659164,
+      "detect_d504_lo": 0.5213678847348391,
+      "detect_d504_hi": 0.5604992819253329,
+      "n_valid": 2486,
+      "far_d504": 0.13314561544650041,
+      "far_d504_lo": 0.1203552288038321,
+      "far_d504_hi": 0.14706800670453157
+    },
+    {
+      "method": "ewma_trunc_student_t",
+      "subgroup": "A < 0.5, kappa >= 4",
+      "A_high": false,
+      "kappa_high": true,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2483,
+      "detect_d504": 0.6190092629883206,
+      "detect_d504_lo": 0.5997378874008061,
+      "detect_d504_hi": 0.637912968026167,
+      "n_valid": 2471,
+      "far_d504": 0.1424524484014569,
+      "far_d504_lo": 0.12922611224718203,
+      "far_d504_hi": 0.1567887580378798
+    },
+    {
+      "method": "ewma_trunc_student_t",
+      "subgroup": "A >= 0.5, kappa < 4",
+      "A_high": true,
+      "kappa_high": false,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2516,
+      "detect_d504": 0.6617647058823529,
+      "detect_d504_lo": 0.6430440767286596,
+      "detect_d504_hi": 0.6799921195171781,
+      "n_valid": 2496,
+      "far_d504": 0.14342948717948717,
+      "far_d504_lo": 0.13022631437595983,
+      "far_d504_hi": 0.1577285302325782
+    },
+    {
+      "method": "ewma_trunc_student_t",
+      "subgroup": "A >= 0.5, kappa >= 4",
+      "A_high": true,
+      "kappa_high": true,
+      "note": "the single frozen mixture threshold, read back on this subgroup; no subgroup was calibrated separately",
+      "n_invalid": 2513,
+      "detect_d504": 0.7103064066852368,
+      "detect_d504_lo": 0.6922605195495305,
+      "detect_d504_hi": 0.7277103118652041,
+      "n_valid": 2547,
+      "far_d504": 0.14840989399293286,
+      "far_d504_lo": 0.13513322006247136,
+      "far_d504_hi": 0.16274552743600484
+    }
+  ],
+  "bootstrap": [
+    {
+      "method_a": "binary_student_t",
+      "method_b": "binary_gaussian",
+      "quantity": "detect",
+      "horizon_days": 504,
+      "point_pp": 4.9399999999999995,
+      "lo_pp": 3.959999999999997,
+      "hi_pp": 6.091250000000005,
+      "excludes_zero": true,
+      "n_reps": 1000,
+      "resampling": "whole paths; calibration and test; thresholds re-derived in every replicate",
+      "interval_type": "per-comparison 95%"
+    },
+    {
+      "method_a": "binary_student_t",
+      "method_b": "binary_gaussian",
+      "quantity": "far",
+      "horizon_days": 504,
+      "point_pp": 0.24000000000000132,
+      "lo_pp": -0.5999999999999978,
+      "hi_pp": 1.040249999999999,
+      "excludes_zero": false,
+      "n_reps": 1000,
+      "resampling": "whole paths; calibration and test; thresholds re-derived in every replicate",
+      "interval_type": "per-comparison 95%"
+    },
+    {
+      "method_a": "ewma_student_t",
+      "method_b": "binary_student_t",
+      "quantity": "detect",
+      "horizon_days": 504,
+      "point_pp": 1.0000000000000009,
+      "lo_pp": -0.24025000000000657,
+      "hi_pp": 1.8804999999999925,
+      "excludes_zero": false,
+      "n_reps": 1000,
+      "resampling": "whole paths; calibration and test; thresholds re-derived in every replicate",
+      "interval_type": "per-comparison 95%"
+    },
+    {
+      "method_a": "ewma_student_t",
+      "method_b": "binary_student_t",
+      "quantity": "far",
+      "horizon_days": 504,
+      "point_pp": -0.14000000000000123,
+      "lo_pp": -1.0802500000000004,
+      "hi_pp": 0.6002500000000003,
+      "excludes_zero": false,
+      "n_reps": 1000,
+      "resampling": "whole paths; calibration and test; thresholds re-derived in every replicate",
+      "interval_type": "per-comparison 95%"
+    }
+  ],
+  "parameter_check": {
+    "A_mean": 0.5005520003136793,
+    "A_min": 0.00036266148107122476,
+    "A_max": 0.9998969318855476,
+    "kappa_mean": 3.9925990249865086,
+    "kappa_min": 0.0008628498464320344,
+    "kappa_max": 7.999097238818175
+  },
+  "elapsed_s": 9.897902042008354
+}

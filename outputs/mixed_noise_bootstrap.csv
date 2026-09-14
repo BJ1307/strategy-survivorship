@@ -1,0 +1,5 @@
+method_a,method_b,quantity,horizon_days,point_pp,lo_pp,hi_pp,excludes_zero,n_reps,resampling,interval_type
+binary_student_t,binary_gaussian,detect,504,4.9399999999999995,3.959999999999997,6.091250000000005,True,1000,whole paths; calibration and test; thresholds re-derived in every replicate,per-comparison 95%
+binary_student_t,binary_gaussian,far,504,0.24000000000000132,-0.5999999999999978,1.040249999999999,False,1000,whole paths; calibration and test; thresholds re-derived in every replicate,per-comparison 95%
+ewma_student_t,binary_student_t,detect,504,1.0000000000000009,-0.24025000000000657,1.8804999999999925,False,1000,whole paths; calibration and test; thresholds re-derived in every replicate,per-comparison 95%
+ewma_student_t,binary_student_t,far,504,-0.14000000000000123,-1.0802500000000004,0.6002500000000003,False,1000,whole paths; calibration and test; thresholds re-derived in every replicate,per-comparison 95%
