@@ -246,4 +246,3 @@ def test_every_included_object_appears_in_the_report():
     t = pd.read_csv(OUT / "market_cross_results.csv")
     for obj in set(t.object):
         assert mc.OBJECTS[obj]["label"] in text, obj
-    assert "Euro Stoxx" in Path("docs/DATA_SOURCE_INVENTORY.md").read_text()

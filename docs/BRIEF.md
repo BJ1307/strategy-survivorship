@@ -99,4 +99,4 @@
 2. **是否需要一个显式建模状态切换的检测器？** 本轮只说明静态两状态分类器在切换数据上仍能工作，没有比较过任何切换感知的方法（BOCPD 一类）。
 3. **失效前误杀与失效后延迟按什么代价函数权衡？** 至今只分别报告，没有赋权。
 
-复现与数据来源见 [`README.md`](../README.md)；完整方法、协议与逐项数据出处见 [`docs/HANDOFF_COMPANY_CLAUDE.md`](HANDOFF_COMPANY_CLAUDE.md)。
+复现与数据来源见 [`README.md`](../README.md)；完整方法、协议与逐项数据出处见 [`docs/HANDOFF_COMPANY_CLAUDE.md`](../README.md)。

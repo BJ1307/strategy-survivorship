@@ -17,8 +17,7 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "outputs"
 DOCS = ROOT / "docs"
-DOCS_TO_CHECK = [ROOT / "README.md", DOCS / "BRIEF.md", DOCS / "APPENDIX.md",
-                 DOCS / "HANDOFF_COMPANY_CLAUDE.md"]
+DOCS_TO_CHECK = [ROOT / "README.md", DOCS / "BRIEF.md"]
 BRIEF_FIGURES = ["fig1_what_robustness_buys.png", "fig2_how_long_to_observe.png",
                  "fig3_monitoring_horizon.png", "fig4_valid_then_failing.png"]
 

@@ -6,7 +6,7 @@
 全部为模拟研究，**不是真实市场部署的验证**。
 
 - **先读**：[`docs/BRIEF.md`](docs/BRIEF.md) —— 两页导师简报，四张主图。
-- **接手项目**：[`docs/HANDOFF_COMPANY_CLAUDE.md`](docs/HANDOFF_COMPANY_CLAUDE.md) —— 完整方法、协议、指标定义与数据出处。
+- **接手项目**：`docs/HANDOFF_COMPANY_CLAUDE.md` —— 完整方法、协议、指标定义与数据出处。
 - **推导**：[`theory.md`](theory.md)。
 - **各阶段报告**：`outputs/stage*_report.md`。
 
@@ -65,17 +65,17 @@ done
 
 | 阶段 | 问题 | 报告 |
 |---|---|---|
-| 1 | 最小可复现流程：模拟→检测→校准→评估 | [`stage1_report.md`](outputs/stage1_report.md) |
-| 1.1 | 失效概率与时间的对应 | [`stage11_report.md`](outputs/stage11_report.md) |
-| 2A | 厚尾、随机波动率、跳跃下的压力测试 | [`stage2a_report.md`](outputs/stage2a_report.md) |
-| 2B | 因果 EWMA 方差预测是否有用 | [`stage2b_report.md`](outputs/stage2b_report.md) |
-| 2C | 环境未知时的统一门槛与误杀控制 | [`stage2c_report.md`](outputs/stage2c_report.md) |
-| 2D | 随机波动率与跳跃同时存在 | [`stage2d_report.md`](outputs/stage2d_report.md) |
-| 2E | 截断方差更新的 2×2 消融 | [`stage2e_report.md`](outputs/stage2e_report.md) |
-| 2E.1 | 收尾、跨预算统计、高斯理论参照 | [`stage2e1_report.md`](outputs/stage2e1_report.md) |
-| 3A | 弱信号 Sharpe 0.6，保留 1 作参照 | [`stage3a_report.md`](outputs/stage3a_report.md) |
-| 3A.1 | 监测期限本身是不是原因 | [`stage3a1_report.md`](outputs/stage3a1_report.md) |
-| 3B | 先有效、后失效（第一年内） | [`stage3b_report.md`](outputs/stage3b_report.md) |
+| 1 | 最小可复现流程：模拟→检测→校准→评估 | `stage1_report.md` |
+| 1.1 | 失效概率与时间的对应 | `stage11_report.md` |
+| 2A | 厚尾、随机波动率、跳跃下的压力测试 | `stage2a_report.md` |
+| 2B | 因果 EWMA 方差预测是否有用 | `stage2b_report.md` |
+| 2C | 环境未知时的统一门槛与误杀控制 | `stage2c_report.md` |
+| 2D | 随机波动率与跳跃同时存在 | `stage2d_report.md` |
+| 2E | 截断方差更新的 2×2 消融 | `stage2e_report.md` |
+| 2E.1 | 收尾、跨预算统计、高斯理论参照 | `stage2e1_report.md` |
+| 3A | 弱信号 Sharpe 0.6，保留 1 作参照 | `stage3a_report.md` |
+| 3A.1 | 监测期限本身是不是原因 | `stage3a1_report.md` |
+| 3B | 先有效、后失效（第一年内） | `stage3b_report.md` |
 
 | 真实数据 1 | 真实指数噪声的可复现参照与训练期诊断（**不含**模拟对比） | 本地生成：`outputs/market/market_stage1_report.md` |
 | 真实数据 2 | 冻结生成器与 S&P 500 训练样本的诊断对照（**不搜参数、不碰监测器**） | 本地生成：`outputs/market/market_stage2_report.md` |
@@ -140,12 +140,12 @@ done
 ```
 
 下一轮的模型基准比较（iid Student-t、GARCH(1,1)-t 对照现有 SV 核）**只有设计、尚未实现**，
-写在 [`docs/BENCHMARK_PROTOCOL_NEXT_ROUND.md`](docs/BENCHMARK_PROTOCOL_NEXT_ROUND.md)。
+写在 `docs/BENCHMARK_PROTOCOL_NEXT_ROUND.md`。
 
 参数与配置变更记入 [`docs/PARAMETER_CHANGE_LOG.md`](docs/PARAMETER_CHANGE_LOG.md)，
-给导师的数据请求在 [`docs/DATA_REQUEST_FOR_SUPERVISOR.md`](docs/DATA_REQUEST_FOR_SUPERVISOR.md)。
-导师数据来源清单在 [`docs/DATA_SOURCE_INVENTORY.md`](docs/DATA_SOURCE_INVENTORY.md)，
-下一轮跨市场扫描规范在 [`docs/CROSS_MARKET_SCAN_SPEC.md`](docs/CROSS_MARKET_SCAN_SPEC.md)。
+给导师的数据请求在 `docs/DATA_REQUEST_FOR_SUPERVISOR.md`。
+导师数据来源清单在 `docs/DATA_SOURCE_INVENTORY.md`，
+下一轮跨市场扫描规范在 `docs/CROSS_MARKET_SCAN_SPEC.md`。
 
 **负面结果保留在报告里**：高斯情境下稳健处理的代价、门槛迁移失败、弱信号低检出、
 以及基线方法在某些设定下胜出，都没有被筛掉。

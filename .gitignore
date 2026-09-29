@@ -43,3 +43,12 @@ outputs/*.zip
 .DS_Store
 .idea/
 .vscode/
+
+# ---------------------------------------------------------------------------
+# Data boundary (supersedes the notes above): research data and every generated
+# artefact live OUTSIDE version control.  Third-party market data must be obtained
+# from the original providers under their terms; see docs/DATA.md.
+data/
+outputs/
+*.csv.gz
+.env.*
