@@ -467,7 +467,9 @@ def main(argv: list[str] | None = None) -> int:
 
     # 1. the primary series ---------------------------------------------------
     sources["sp500"] = obtain("sp500", raw_dir, args.reuse_snapshot)
-    raw = md.read_fred_csv(Path(sources["sp500"]["raw_file"]), "SP500")
+    # The provenance records the path the snapshot had when it was acquired; the file
+    # itself is looked up in the configured data directory under the same name.
+    raw = md.read_fred_csv(Path(args.raw) / Path(sources["sp500"]["raw_file"]).name, "SP500")
     prices, report = md.clean_price_series(raw, WINDOW_START, WINDOW_END)
     rep = report.to_dict()
     (out / "market_cleaning_report.json").write_text(json.dumps(rep, indent=2),
@@ -486,7 +488,7 @@ def main(argv: list[str] | None = None) -> int:
     if not args.no_vix:
         try:
             sources["vix"] = obtain("vix", raw_dir, args.reuse_snapshot)
-            vraw = md.read_fred_csv(Path(sources["vix"]["raw_file"]), "VIXCLS")
+            vraw = md.read_fred_csv(Path(args.raw) / Path(sources["vix"]["raw_file"]).name, "VIXCLS")
             vix = mdg.period_slice(vraw.dropna(subset=["value"]), WINDOW_START, WINDOW_END)
             vix = vix.rename(columns={"value": "vix_level_percent"})
             vix.to_csv(out / "market_vix.csv", index=False)

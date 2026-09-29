@@ -337,7 +337,7 @@ def _snapshot(stem: str, prov: dict | None = None) -> tuple[Path, dict]:
     prov = _provenance() if prov is None else prov
     rec = prov.get(stem)
     if rec:
-        p = Path(rec["raw_file"])
+        p = RAW / Path(rec["raw_file"]).name      # the recorded path, resolved in the data directory
         if p.exists():
             h = hashlib.sha256(p.read_bytes()).hexdigest()
             if rec.get("raw_sha256") and h != rec["raw_sha256"]:
