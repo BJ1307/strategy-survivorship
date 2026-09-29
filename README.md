@@ -73,7 +73,7 @@ python3.13 -m venv .venv
 
 Runtime dependencies are numpy, scipy, pandas and matplotlib; pytest is needed for the tests.
 
-## Quick synthetic example (no data, no network, a few seconds)
+## Quick synthetic example (no data, no network, under a minute)
 
 ```bash
 .venv/bin/python -m strategy_survivorship.stage1 --smoke --out outputs/smoke
@@ -89,8 +89,9 @@ thresholds, evaluates every detector and writes `outputs/smoke/stage1_metrics.cs
 .venv/bin/python -m pytest
 ```
 
-481 tests, about 30 s. Tests that check numbers in generated artefacts skip with a
-reason when those artefacts have not been generated locally.
+490 tests, about 30 s. In a fresh clone 419 run and 71 skip: the skipped tests check
+numbers in generated artefacts (outputs/) or the local data snapshots, and they run once
+those have been generated or supplied.
 
 ## Reproducing the simulation study
 
