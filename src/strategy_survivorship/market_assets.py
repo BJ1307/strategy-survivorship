@@ -487,11 +487,9 @@ def main(argv: list[str] | None = None) -> int:
     if args.paths < 500 and out.resolve() == OUT.resolve():
         raise SystemExit(f"--paths {args.paths} is below the 500 needed for a "
                          f"deliverable run; point --out at a temporary directory")
-    if args.smoke:
-        paths = min(args.paths, 60)
     out.mkdir(parents=True, exist_ok=True)
     cfg = DEFAULT
-    paths = args.paths
+    paths = min(args.paths, 60) if args.smoke else args.paths
 
     keys = list(mc.RV_KEYS) + list(mc.RV_SHAPE_KEYS) + \
         [mc.W1, "w1_sim_vs_sim_reference"] + \

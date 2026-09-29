@@ -476,7 +476,7 @@ def main(argv: list[str] | None = None) -> int:
         print("CLEANING DEFECTS:", "; ".join(rep["defects"]))
     if not report.covers_request:
         print(f"COVERAGE: source covers {report.coverage_available}, requested "
-              f"{report.coverage_available}. The window is NOT moved silently; "
+              f"{report.coverage_requested}. The window is NOT moved silently; "
               f"see market_cleaning_report.json.")
 
     returns = md.simple_returns(prices)
