@@ -519,12 +519,12 @@ import numpy as np
 import pandas as pd
 
 
-CN = {"binary_gaussian": "固定 Gaussian", "binary_student_t": "固定 Student-t",
-      "trailing_sharpe_252": "252 日 trailing Sharpe",
-      "ewma_student_t": "普通 EWMA Student-t",
-      "ewma_trunc_student_t": "截断 EWMA Student-t"}
-SC = {"gaussian_ctrl": "独立高斯对照", "sv_jump": "SV+跳跃（主情境）"}
-QN = {"joint": "联合检出", "cond": "条件检出", "pre_far": "失效前误杀"}
+CN = {"binary_gaussian": "fixed Gaussian", "binary_student_t": "fixed Student-t",
+      "trailing_sharpe_252": "252-day trailing Sharpe",
+      "ewma_student_t": "plain EWMA Student-t",
+      "ewma_trunc_student_t": "truncated EWMA Student-t"}
+SC = {"gaussian_ctrl": "iid Gaussian control", "sv_jump": "SV+jumps (main scenario)"}
+QN = {"joint": "joint detection", "cond": "conditional detection", "pre_far": "pre-failure false alarm"}
 
 
 def _t(rows, header, render):
@@ -536,15 +536,15 @@ def _t(rows, header, render):
 
 def _setlabel(cfg, st):
     if st == RANDOM_T:
-        return f"随机 T ~ U{{0..{cfg.stage3b_random_failure_max}}}"
-    return f"固定 T={st.replace('fixed_T', '')}"
+        return f"random T ~ U{{0..{cfg.stage3b_random_failure_max}}}"
+    return f"fixed T={st.replace('fixed_T', '')}"
 
 
 def _med(v, note):
     if isinstance(v, str) and v == "":
-        return note or "未达到"
+        return note or "not reached"
     if v != v:
-        return note or "未达到"
+        return note or "not reached"
     return f"{int(v)}d"
 
 
@@ -574,103 +574,103 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
                  & (boot.method_a == ma) & (boot.method_b == mb)]
         return r.iloc[0] if len(r) else None
 
-    A("# Stage 3B 报告：随机失效时间的有限诊断")
+    A("# Stage 3B report: a bounded diagnostic for a random failure time")
     A("")
-    A("本文件由 `python -m strategy_survivorship.stage3b` 自动生成，"
-      "所有数字取自同一次运行的结果表。")
+    A("This file is generated automatically by `python -m strategy_survivorship.stage3b`; "
+      "every number is taken from the result tables of a single run.")
     A("")
 
     # ---------------- 1 ----------------
-    A("## 1. 本轮的设定与覆盖范围")
+    A("## 1. Setup and coverage of this round")
     A("")
     A("```")
-    A("    theta_t = s   当 t <= T")
-    A("    theta_t = 0   当 t >  T")
+    A("    theta_t = s   if t <= T")
+    A("    theta_t = 0   if t >  T")
     A("```")
     A("")
-    A(f"T 是**最后一个有效交易日**。设定为固定 T ∈ "
-      f"{{{', '.join(str(x) for x in cfg.stage3b_fixed_failure_days)}}}、"
-      f"随机 T ~ 均匀分布于整数交易日 0..{cfg.stage3b_random_failure_max}，"
-      f"以及 T=∞ 的始终有效对照。")
+    A(f"T is the **last valid trading day**. The settings are fixed T ∈ "
+      f"{{{', '.join(str(x) for x in cfg.stage3b_fixed_failure_days)}}}, "
+      f"random T ~ uniform on the integer trading days 0..{cfg.stage3b_random_failure_max}, "
+      f"and the always-valid control with T=∞.")
     A("")
-    A(f"**这是“上线后一年内失效”的有限覆盖实验。**"
-      f"T ≤ {cfg.stage3b_random_failure_max}，因此每个设定都有完整的 "
-      f"{max(hs)} 天失效后观察期，落在 {cfg.horizon_days} 天总期限之内。"
-      "**不能**把它描述成已经完成了 0–5 年或 0–10 年的寿命研究。")
+    A(f"**This is a bounded-coverage experiment for “failure within one year after going live”.** "
+      f"T ≤ {cfg.stage3b_random_failure_max}, so every setting has a complete "
+      f"{max(hs)}-day post-failure observation period that falls inside the {cfg.horizon_days}-day total horizon. "
+      "It **must not** be described as a completed 0–5 year or 0–10 year lifetime study.")
     A("")
-    A("- T **独立于**噪声、潜在波动率与跳跃；真实 T 只供生成器与评分使用。")
-    A("- 模型持续接收收益：在 T 时**不**重置先验、累计证据、方差估计或任何窗口。")
-    A("- 静态两状态分类器在切换数据上的 q，本报告称为**工作失效分数**，"
-      "不把它解释成正确建模了状态切换后的真实后验概率。")
+    A("- T is **independent of** the noise, the latent volatility and the jumps; the true T is used only by the generator and for scoring.")
+    A("- The models keep receiving returns: at T they do **not** reset the prior, the accumulated evidence, the variance estimate or any window.")
+    A("- This report calls the q of a static two-state classifier on switching data the **working failure score**, "
+      "and does not interpret it as the true posterior probability of a model that correctly represents the state switch.")
     A("")
-    A(f"D={cfg.D}、H={cfg.horizon_days}、年化基础波动率 {cfg.sigma_annual:.0%}、"
-      f"初始先验 {cfg.prior_valid:g}，以及全部检测器参数保持不变。"
-      f"两个噪声情境（{SC['gaussian_ctrl']}、{SC['sv_jump']}），"
-      f"五个既有方法，s ∈ {{{', '.join(f'{x:g}' for x in S['sharpes'])}}}。")
+    A(f"D={cfg.D}, H={cfg.horizon_days}, the annualised base volatility {cfg.sigma_annual:.0%}, "
+      f"the initial prior {cfg.prior_valid:g} and all detector parameters are unchanged. "
+      f"Two noise scenarios ({SC['gaussian_ctrl']}, {SC['sv_jump']}), "
+      f"the five existing methods, s ∈ {{{', '.join(f'{x:g}' for x in S['sharpes'])}}}.")
     A("")
 
     # ---------------- 2 ----------------
-    A("## 2. 门槛与抽样")
+    A("## 2. Thresholds and sampling")
     A("")
-    A(f"- 门槛**统一读取** `{Path(S['thresholds']['source']).name}` 中对应方法、情境、"
-      f"Sharpe 与预算的 **{cfg.horizon_days} 日**门槛。"
-      "不混用 Stage 3A.1 的短期门槛，**不按真实 T 单独校准**——"
-      "真实失效时间在实践中不可得。")
-    A(f"- 保留 α ∈ {{{a_alt:g}, {a_main:g}}}；所有路径总监测期不超过 "
-      f"{cfg.horizon_days} 天。")
-    A(f"- 每个噪声情境使用新的独立测试数据：{cfg.stage3b_test_paths} 条始终有效对照路径，"
-      f"另 {cfg.stage3b_test_paths} 条供各失效设定共用。"
-      f"共 **{S['sampling']['base_noise_paths']:,} 条基础噪声路径**；"
-      "两个 Sharpe 与各方法共享相应噪声以形成配对，"
-      "因此各设定之间**不是**互相独立的样本。")
-    A("- 随机 T 使用独立随机流，并在相关方法之间共用。")
+    A(f"- Thresholds are **read uniformly** from `{Path(S['thresholds']['source']).name}`: for each method, scenario, "
+      f"Sharpe and budget, the matching **{cfg.horizon_days}-day** threshold. "
+      "Stage 3A.1's short-horizon thresholds are not mixed in, and **nothing is calibrated separately for the true T** — "
+      "the true failure time is not available in practice.")
+    A(f"- α ∈ {{{a_alt:g}, {a_main:g}}} is kept; the total monitoring period of every path is at most "
+      f"{cfg.horizon_days} days.")
+    A(f"- Each noise scenario uses new, independent test data: {cfg.stage3b_test_paths} always-valid control paths, "
+      f"and another {cfg.stage3b_test_paths} shared by all failure settings. "
+      f"In total **{S['sampling']['base_noise_paths']:,} base noise paths**; "
+      "both Sharpes and all methods share the corresponding noise so that comparisons are paired, "
+      "so the settings are **not** mutually independent samples.")
+    A("- The random T uses an independent random stream and is shared across the relevant methods.")
     A("")
-    A("**本轮不重新拟合门槛。**下文所有区间描述的是“给定既有冻结门槛时的测试不确定性”，"
-      "**不能**声称重新覆盖了校准误差。")
+    A("**Thresholds are not refitted in this round.** Every interval below describes “test uncertainty given the existing frozen thresholds”; "
+      "it **cannot** be claimed to re-cover calibration error.")
     A("")
 
     # ---------------- 3 ----------------
-    A("## 3. 评价定义")
+    A("## 3. Evaluation definitions")
     A("")
     A("```")
-    A("    失效前误杀      P(tau <= T)")
-    A("    条件检出        P(T < tau <= T+h | tau > T)")
-    A("    联合检出        P(T < tau <= T+h)")
+    A("    pre-failure false alarm    P(tau <= T)")
+    A("    conditional detection      P(T < tau <= T+h | tau > T)")
+    A("    joint detection            P(T < tau <= T+h)")
     A("```")
     A("")
-    A(f"h ∈ {{{', '.join(str(x) for x in hs)}}} 个交易日。"
-      "**主要比较保持相同的失效后观察长度**，不让不同 T 隐含不同的检测机会。")
+    A(f"h ∈ {{{', '.join(str(x) for x in hs)}}} trading days. "
+      "**The main comparisons keep the same post-failure observation length**, so that different T do not implicitly get different detection opportunities.")
     A("")
-    A(f"从不报警编码为 τ=∞。它是失效前窗口的**存活者**、失效后的**未检出**路径，"
-      f"**不是**提前误杀。联合检出恒等式 `联合 = 存活率 × 条件检出` 在每一行上核验，"
-      f"本轮全表最大偏差 **{S['joint_identity_max_gap']:.2e}**。")
+    A(f"A path that never alarms is coded as τ=∞. It is a **survivor** of the pre-failure window and an **undetected** path after failure, "
+      f"**not** an early false alarm. The joint-detection identity `joint = survival rate × conditional detection` is checked on every row; "
+      f"the largest deviation over the whole table in this round is **{S['joint_identity_max_gap']:.2e}**.")
     A("")
-    A(f"失效后延迟为 `E[min(τ−T, {max(hs)})]`，条件于 τ>T，分母是**全部存活到 T 的路径**："
-      "未检出的存活者按窗口上限计入而不是删去，提前误杀的路径不计为零延迟。"
-      "失效后中位时间同样以全部存活者为分母，取累计比例首次达到一半的那一天。")
+    A(f"The post-failure delay is `E[min(τ−T, {max(hs)})]`, conditional on τ>T, and its denominator is **all paths that survive to T**: "
+      "undetected survivors are counted at the window cap rather than dropped, and paths with an early false alarm are not counted as zero delay. "
+      "The post-failure median time also uses all survivors as the denominator, and is the first day on which the cumulative fraction reaches one half.")
     A("")
 
     # ---------------- 3.5: the supervisor's primary setting -------------
     st0 = f"fixed_T{T0}"
     s_pri = max(S["sharpes"])
-    A(f"## 3.5 主线设定 s={s_pri:g}（导师指定）")
+    A(f"## 3.5 Primary setting s={s_pri:g} (specified by the supervisor)")
     A("")
-    A(f"导师指定的主线是 **Sharpe {s_pri:g} 对 0**；s={s0:g} 是后加的弱信号压力测试。"
-      f"下面先给 s={s_pri:g} 的完整结果，再在第 4–5 节给出 s={s0:g}。")
+    A(f"The primary setting specified by the supervisor is **Sharpe {s_pri:g} vs 0**; s={s0:g} is a weak-signal stress test added later. "
+      f"The full results for s={s_pri:g} are given first below, and s={s0:g} follows in Sections 4–5.")
     A("")
-    A(f"**协议记录不改写**：Stage 3B 事先写定的主比较用的是 s={s0:g}、T={T0}、"
-      f"α={a_main:g}。本节是按导师要求调整**展示重点**，"
-      f"不把 s={s_pri:g} 追溯描述为当时唯一的预设主分析。"
-      f"s={s_pri:g} 使用它自己的收益漂移 μ₁={s_pri:g}·σ_ann/D、检测器候选均值、"
-      "EWMA 中心与 Stage 3A 对应的 504 日冻结门槛——**不是** s=0.6 结果的改标签或换算。")
+    A(f"**The protocol record is not rewritten**: the main comparison written down in advance for Stage 3B used s={s0:g}, T={T0}, "
+      f"α={a_main:g}. This section changes the **emphasis of the presentation** at the supervisor's request, "
+      f"and does not retroactively describe s={s_pri:g} as the only pre-specified main analysis at the time. "
+      f"s={s_pri:g} uses its own return drift μ₁={s_pri:g}·σ_ann/D, its own detector candidate mean, "
+      "EWMA centre and the corresponding 504-day frozen threshold from Stage 3A — it is **not** a relabelling or rescaling of the s=0.6 results.")
     A("")
     for st in sets:
-        A(f"**{_setlabel(cfg, st)}**，{SC[sc0]}，α={a_main:g}，失效后 {h0} 天")
+        A(f"**{_setlabel(cfg, st)}**, {SC[sc0]}, α={a_main:g}, {h0} days after failure")
         A("")
         L.extend(_t(list(METHODS_3B),
-                    ["方法", "失效前误杀", "存活率", "存活数", "条件检出", "95% 区间",
-                     "联合检出", f"E[min(τ−T,{max(hs)})]（存活者）", "失效后未检出",
-                     "失效后中位"],
+                    ["Method", "Pre-failure false alarm", "Survival rate", "Survivors", "Conditional detection", "95% interval",
+                     "Joint detection", f"E[min(τ−T,{max(hs)})] (survivors)", "Undetected after failure",
+                     "Post-failure median"],
                     lambda m: [
                         CN[m], f"{g(sc0, s_pri, a_main, st, m, 'pre_failure_far'):.4f}",
                         f"{g(sc0, s_pri, a_main, st, m, 'survival_rate'):.4f}",
@@ -685,8 +685,8 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
                              str(g(sc0, s_pri, a_main, st, m,
                                    'median_post_failure_note')))]))
         A("")
-    A(f"配对区间（s={s_pri:g}，同样是 {cfg.stage3b_bootstrap_reps} 次配对重抽，"
-      "存活分母每次重算）：")
+    A(f"Paired intervals (s={s_pri:g}, again {cfg.stage3b_bootstrap_reps} paired resamples, "
+      "survivor denominator recomputed each time):")
     A("")
     rows = [(st, ma, mb, q) for st in sets for ma, mb in MAIN_PAIRS
             for q in ("joint", "cond", "pre_far")]
@@ -698,48 +698,48 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
         return [_setlabel(cfg, st), f"{CN[ma]} − {CN[mb]}", QN[q],
                 f"{float(b.point) * 100:+.2f} pp",
                 f"[{float(b.lo) * 100:+.2f}, {float(b.hi) * 100:+.2f}]",
-                "是" if bool(b.excludes_zero) else "否"]
-    L.extend(_t(rows, ["失效设定", "比较", "量", "点估计", "95% 区间", "排除 0"], rp))
+                "yes" if bool(b.excludes_zero) else "no"]
+    L.extend(_t(rows, ["Failure setting", "Comparison", "Quantity", "Point estimate", "95% interval", "Excludes 0"], rp))
     A("")
     tt_gain = {st: (g(sc0, s_pri, a_main, st, "ewma_trunc_student_t", f"joint_detect_h{h0}")
                     - g(sc0, s_pri, a_main, st, "ewma_student_t", f"joint_detect_h{h0}"))
                for st in sets}
-    A(f"截断更新的额外贡献（截断 t 减普通 EWMA t 的联合检出，s={s_pri:g}）："
-      + "；".join(f"{_setlabel(cfg, st)} {v * 100:+.2f} pp" for st, v in tt_gain.items())
-      + "。这一对不在 Stage 3B 预设比较之列，因此只报点估计，不作显著性声明。")
+    A(f"Additional contribution of the truncated update (joint detection of truncated t minus plain EWMA t, s={s_pri:g}): "
+      + "; ".join(f"{_setlabel(cfg, st)} {v * 100:+.2f} pp" for st, v in tt_gain.items())
+      + ". This pair is not among the pre-specified Stage 3B comparisons, so only point estimates are reported and no significance claim is made.")
     A("")
     b_t0 = bo(sc0, s_pri, a_main, "fixed_T0", "cond", *MAIN_PAIRS[0])
     b_late = bo(sc0, s_pri, a_main, st0, "joint", *MAIN_PAIRS[1])
     b_rand = bo(sc0, s_pri, a_main, RANDOM_T, "joint", *MAIN_PAIRS[1])
-    A(f"**从 s={s_pri:g} 自己的数据读出来的四点。**")
+    A(f"**Four points read from the s={s_pri:g} data itself.**")
     A("")
-    A(f"1. **EWMA t 相对固定 t 的改善**：T=0（上线即无效）条件检出差 "
+    A(f"1. **Improvement of EWMA t over fixed t**: at T=0 (invalid from launch) the conditional-detection difference is "
       f"{float(b_t0.point) * 100:+.2f} pp "
-      f"[{float(b_t0.lo) * 100:+.2f}, {float(b_t0.hi) * 100:+.2f}]，"
-      f"随机 T 下联合检出差 "
-      f"{float(bo(sc0, s_pri, a_main, RANDOM_T, 'joint', *MAIN_PAIRS[0]).point) * 100:+.2f} pp。"
-      "四个失效设定下这一差都排除 0。")
-    A(f"2. **滚动 Sharpe 的排序仍随 T 改变**：EWMA t 减 trailing Sharpe 的联合检出差，"
-      f"T=0 为 {float(bo(sc0, s_pri, a_main, 'fixed_T0', 'joint', *MAIN_PAIRS[1]).point) * 100:+.2f} pp，"
-      f"T={T0} 为 {float(b_late.point) * 100:+.2f} pp "
-      f"[{float(b_late.lo) * 100:+.2f}, {float(b_late.hi) * 100:+.2f}]，"
-      f"随机 T 为 {float(b_rand.point) * 100:+.2f} pp。"
-      f"方向在 T={T0} 处反转，幅度比 s={s0:g} 时更大；成因见第 6 节列出的四条未分解机制。")
-    A(f"3. **截断更新的额外贡献**：{min(tt_gain.values()) * 100:+.2f} 到 "
-      f"{max(tt_gain.values()) * 100:+.2f} pp，比第 1 点小一个数量级。")
-    A(f"4. **绝对能力**：见 Stage 3A——s={s_pri:g}、{SC[sc0]}、α={a_main:g} 下，"
-      "观察满一年后最好的方法检出 48.74% 的无效策略，两年 76.17%；"
-      f"同一设定 s={s0:g} 时为 25.84% / 52.32%。"
-      "这些是模拟结果，不是真实市场部署的验证。")
+      f"[{float(b_t0.lo) * 100:+.2f}, {float(b_t0.hi) * 100:+.2f}], "
+      f"and under random T the joint-detection difference is "
+      f"{float(bo(sc0, s_pri, a_main, RANDOM_T, 'joint', *MAIN_PAIRS[0]).point) * 100:+.2f} pp. "
+      "This difference excludes 0 in all four failure settings.")
+    A(f"2. **The ranking against the rolling Sharpe still changes with T**: the joint-detection difference EWMA t minus trailing Sharpe is, "
+      f"at T=0, {float(bo(sc0, s_pri, a_main, 'fixed_T0', 'joint', *MAIN_PAIRS[1]).point) * 100:+.2f} pp; "
+      f"at T={T0}, {float(b_late.point) * 100:+.2f} pp "
+      f"[{float(b_late.lo) * 100:+.2f}, {float(b_late.hi) * 100:+.2f}]; "
+      f"under random T, {float(b_rand.point) * 100:+.2f} pp. "
+      f"The direction reverses at T={T0}, with a larger magnitude than at s={s0:g}; for the causes see the four undecomposed mechanisms listed in Section 6.")
+    A(f"3. **Additional contribution of the truncated update**: {min(tt_gain.values()) * 100:+.2f} to "
+      f"{max(tt_gain.values()) * 100:+.2f} pp, an order of magnitude smaller than point 1.")
+    A(f"4. **Absolute capability**: see Stage 3A — at s={s_pri:g}, {SC[sc0]}, α={a_main:g}, "
+      "the best method detects 48.74% of invalid strategies after a full year of observation, and 76.17% after two years; "
+      f"in the same setting with s={s0:g} the figures are 25.84% / 52.32%. "
+      "These are simulation results, not a validation in real market deployment.")
     A("")
 
     # ---------------- 4 ----------------
-    A(f"## 4. 主设定：s={s0:g}、{SC[sc0]}、α={a_main:g}、T={T0}、失效后 {h0} 天")
+    A(f"## 4. Main setting: s={s0:g}, {SC[sc0]}, α={a_main:g}, T={T0}, {h0} days after failure")
     A("")
     rows = list(METHODS_3B)
-    L.extend(_t(rows, ["方法", "失效前误杀", "95% 区间", "存活数", "条件检出", "95% 区间",
-                       "联合检出", "95% 区间", f"E[min(τ−T,{max(hs)})]（存活者）",
-                       "失效后中位", "失效后未检出"],
+    L.extend(_t(rows, ["Method", "Pre-failure false alarm", "95% interval", "Survivors", "Conditional detection", "95% interval",
+                       "Joint detection", "95% interval", f"E[min(τ−T,{max(hs)})] (survivors)",
+                       "Post-failure median", "Undetected after failure"],
                 lambda m: [
                     CN[m], f"{g(sc0, s0, a_main, st0, m, 'pre_failure_far'):.4f}",
                     f"[{g(sc0, s0, a_main, st0, m, 'pre_failure_far_lo'):.4f}, "
@@ -756,31 +756,31 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
                          str(g(sc0, s0, a_main, st0, m, 'median_post_failure_note'))),
                     f"{g(sc0, s0, a_main, st0, m, 'post_failure_undetected'):.4f}"]))
     A("")
-    A("预先固定的重点比较（配对 bootstrap，存活分母在每次重抽中重算）：")
+    A("Pre-specified key comparisons (paired bootstrap, survivor denominator recomputed in every resample):")
     A("")
     rows = [(ma, mb, q) for ma, mb in MAIN_PAIRS for q in ("joint", "cond", "pre_far")]
-    L.extend(_t(rows, ["比较", "量", "点估计", "95% 区间", "排除 0"],
+    L.extend(_t(rows, ["Comparison", "Quantity", "Point estimate", "95% interval", "Excludes 0"],
                 lambda r: [f"{CN[r[0]]} − {CN[r[1]]}", QN[r[2]]]
                 + ([f"{float(bo(sc0, s0, a_main, st0, r[2], r[0], r[1]).point) * 100:+.2f} pp",
                     f"[{float(bo(sc0, s0, a_main, st0, r[2], r[0], r[1]).lo) * 100:+.2f}, "
                     f"{float(bo(sc0, s0, a_main, st0, r[2], r[0], r[1]).hi) * 100:+.2f}]",
-                    "是" if bool(bo(sc0, s0, a_main, st0, r[2], r[0], r[1]).excludes_zero)
-                    else "否"]
+                    "yes" if bool(bo(sc0, s0, a_main, st0, r[2], r[0], r[1]).excludes_zero)
+                    else "no"]
                    if bo(sc0, s0, a_main, st0, r[2], r[0], r[1]) is not None
                    else ["-", "-", "-"])))
     A("")
-    A("**三个量必须一起读**：联合检出的差可以由条件检出的差、也可以由失效前误杀的差造成。")
+    A("**The three quantities must be read together**: a difference in joint detection can be caused by a difference in conditional detection, or equally by a difference in pre-failure false alarms.")
     A("")
 
     # ---------------- 5 ----------------
-    A("## 5. 四种失效设定的对照")
+    A("## 5. Comparison across the four failure settings")
     A("")
     for s in sorted(S["sharpes"], reverse=True):
-        A(f"**s = {s:g}**，{SC[sc0]}，α={a_main:g}，失效后 {h0} 天")
+        A(f"**s = {s:g}**, {SC[sc0]}, α={a_main:g}, {h0} days after failure")
         A("")
         rows = [(st, m) for st in sets for m in METHODS_3B]
-        L.extend(_t(rows, ["失效设定", "方法", "失效前误杀", "存活率", "条件检出",
-                           "联合检出", f"E[min(τ−T,{max(hs)})]（存活者）", "失效后中位"],
+        L.extend(_t(rows, ["Failure setting", "Method", "Pre-failure false alarm", "Survival rate", "Conditional detection",
+                           "Joint detection", f"E[min(τ−T,{max(hs)})] (survivors)", "Post-failure median"],
                     lambda r: [_setlabel(cfg, r[0]), CN[r[1]],
                                f"{g(sc0, s, a_main, r[0], r[1], 'pre_failure_far'):.4f}",
                                f"{g(sc0, s, a_main, r[0], r[1], 'survival_rate'):.4f}",
@@ -791,32 +791,32 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
                                     str(g(sc0, s, a_main, r[0], r[1],
                                           'median_post_failure_note')))]))
         A("")
-    A("**始终有效对照（T=∞）的全期实际误杀率**：")
+    A("**Realised full-period false-alarm rate of the always-valid control (T=∞)**:")
     A("")
     rows = [r for _, r in always[(always.scenario == sc0)
                                  & (always.far_target == a_main)].iterrows()]
-    L.extend(_t(rows, ["s", "方法", "全期误杀率", "95% 区间", "样本量"],
+    L.extend(_t(rows, ["s", "Method", "Full-period false-alarm rate", "95% interval", "Sample size"],
                 lambda r: [f"{r['sharpe_valid']:g}", CN[r["method"]],
                            f"{r['full_period_far']:.4f}",
                            f"[{r['full_period_far_lo']:.4f}, {r['full_period_far_hi']:.4f}]",
                            f"{int(r['n_paths'])}"]))
     A("")
-    A(f"（T=0 与更早的失效设定下，“失效前误杀”按定义只统计到第 T 天为止，"
-      f"因此 T=0 时它恒为 0：第 1 天起策略已经无效。）")
+    A(f"(For T=0 and the earlier failure settings, “pre-failure false alarm” by definition counts only up to day T, "
+      f"so at T=0 it is always 0: the strategy is already invalid from day 1.)")
     A("")
 
     # ---------------- 6 ----------------
-    A("## 6. 历史证据诊断")
+    A("## 6. Historical evidence diagnostic")
     A("")
-    A("失效时刻 T 的工作失效分数 q_T 与对数赔率 U_T = −L_T，分别给出全部路径与"
-      "存活到 T 的路径。**T=0 使用初始值（先验），不取数组最后一天。**")
+    A("The working failure score q_T and the log-odds U_T = −L_T at the failure time T, given separately for all paths and for "
+      "the paths that survive to T. **T=0 uses the initial value (the prior), not the last day of the array.**")
     A("")
-    A(f"**{CN['trailing_sharpe_252']} 不在此表中。**它的统计量是年化 Sharpe 比率，"
-      "不在对数赔率尺度上；对它取 expit 得到的数没有可解释的含义，"
-      "因此这里不把它放到一个它并不居于其上的刻度上报告。")
+    A(f"**{CN['trailing_sharpe_252']} is not in this table.** Its statistic is an annualised Sharpe ratio, "
+      "not on the log-odds scale; expit of it gives a number with no interpretable meaning, "
+      "so it is not reported here on a scale it does not live on.")
     A("")
     for s in sorted(S["sharpes"], reverse=True):
-        A(f"**s = {s:g}**，{SC[sc0]}")
+        A(f"**s = {s:g}**, {SC[sc0]}")
         A("")
         d = ev[(ev.scenario == sc0) & (ev.sharpe_valid == s)]
         rows = [(st, m) for st in sets for m in EVIDENCE_METHODS]
@@ -829,118 +829,118 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
                     f"{x.mean_U_at_T_all:+.4f}", f"{x.mean_q_at_T_all:.4f}",
                     f"{x.mean_U_at_T_survivors:+.4f}", f"{x.mean_q_at_T_survivors:.4f}",
                     f"{int(x.n_survivors_last_alpha)}"]
-        L.extend(_t(rows, ["失效设定", "方法", "U_T（全部）", "q_T（全部）",
-                           "U_T（存活）", "q_T（存活）", "存活数"], re_))
+        L.extend(_t(rows, ["Failure setting", "Method", "U_T (all)", "q_T (all)",
+                           "U_T (survivors)", "q_T (survivors)", "Survivors"], re_))
         A("")
     idc = pd.DataFrame(S["identity_check"])
-    A("高斯对照、固定 T、**全部路径**上的解析核验：")
+    A("Analytic check on the Gaussian control, fixed T, **all paths**:")
     A("")
     A("```")
     A("    E[U_T] = -s²T/(2D),      E[U_{T+h} - U_T] = s²h/(2D)")
     A("```")
     A("")
     rows = [r for _, r in idc.iterrows()]
-    L.extend(_t(rows, ["s", "T", "h", "E[U_T] 理论", "实测", "E[ΔU] 理论", "实测",
-                       "最大偏差（标准误）"],
+    L.extend(_t(rows, ["s", "T", "h", "E[U_T] theory", "Measured", "E[ΔU] theory", "Measured",
+                       "Max deviation (SE)"],
                 lambda r: [f"{r['sharpe_valid']:g}", f"{int(r['T'])}", f"{int(r['h'])}",
                            f"{r['mean_U_at_T_theory']:+.4f}",
                            f"{r['mean_U_at_T_measured']:+.4f}",
                            f"{r['mean_dU_theory']:+.4f}", f"{r['mean_dU_measured']:+.4f}",
                            f"{max(r['z_U_at_T'], r['z_dU']):.2f}"]))
     A("")
-    A("**这个关系不自动适用于经过提前误杀筛选的样本，也不自动适用于 SV+跳跃。**"
-      "上面两张表里的“存活”列正是被筛选过的样本。")
+    A("**This relation does not automatically apply to samples filtered by early false alarms, nor does it automatically apply to SV+jumps.** "
+      "The “survivors” columns in the two tables above are exactly such filtered samples.")
     A("")
     tr = "trailing_sharpe_252"
     elig = int(g(sc0, s0, a_main, st0, tr, "first_eligible_day"))
-    A(f"**{CN[tr]} 在 T={T0} 处同时误杀更少、条件检出与联合检出更高，这是本设定下的"
-      f"实测事实。** 但本轮**没有**分解这个优势的来源。至少有四条机制可能同时起作用，"
-      "它们的相对份额未被测量：")
+    A(f"**{CN[tr]} at T={T0} simultaneously has fewer false alarms and higher conditional and joint detection; this is a "
+      f"measured fact in this setting.** But this round did **not** decompose the source of this advantage. At least four mechanisms may be acting at the same time, "
+      "and their relative shares have not been measured:")
     A("")
-    A(f"1. **启动期**：它最早只能在第 {elig} 天说话，因此在 T=0 时失效后窗口里只有"
-      f"第 {elig}–{h0} 天可用，而在 T={T0} 时启动期恰在失效时刻走完。"
-      f"同一件事也限制了它在失效前的报警机会："
-      f"T={T0} 时它在失效前只有第 {elig} 天这一天可能报警"
-      f"（实测误杀 {g(sc0, s0, a_main, st0, tr, 'pre_failure_far'):.2%}，"
-      f"{CN['ewma_student_t']} 为 "
-      f"{g(sc0, s0, a_main, st0, 'ewma_student_t', 'pre_failure_far'):.2%}）。")
-    A("2. **滚动窗口会逐步移除失效前的数据**：失效之后，有利的历史证据会随窗口滑出，"
-      "而累计型模型不会自动丢弃它。")
-    A("3. **方差状态**：EWMA 类方法在失效时刻带着一个由过去数据形成的方差估计。")
-    A("4. **存活者筛选**：条件统计只在没有被提前误杀的路径上计算，各方法的存活集合不同。")
+    A(f"1. **Warm-up period**: it can speak at the earliest on day {elig}, so at T=0 only "
+      f"days {elig}–{h0} of the post-failure window are usable, whereas at T={T0} the warm-up period ends exactly at the failure time. "
+      f"The same fact also limits its alarm opportunities before failure: "
+      f"at T={T0} it can alarm before failure only on the single day {elig} "
+      f"(realised false alarm {g(sc0, s0, a_main, st0, tr, 'pre_failure_far'):.2%}; "
+      f"{CN['ewma_student_t']}: "
+      f"{g(sc0, s0, a_main, st0, 'ewma_student_t', 'pre_failure_far'):.2%}).")
+    A("2. **The rolling window gradually removes pre-failure data**: after failure, favourable historical evidence slides out of the window, "
+      "whereas cumulative models do not discard it automatically.")
+    A("3. **Variance state**: the EWMA-type methods enter the failure time carrying a variance estimate formed from past data.")
+    A("4. **Survivor selection**: the conditional statistics are computed only on paths without an early false alarm, and the survivor sets differ across methods.")
     A("")
-    A("因此**不能**把这个优势归因于其中任何单独一条，也不能据此断言"
-      "“它的判别能力更强”或“它的优势只是窗口对齐”——两种说法本轮都没有证据支持。")
+    A("The advantage therefore **cannot** be attributed to any single one of these, nor can one assert from it "
+      "that “it discriminates better” or that “its advantage is only window alignment” — neither claim is supported by evidence in this round.")
     A("")
-    A("其二，若累计型模型在较晚失效时变慢，**不要把全部差异都归因于历史证据**："
-      "初始化、方差状态与存活筛选（只有没被提前误杀的路径才进入条件统计）"
-      "都会影响表现，本轮没有分解它们各自的份额。")
+    A("Second, if the cumulative models become slower when failure comes later, **do not attribute the whole difference to historical evidence**: "
+      "initialisation, the variance state and survivor selection (only paths without an early false alarm enter the conditional statistics) "
+      "all affect performance, and this round did not decompose their individual shares.")
     A("")
 
     # ---------------- 7 ----------------
-    A("## 7. 直接回答")
+    A("## 7. Direct answers")
     A("")
     jt = {m: g(sc0, s0, a_main, st0, m, f"joint_detect_h{h0}") for m in METHODS_3B}
     z0 = {m: g(sc0, s0, a_main, "fixed_T0", m, f"joint_detect_h{h0}") for m in METHODS_3B}
     bestj = max((v, k) for k, v in jt.items())
-    A(f"**（一）从“上线即无效”迁移到“先有效、后失效”时有什么变化？** "
-      f"在主设定下，把 T 从 0 移到 {T0} 天后，同样 {h0} 天的观察窗口内："
-      + "；".join(f"{CN[m]} 的联合检出由 {z0[m]:.2%} 变为 {jt[m]:.2%}"
-                  for m in ("binary_student_t", "ewma_student_t")) + "。")
+    A(f"**(1) What changes when moving from “invalid from launch” to “valid-then-failing”?** "
+      f"In the main setting, after moving T from 0 to {T0} days, within the same {h0}-day observation window: "
+      + "; ".join(f"{CN[m]}: joint detection goes from {z0[m]:.2%} to {jt[m]:.2%}"
+                  for m in ("binary_student_t", "ewma_student_t")) + ".")
     A("")
-    A(f"变化来自三处，本报告分开列出而不是合成一个数字："
-      f"（i）失效前的误杀会先消耗掉一部分路径（本设定下 "
-      f"{g(sc0, s0, a_main, st0, 'ewma_student_t', 'pre_failure_far'):.2%}，"
-      f"这些路径在 T 之前就被判无效，属于误杀而非检出）；"
-      f"（ii）存活下来的路径带着一段**有利的历史证据**进入失效时刻"
-      f"（第 6 节的 U_T、q_T）；"
-      f"（iii）滚动型方法的启动期在较晚的 T 下已经走完。")
+    A(f"The change comes from three sources, which this report lists separately rather than combining into one number: "
+      f"(i) pre-failure false alarms first use up part of the paths (in this setting "
+      f"{g(sc0, s0, a_main, st0, 'ewma_student_t', 'pre_failure_far'):.2%}; "
+      f"these paths are declared invalid before T, which is a false alarm, not a detection); "
+      f"(ii) the surviving paths enter the failure time carrying a stretch of **favourable historical evidence** "
+      f"(U_T, q_T in Section 6); "
+      f"(iii) the warm-up period of the rolling methods has already ended at the later T.")
     A("")
-    A(f"主设定下联合检出最高的是 {CN[bestj[1]]}（{bestj[0]:.2%}）。")
+    A(f"In the main setting the highest joint detection is that of {CN[bestj[1]]} ({bestj[0]:.2%}).")
     A("")
     r_late = bo(sc0, s0, a_main, st0, "joint", "ewma_student_t", tr)
     r_rand = bo(sc0, s0, a_main, RANDOM_T, "joint", "ewma_student_t", tr)
     if r_late is not None and r_rand is not None:
-        A(f"**一个随失效时间改变方向的比较。** {CN['ewma_student_t']} 相对 {CN[tr]} 的"
-          f"联合检出差，在 T={T0} 时为 {float(r_late.point) * 100:+.2f} pp "
-          f"[{float(r_late.lo) * 100:+.2f}, {float(r_late.hi) * 100:+.2f}]，"
-          f"而在随机 T 下为 {float(r_rand.point) * 100:+.2f} pp "
-          f"[{float(r_rand.lo) * 100:+.2f}, {float(r_rand.hi) * 100:+.2f}]——"
-          "两个区间都排除 0，**方向相反**。"
-          f"本轮只测了 T ∈ {{0, 126, {T0}}} 与随机 T 四个设定，"
-          f"**没有**扫描 T，因此不能说 T={T0} 是对 {CN[tr]} 全局最有利的失效时刻。"
-          "能记录的是：**方法排序随失效时刻改变**，成因见上一节列出的四条未分解机制。")
+        A(f"**A comparison whose direction changes with the failure time.** The joint-detection difference of {CN['ewma_student_t']} relative to {CN[tr]} "
+          f"is, at T={T0}, {float(r_late.point) * 100:+.2f} pp "
+          f"[{float(r_late.lo) * 100:+.2f}, {float(r_late.hi) * 100:+.2f}], "
+          f"whereas under random T it is {float(r_rand.point) * 100:+.2f} pp "
+          f"[{float(r_rand.lo) * 100:+.2f}, {float(r_rand.hi) * 100:+.2f}] — "
+          "both intervals exclude 0, **in opposite directions**. "
+          f"This round tested only four settings, T ∈ {{0, 126, {T0}}} and random T, "
+          f"and did **not** scan T, so it cannot be said that T={T0} is the globally most favourable failure time for {CN[tr]}. "
+          "What can be recorded is: **the method ranking changes with the failure time**; for the causes see the four undecomposed mechanisms listed in the previous section.")
     A("")
-    A("**（二）这些结果是否足以支持本周向导师说明适用范围？** "
-      "可以说明的是：本项目现有的五个检测器在“先有效、后失效”这一设定下仍然可用，"
-      "并且失效前误杀、条件检出、联合检出三个量已经被分开测量与报告；"
-      f"覆盖范围是 T ≤ {cfg.stage3b_random_failure_max} 天、两个噪声情境、"
-      f"两个信号强度、两个误杀预算。"
-      "**不能**据此说明更长寿命（数年）的表现，也不能说明任何未纳入本项目的方法。")
+    A("**(2) Are these results enough to support explaining the scope of applicability to the supervisor this week?** "
+      "What can be stated is: the five existing detectors of this project remain usable in the “valid-then-failing” setting, "
+      "and the three quantities pre-failure false alarm, conditional detection and joint detection have been measured and reported separately; "
+      f"the coverage is T ≤ {cfg.stage3b_random_failure_max} days, two noise scenarios, "
+      f"two signal strengths and two false-alarm budgets. "
+      "This **cannot** be used to describe performance over longer lifetimes (several years), nor any method not included in this project.")
     A("")
-    A("**（三）哪些问题应留给导师决定下一周是否继续？** 本报告不替这些问题作答：")
+    A("**(3) Which questions should be left to the supervisor, to decide whether to continue next week?** This report does not answer them on the supervisor's behalf:")
     A("")
-    A("1. 失效时间的覆盖范围是否要从一年扩展到数年——那需要更长的模拟期限，"
-      "并会改变“两年监测”这个主基准的含义。")
-    A("2. 是否需要一个显式建模状态切换的检测器（而不是继续用静态两状态分类器的"
-      "工作失效分数）——本轮的证据只说明静态分类器在切换数据上仍能工作，"
-      "没有比较过任何切换感知的方法。")
-    A("3. 失效前误杀与失效后延迟之间的权衡应当按什么代价函数取舍——"
-      "本项目至今只报告两者，没有为它们赋权，等待成本也未纳入评价。")
+    A("1. Whether the coverage of failure times should be extended from one year to several years — that needs a longer simulation horizon, "
+      "and would change the meaning of the “two-year monitoring” main benchmark.")
+    A("2. Whether a detector that explicitly models the state switch is needed (instead of continuing to use the static two-state classifier's "
+      "working failure score) — the evidence of this round only shows that the static classifier still works on switching data; "
+      "no switch-aware method has been compared.")
+    A("3. Which cost function should govern the trade-off between pre-failure false alarms and post-failure delay — "
+      "this project has so far only reported both, without weighting them, and waiting costs are not included in the evaluation either.")
     A("")
 
     # ---------------- 8 ----------------
-    A("## 8. 限制")
+    A("## 8. Limitations")
     A("")
-    A(f"- 覆盖范围是 T ≤ {cfg.stage3b_random_failure_max} 天（一年内失效），"
-      "不是 0–5 年或 0–10 年的寿命研究。")
-    A("- 门槛沿用 Stage 3A 的 504 日冻结值；区间只描述测试抽样，不覆盖校准误差。")
-    A("- 各失效设定共用同一批基础噪声，设定之间不是独立样本。")
-    A("- 静态分类器的 q 是工作失效分数，不是对切换过程的正确后验。")
-    A("- 解析恒等式只在 iid 高斯、固定 T、全部路径上核验过。")
-    A("- 本轮不实现 BOCPD，也不新增任何检测模型或扩大参数范围。")
+    A(f"- The coverage is T ≤ {cfg.stage3b_random_failure_max} days (failure within one year), "
+      "not a 0–5 year or 0–10 year lifetime study.")
+    A("- The thresholds reuse the frozen 504-day values from Stage 3A; the intervals describe test sampling only and do not cover calibration error.")
+    A("- All failure settings share the same base noise, so the settings are not independent samples.")
+    A("- The static classifier's q is a working failure score, not a correct posterior for the switching process.")
+    A("- The analytic identity has been checked only for iid Gaussian noise, fixed T and all paths.")
+    A("- This round does not implement BOCPD, nor does it add any detection model or widen any parameter range.")
     A("")
-    A("## 9. 复现")
+    A("## 9. Reproduction")
     A("")
     A("```bash")
     A("uv run python -m strategy_survivorship.stage3b")
@@ -948,7 +948,7 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
     A("uv run python -m strategy_survivorship.stage3b --report-only")
     A("```")
     A("")
-    A(f"本轮耗时 {S['elapsed_s']:.1f} 秒。")
+    A(f"This run took {S['elapsed_s']:.1f} seconds.")
     path.write_text("\n".join(L) + "\n", encoding="utf-8")
     return path
 

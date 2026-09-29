@@ -366,9 +366,9 @@ from pathlib import Path
 import pandas as pd
 
 
-SC = {"gaussian": "高斯（对照）", "student_t": "厚尾 Student-t (ν=5)",
-      "stoch_vol": "随机波动率 (ρ=0.98)", "jump": "跳跃 (λ=2/年, κ=5)"}
-ARM = {"frozen_stage1": "冻结 Stage 1 门槛", "recalibrated": "按情境重新校准"}
+SC = {"gaussian": "Gaussian (control)", "student_t": "Heavy-tailed Student-t (ν=5)",
+      "stoch_vol": "Stochastic volatility (ρ=0.98)", "jump": "Jumps (λ=2/yr, κ=5)"}
+ARM = {"frozen_stage1": "Frozen Stage 1 thresholds", "recalibrated": "Recalibrated per scenario"}
 
 
 def _t(rows, header, render):
@@ -380,7 +380,7 @@ def _t(rows, header, render):
 
 def _med(r):
     v = r.get("median_detect_days", "")
-    return f"{int(v)}d" if v not in ("", None) and v == v else "未达到"
+    return f"{int(v)}d" if v not in ("", None) and v == v else "not reached"
 
 
 def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame, path: Path) -> Path:
@@ -390,86 +390,86 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
     a_main = cfg.far_targets[-1]
     M = metrics
 
-    A("# Stage 2A 报告：现实噪声下的基线压力测试")
+    A("# Stage 2A report: baseline stress test under realistic noise")
     A("")
-    A("本文件由 `python -m strategy_survivorship.stage2a` 自动生成，"
-      "所有数字取自同一次运行的结果表。")
+    A("This file is generated automatically by `python -m strategy_survivorship.stage2a`; "
+      "every number is taken from the result tables of the same run.")
     A("")
 
-    A("## 1. 本轮结论")
+    A("## 1. Conclusions of this round")
     A("")
     fz = M[(M.arm == "frozen_stage1") & (M.far_target == a_main)]
     rc = M[(M.arm == "recalibrated") & (M.far_target == a_main)]
     g = lambda d, sc, arm, col: float(
         M[(M.scenario == sc) & (M.arm == arm) & (M.far_target == a_main) & (M.detector == d)][col].iloc[0])
     A(
-        f"**冻结 Stage 1 门槛后，噪声改变会把实际误杀率推离名义预算。** 在名义 α={a_main:g} 下，"
-        f"两年实测误杀率：高斯对照 {g('binary_gaussian','gaussian','frozen_stage1','far_d504'):.4f}、"
-        f"厚尾 {g('binary_gaussian','student_t','frozen_stage1','far_d504'):.4f}、"
-        f"随机波动率 {g('binary_gaussian','stoch_vol','frozen_stage1','far_d504'):.4f}、"
-        f"跳跃 {g('binary_gaussian','jump','frozen_stage1','far_d504'):.4f}"
-        "（Binary Gaussian）。完整四检测器 × 四情境见第 4 节。"
+        f"**With the Stage 1 thresholds frozen, changing the noise pushes the actual false-alarm rate away from the nominal budget.** At nominal α={a_main:g}, "
+        f"the two-year realised false-alarm rates are: Gaussian control {g('binary_gaussian','gaussian','frozen_stage1','far_d504'):.4f}, "
+        f"heavy-tailed {g('binary_gaussian','student_t','frozen_stage1','far_d504'):.4f}, "
+        f"stochastic volatility {g('binary_gaussian','stoch_vol','frozen_stage1','far_d504'):.4f}, "
+        f"jumps {g('binary_gaussian','jump','frozen_stage1','far_d504'):.4f}"
+        " (Binary Gaussian). The full four-detector × four-scenario results are in Section 4."
     )
     A("")
     A(
-        "**按情境重新校准可以把误杀率拉回预算附近，但这是理想化设定。** "
-        "它假设噪声情境事先已知；本轮**没有**任何检测器在未知环境下自适应，"
-        "重新校准臂只回答「如果环境已知，这些规则能做到什么」。"
+        "**Recalibrating per scenario can bring the false-alarm rate back near the budget, but this is an idealised setting.** "
+        "It assumes the noise scenario is known in advance; in this round **no** detector adapts in an unknown environment, "
+        "and the recalibrated arm only answers 'if the environment were known, what could these rules achieve'."
     )
     A("")
     if "gaussian_oracle_vol" in set(M.detector):
         o = g("gaussian_oracle_vol", "stoch_vol", "recalibrated", "detect_d504")
         b = g("binary_gaussian", "stoch_vol", "recalibrated", "detect_d504")
         A(
-            f"**知道当期方差能带来多少帮助（随机波动率情境）**：oracle 两年检出率 {o:.4f}，"
-            f"固定波动率 Binary Gaussian {b:.4f}，差 {o - b:+.4f}。"
-            "oracle 使用真实当期条件方差，**任何可部署规则都拿不到这个信息**。"
-            "它是一个**理想信息对照**：说明在这一族固定均值假设的更新式里，"
-            "拿到真实当期方差能走到哪里。**它不是已经证明的严格性能上界**——"
-            "别的方法（不同均值假设、不同决策规则、对潜在方差积分的后验）完全可能超过它。"
+            f"**How much knowing the current variance helps (stochastic-volatility scenario)**: oracle two-year detection rate {o:.4f}, "
+            f"fixed-volatility Binary Gaussian {b:.4f}, difference {o - b:+.4f}. "
+            "The oracle uses the true current conditional variance; **no deployable rule has access to this information**. "
+            "It is an **idealised-information reference**: it shows how far this family of updates with fixed mean hypotheses "
+            "can go when given the true current variance. **It is not a proven strict upper bound on performance** - "
+            "other methods (different mean hypotheses, different decision rules, a posterior that integrates over the latent variance) may well exceed it."
         )
         A("")
 
-    A("## 2. 实验定义（在看结果前固定）")
+    A("## 2. Experiment definition (fixed before looking at the results)")
     A("")
     A("```")
     A("r_t = mu_S + sigma_0 * eps_t,   mu_S = S*sigma_ann/D,   sigma_0 = sigma_ann/sqrt(D)")
-    A(f"S in {{0, 1}},  D = {cfg.D},  sigma_ann = {cfg.sigma_annual:g},  H = {H} 交易日")
+    A(f"S in {{0, 1}},  D = {cfg.D},  sigma_ann = {cfg.sigma_annual:g},  H = {H} trading days")
     A("```")
     A("")
-    A("四种 eps 全部**零均值、单位无条件方差**，归一化只用理论常数，"
-      "**不做任何按路径样本均值/标准差的事后标准化**（那会改变生成机制并把未来数据带入构造）。")
+    A("All four eps have **zero mean and unit unconditional variance**; the normalisation uses only theoretical constants, "
+      "and **there is no after-the-fact standardisation by per-path sample mean/standard deviation** (that would change the generating mechanism and bring future data into the construction).")
     A("")
-    A("| 情境 | 定义 | 参数 |")
+    A("| Scenario | Definition | Parameters |")
     A("|---|---|---|")
-    A("| 高斯（对照） | `eps = z`, `z~N(0,1)` | — |")
-    A(f"| 厚尾 | `eps = sqrt((nu-2)/nu) * X`, `X~t_nu` | ν = {cfg.noise_student_t_df:g} |")
-    A(f"| 随机波动率 | `a_t = rho a_{{t-1}} + sqrt(1-rho^2) xi_t`, `a_0~N(0,1)`; `v_t = exp(a_t - 1/2)`; `eps = sqrt(v_t) z_t` | ρ = {cfg.noise_sv_rho:g}, 振幅 {cfg.noise_sv_amplitude:g} |")
-    A(f"| 跳跃 | `K_t~Poisson(lambda/D)`; `eps = (z + kappa*sqrt(K)*w)/sqrt(1+kappa^2 lambda/D)` | λ = {cfg.noise_jump_lambda_annual:g}/年, κ = {cfg.noise_jump_kappa:g} |")
+    A("| Gaussian (control) | `eps = z`, `z~N(0,1)` | — |")
+    A(f"| Heavy-tailed | `eps = sqrt((nu-2)/nu) * X`, `X~t_nu` | ν = {cfg.noise_student_t_df:g} |")
+    A(f"| Stochastic volatility | `a_t = rho a_{{t-1}} + sqrt(1-rho^2) xi_t`, `a_0~N(0,1)`; `v_t = exp(a_t - 1/2)`; `eps = sqrt(v_t) z_t` | ρ = {cfg.noise_sv_rho:g}, amplitude {cfg.noise_sv_amplitude:g} |")
+    A(f"| Jumps | `K_t~Poisson(lambda/D)`; `eps = (z + kappa*sqrt(K)*w)/sqrt(1+kappa^2 lambda/D)` | λ = {cfg.noise_jump_lambda_annual:g}/yr, κ = {cfg.noise_jump_kappa:g} |")
     A("")
-    A("单位说明：**λ 是年度跳跃强度**（每年期望跳跃次数），日强度为 λ/D；"
-      "**κ 是单次跳跃的标准差**，以日高斯冲击为单位。")
+    A("Units: **λ is the annual jump intensity** (expected number of jumps per year), so the daily intensity is λ/D; "
+      "**κ is the standard deviation of a single jump**, in units of the daily Gaussian shock.")
     A("")
-    A("> 这些参数是**研究压力情境**，不是对任何市场的拟合，也不声称能复现真实市场。"
-      "主实验一次只加入一种噪声特征，不做完整组合网格。"
-      "有效状态表示**长期** Sharpe 为 1；在随机波动率下逐日条件 Sharpe 必然变化，本轮不要求它恒等于 1。")
+    A("> These parameters are **research stress scenarios**, not fits to any market, and they do not claim to reproduce real markets. "
+      "The main experiment adds only one noise feature at a time and does not run a full grid of combinations. "
+      "The valid state means a **long-run** Sharpe of 1; under stochastic volatility the daily conditional Sharpe necessarily varies, and this round does not require it to be identically 1.")
     A("")
-    A(f"每个情境使用独立的 {cfg.n_noise_calibration} 条有效校准路径、"
-      f"{cfg.n_noise_test_valid} 条有效测试路径、{cfg.n_noise_test_invalid} 条无效测试路径；"
-      "同一情境下各模型评价**同一批**测试路径。")
+    A(f"Each scenario uses its own independent {cfg.n_noise_calibration} valid calibration paths, "
+      f"{cfg.n_noise_test_valid} valid test paths and {cfg.n_noise_test_invalid} invalid test paths; "
+      "within a scenario all models are evaluated on the **same set** of test paths.")
     A("")
 
-    A("## 3. 噪声诊断")
+    A("## 3. Noise diagnostics")
     A("")
-    A("误差为**路径级**（路径之间独立，路径内的交易日不独立——ρ=0.98 时对数方差半衰期约 34 天，"
-      "把所有 path-day 当独立样本会严重低估误差）。")
+    A("Errors are **path-level** (paths are independent of each other, but the trading days within a path are not - at ρ=0.98 the half-life of the log-variance is about 34 days, "
+      "and treating every path-day as an independent sample would severely understate the error).")
     A("")
-    A("自相关一律**跨路径池化、用全局均值去心**。按每条路径自己的样本均值去心会把携带持续性的"
-      "低频成分一起减掉：实测下它把 |ε| 的一阶自相关低估约 21%、四十阶低估约 47%，"
-      "并把 AR(1) 估计拉到设定 ρ 以下约 23 个标准误。池化估计与设定值一致。")
+    A("Autocorrelations are always **pooled across paths and demeaned by the global mean**. Demeaning each path by its own sample mean also removes the "
+      "low-frequency component that carries the persistence: measured here, it understates the lag-1 autocorrelation of |ε| by about 21% and the lag-40 autocorrelation by about 47%, "
+      "and drags the AR(1) estimate about 23 standard errors below the configured ρ. The pooled estimates agree with the configured values.")
     A("")
     L.extend(_t(diag.to_dict("records"),
-                ["情境", "均值 ± 3SE", "方差 ± 3SE", "P(abs ε>2)", "P(abs ε>4)", "P(abs ε>6)", "abs ε 一阶自相关"],
+                ["Scenario", "Mean ± 3SE", "Variance ± 3SE", "P(abs ε>2)", "P(abs ε>4)", "P(abs ε>6)", "abs ε lag-1 autocorrelation"],
                 lambda r: [SC[r["scenario"]],
                            f"{r['mean']:+.5f} ± {3*r['mean_se_path_level']:.5f}",
                            f"{r['var']:.4f} ± {3*r['var_se_path_level']:.4f}",
@@ -480,29 +480,29 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
     jp = diag[diag.scenario == "jump"]
     if len(sv):
         r = sv.iloc[0]
-        A(f"随机波动率：对数方差一阶自相关 **{r.log_var_lag1_autocorr:.5f} ± {r.log_var_lag1_autocorr_se:.5f}**"
-          f"（设定 ρ = {cfg.noise_sv_rho:g}，相差 "
-          f"{abs(r.log_var_lag1_autocorr - cfg.noise_sv_rho)/r.log_var_lag1_autocorr_se:.1f} 个标准误）；"
-          f"|ε| 一阶自相关 **{r.abs_eps_lag1_autocorr:.5f} ± {r.abs_eps_lag1_autocorr_se:.5f}**，"
-          f"对应的**解析总体值为 {r.abs_eps_lag1_autocorr_theory:.5f}**"
-          f"（相差 {abs(r.abs_eps_lag1_autocorr - r.abs_eps_lag1_autocorr_theory)/r.abs_eps_lag1_autocorr_se:.2f} 个标准误）；"
-          f"真实日波动率的 90/10 分位比 {r.true_sigma_ratio_p90_p10:.2f}。")
+        A(f"Stochastic volatility: lag-1 autocorrelation of the log-variance **{r.log_var_lag1_autocorr:.5f} ± {r.log_var_lag1_autocorr_se:.5f}**"
+          f" (configured ρ = {cfg.noise_sv_rho:g}, a difference of "
+          f"{abs(r.log_var_lag1_autocorr - cfg.noise_sv_rho)/r.log_var_lag1_autocorr_se:.1f} standard errors); "
+          f"lag-1 autocorrelation of |ε| **{r.abs_eps_lag1_autocorr:.5f} ± {r.abs_eps_lag1_autocorr_se:.5f}**, "
+          f"with a corresponding **analytic population value of {r.abs_eps_lag1_autocorr_theory:.5f}**"
+          f" (a difference of {abs(r.abs_eps_lag1_autocorr - r.abs_eps_lag1_autocorr_theory)/r.abs_eps_lag1_autocorr_se:.2f} standard errors); "
+          f"90/10 quantile ratio of the true daily volatility {r.true_sigma_ratio_p90_p10:.2f}.")
     if len(jp):
-        A(f"跳跃：实测日均跳跃数 {jp.mean_jumps_per_day.iloc[0]:.5f}"
-          f"（理论 {jp.expected_jumps_per_day.iloc[0]:.5f}），"
-          f"含跳跃交易日占比 {jp.frac_days_with_jump.iloc[0]:.4f}。")
+        A(f"Jumps: realised mean number of jumps per day {jp.mean_jumps_per_day.iloc[0]:.5f}"
+          f" (theoretical {jp.expected_jumps_per_day.iloc[0]:.5f}), "
+          f"fraction of trading days with a jump {jp.frac_days_with_jump.iloc[0]:.4f}.")
     A("")
-    A("Student-t 的样本峰度在 ν=5 下**没有中心极限定理**（八阶矩不存在），"
-      "有限样本中它还被 n 的一个函数从上方界住、系统性偏低，且分布随 n 持续变化，"
-      "因此**未**用作验收统计量；改用尾部频率。"
-      "（注意这不同于「有限样本方差不存在」：对固定 n 它是有界统计量。）")
+    A("At ν=5 the sample kurtosis of the Student-t has **no central limit theorem** (the eighth moment does not exist); "
+      "in finite samples it is also bounded above by a function of n, is systematically biased low, and its distribution keeps changing with n, "
+      "so it is **not** used as an acceptance statistic; tail frequencies are used instead. "
+      "(Note that this is different from 'the finite-sample variance does not exist': for fixed n it is a bounded statistic.)")
     A("")
-    A("> **随机波动率与厚尾的关系**：SV 在**给定**潜在方差时是条件高斯的，"
-      "但把未观测的方差积分掉之后，单日边际分布是一个**正态尺度混合**，本身就是重尾的"
-      "（图 2A.1(a) 中它的尾部频率与 Student-t 情境几乎重合）。"
-      "所以不能说「Student-t 检测器在 SV 下的优势与厚尾无关」——"
-      "边际重尾正是它在这里占优的一部分原因；"
-      "另一部分是持续性，本轮未做分离，Stage 2B 的 ρ=0 对照才回答这一点。")
+    A("> **Relation between stochastic volatility and heavy tails**: SV is conditionally Gaussian **given** the latent variance, "
+      "but once the unobserved variance is integrated out, the one-day marginal distribution is a **scale mixture of normals**, which is itself heavy-tailed "
+      "(in Fig 2A.1(a) its tail frequency almost coincides with that of the Student-t scenario). "
+      "So one cannot say 'the advantage of the Student-t detector under SV has nothing to do with heavy tails' - "
+      "the heavy marginal tails are precisely part of the reason it comes out ahead here; "
+      "the other part is persistence, which this round does not separate out; only the ρ=0 control in Stage 2B answers that.")
     A("")
 
     for arm in ("frozen_stage1", "recalibrated"):
@@ -510,21 +510,21 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
         A(f"## {n}. {ARM[arm]}")
         A("")
         if arm == "frozen_stage1":
-            A("Stage 1 的门槛原样搬过来，**不重新校准**，看噪声改变造成什么。")
+            A("The Stage 1 thresholds are carried over unchanged, **without recalibration**, to see what the noise change does.")
         else:
-            A("在每个情境**自己的有效校准路径**上校准到同一名义预算，冻结后再测试。"
-              "**这是按环境分布进行的理想校准**，不代表检测器能适应未知环境。")
+            A("Thresholds are calibrated to the same nominal budget on **each scenario's own valid calibration paths**, then frozen and tested. "
+              "**This is an idealised calibration performed per environment distribution**; it does not mean the detectors can adapt to an unknown environment.")
         A("")
         for alpha in cfg.far_targets:
-            A(f"### {n}.{list(cfg.far_targets).index(alpha)+1} 相同**名义校准预算** α = {alpha:g}")
+            A(f"### {n}.{list(cfg.far_targets).index(alpha)+1} Same **nominal calibration budget** α = {alpha:g}")
             A("")
-            A("各检测器共享的是**名义校准预算**，不是相同的实测误杀率——"
-              "下表第三列即每个检测器在测试集上的实际两年 FAR，读检出率时必须对照它。")
+            A("What the detectors share is the **nominal calibration budget**, not the same realised false-alarm rate - "
+              "the third column of the table below is each detector's actual two-year FAR on the test set, and detection rates must be read against it.")
             A("")
             sub = M[(M.arm == arm) & (M.far_target == alpha)]
             L.extend(_t(sub.to_dict("records"),
-                        ["情境", "检测器", "两年实测误杀", "检出 h=126d", "h=252d", "h=504d",
-                         "两年未检出", "截断均检时间(日)", "中位检测时间"],
+                        ["Scenario", "Detector", "Two-year realised false alarm", "Detection h=126d", "h=252d", "h=504d",
+                         "Undetected at two years", "Truncated mean detection time (days)", "Median detection time"],
                         lambda r: [SC[r["scenario"]], LABEL_2A.get(r["detector"], r["detector"]),
                                    f"{r['far_d504']:.4f}", f"{r['detect_d126']:.4f}",
                                    f"{r['detect_d252']:.4f}", f"{r['detect_d504']:.4f}",
@@ -532,16 +532,16 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
                                    f"{r['trunc_mean_detect_days']:.0f}", _med(r)]))
             A("")
 
-    A("## 6. 配对比较")
+    A("## 6. Paired comparisons")
     A("")
-    A("同一情境下各模型评价同一批测试路径，因此差值是配对的。")
+    A("Within a scenario all models are evaluated on the same set of test paths, so the differences are paired.")
     A("")
-    A("> **这些区间条件于该臂实际使用的、已经冻结的校准门槛。** "
-      "它们回答「给定这组门槛，两条规则在新测试数据上差多少」，"
-      "**不包含**重新抽校准集会带来的波动。")
+    A("> **These intervals are conditional on the already-frozen calibration thresholds that the arm actually uses.** "
+      "They answer 'given this set of thresholds, how much do the two rules differ on new test data', "
+      "and **do not include** the variability that redrawing the calibration set would bring.")
     A("")
     pr = [p for p in summary["paired"] if p["far_target"] == a_main]
-    L.extend(_t(pr, ["情境", "臂", "对比（参照 − 对方）", "两年检出率之差", "95% CI", "截断均检时间之差(日)", "95% CI"],
+    L.extend(_t(pr, ["Scenario", "Arm", "Comparison (reference − other)", "Difference in two-year detection rate", "95% CI", "Difference in truncated mean detection time (days)", "95% CI"],
                 lambda r: [SC[r["scenario"]], ARM["frozen_stage1" if r["arm"] == "frozen" else "recalibrated"],
                            f"Gaussian − {LABEL_2A.get(r['other'], r['other'])}",
                            f"{r['detect_diff']:+.4f}",
@@ -549,43 +549,43 @@ def write_stage2a_report(cfg, summary, metrics: pd.DataFrame, diag: pd.DataFrame
                            f"{r['trunc_time_diff_days']:+.1f}",
                            f"[{r['trunc_time_diff_lo']:+.1f}, {r['trunc_time_diff_hi']:+.1f}]"]))
     A("")
-    A(f"（上表为 α={a_main:g}；5% 档完整结果见 `stage2a_paired.csv`。）")
+    A(f"(The table above is for α={a_main:g}; the full results at the 5% level are in `stage2a_paired.csv`.)")
     A("")
 
-    A("## 7. 概率校准（与检测性能分开报告）")
+    A("## 7. Probability calibration (reported separately from detection performance)")
     A("")
-    A("只对输出真正后验的检测器计算；滚动 Sharpe 未转换成概率。")
+    A("Computed only for detectors that output a genuine posterior; the rolling Sharpe is not converted into a probability.")
     A("")
     L.extend(_t(summary["probability_calibration"],
-                ["情境", "检测器", "时间", "Brier", "基准率 Brier", "技能分", "平均预测 q", "实际无效比例"],
+                ["Scenario", "Detector", "Time", "Brier", "Base-rate Brier", "Skill score", "Mean predicted q", "Observed invalid fraction"],
                 lambda r: [SC[r["scenario"]], LABEL_2A.get(r["detector"], r["detector"]),
                            f"{r['years']:.0f}y", f"{r['brier']:.4f}", f"{r['brier_base_rate']:.4f}",
                            f"{r['brier_skill_vs_base_rate']:+.4f}", f"{r['mean_predicted_q']:.4f}",
                            f"{r['observed_invalid_frac']:.4f}"]))
     A("")
 
-    A("## 8. 复现")
+    A("## 8. Reproduction")
     A("")
     A("```bash")
     A(".venv/bin/python -m pytest")
-    A(".venv/bin/python -m strategy_survivorship.stage1     # 主 benchmark（不变）")
-    A(".venv/bin/python -m strategy_survivorship.stage11    # Stage 1.1 诊断")
-    A(".venv/bin/python -m strategy_survivorship.stage2a    # 本报告")
+    A(".venv/bin/python -m strategy_survivorship.stage1     # main benchmark (unchanged)")
+    A(".venv/bin/python -m strategy_survivorship.stage11    # Stage 1.1 diagnostics")
+    A(".venv/bin/python -m strategy_survivorship.stage2a    # this report")
     A("```")
     A("")
     e = summary["environment"]
-    A(f"Python {e['python']} / NumPy {e['numpy']} / SciPy {e['scipy']}；"
-      f"本次 Stage 2A 耗时 {summary['elapsed_s']:.1f} s。")
+    A(f"Python {e['python']} / NumPy {e['numpy']} / SciPy {e['scipy']}; "
+      f"this Stage 2A run took {summary['elapsed_s']:.1f} s.")
     A("")
-    A("| 输出 | 内容 |")
+    A("| Output | Contents |")
     A("|---|---|")
-    A("| `stage2a_report.md` | 本报告 |")
-    A("| `stage2a_metrics.csv` | 情境 × 臂 × α × 检测器的全部指标 |")
-    A("| `stage2a_noise_diagnostics.csv` | 四种噪声的矩、尾频率与结构诊断 |")
-    A("| `stage2a_paired.csv` | 配对差异与区间 |")
-    A("| `stage2a_probability_calibration.csv` | Brier 与技能分 |")
-    A("| `stage2a_summary.json` | 上述全部结果的紧凑汇总 |")
-    A("| `figures/fig2a1..fig2a4*.png` | 四张主图 |")
+    A("| `stage2a_report.md` | This report |")
+    A("| `stage2a_metrics.csv` | All metrics by scenario × arm × α × detector |")
+    A("| `stage2a_noise_diagnostics.csv` | Moments, tail frequencies and structural diagnostics of the four noise models |")
+    A("| `stage2a_paired.csv` | Paired differences and intervals |")
+    A("| `stage2a_probability_calibration.csv` | Brier and skill scores |")
+    A("| `stage2a_summary.json` | Compact summary of all the results above |")
+    A("| `figures/fig2a1..fig2a4*.png` | The four main figures |")
     A("")
     path.write_text("\n".join(L), encoding="utf-8")
     return path

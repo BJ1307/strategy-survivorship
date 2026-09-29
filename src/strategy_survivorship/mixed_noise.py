@@ -266,9 +266,9 @@ from pathlib import Path
 
 import pandas as pd
 
-CN = {"binary_gaussian": "固定 Gaussian", "binary_student_t": "固定 Student-t",
-      "trailing_sharpe_252": "滚动一年 Sharpe", "ewma_student_t": "EWMA Student-t",
-      "ewma_trunc_student_t": "截断 EWMA Student-t"}
+CN = {"binary_gaussian": "Fixed Gaussian", "binary_student_t": "Fixed Student-t",
+      "trailing_sharpe_252": "Trailing one-year Sharpe", "ewma_student_t": "EWMA Student-t",
+      "ewma_trunc_student_t": "Truncated EWMA Student-t"}
 DAYS = (63, 126, 252, 504)
 
 
@@ -288,54 +288,54 @@ def write(out_dir: Path) -> Path:
     L: list[str] = []
     A = L.append
 
-    A("# mixed_noise 实验报告：每条策略的噪声参数都不同")
+    A("# mixed_noise experiment report: every strategy has different noise parameters")
     A("")
-    A("由 `python -m strategy_survivorship.mixed_noise` 自动生成，"
-      "所有数字取自同一次运行的结果表。**本轮没有新增任何检测模型。**")
+    A("Generated automatically by `python -m strategy_survivorship.mixed_noise`; "
+      "all numbers are taken from the result tables of a single run. **This round adds no new detection model.**")
     A("")
 
-    A("## 1. 运行前写定的设计")
+    A("## 1. Design written down before the run")
     A("")
     A("```")
-    A(f"    A_i     ~ Uniform(0, {S['config']['mixed_A_max']:g})   波动起伏幅度")
-    A(f"    kappa_i ~ Uniform(0, {S['config']['mixed_kappa_max']:g})   跳跃尺度")
+    A(f"    A_i     ~ Uniform(0, {S['config']['mixed_A_max']:g})   volatility swing amplitude")
+    A(f"    kappa_i ~ Uniform(0, {S['config']['mixed_kappa_max']:g})   jump scale")
     A(f"    rho = {p['held_fixed']['rho']}    lambda = "
-      f"{p['held_fixed']['jump_intensity_per_year']:g}/年    潜在 AR(1) 从平稳分布起步")
-    A(f"    有效 Sharpe = {p['states']['valid_sharpe']:g}，无效 = "
-      f"{p['states']['invalid_sharpe']:g}，先验各 {p['states']['prior']:g}")
-    A(f"    D = {p['days_per_year']}，H = {p['horizon_days']}，"
-      f"两年累计误杀预算 = {p['far_budget']:g}")
+      f"{p['held_fixed']['jump_intensity_per_year']:g}/year    latent AR(1) starts from its stationary distribution")
+    A(f"    valid Sharpe = {p['states']['valid_sharpe']:g}, invalid = "
+      f"{p['states']['invalid_sharpe']:g}, prior of each = {p['states']['prior']:g}")
+    A(f"    D = {p['days_per_year']}, H = {p['horizon_days']}, "
+      f"two-year cumulative false-alarm budget = {p['far_budget']:g}")
     A("```")
     A("")
-    A("四个参数的角色不同，不要混：**A** 控制波动起伏的幅度；**rho** 控制一个波动水平"
-      "能持续多久；**kappa** 控制单次跳跃有多大；**K** 是某一天落下几次跳跃。")
+    A("The four parameters play different roles and must not be confused: **A** controls the amplitude of volatility swings; **rho** controls how long a volatility level "
+      "persists; **kappa** controls how large a single jump is; **K** is how many jumps land on a given day.")
     A("")
-    A("每条策略只抽一次 (A, kappa)，整个观察期固定，且**独立于状态与全部噪声流**。"
-      "监测器看不到它们，只看到收益。")
+    A("Each strategy draws (A, kappa) only once; they stay fixed for the whole observation window and are **independent of the state and of all noise streams**. "
+      "The monitor cannot see them; it sees only returns.")
     A("")
-    A(f"**范围声明。** 这两个取值范围是运行前写定的**模拟选择**，"
-      "不是从任何市场估计出来的，也不是导师指定的。")
-    A("")
-
-    A("## 2. 归一化与门槛")
-    A("")
-    A(f"- 标准化用的是**该路径自己 kappa 对应的理论常数** "
-      f"`sqrt(1 + kappa_i^2 * lambda/D)`；**没有**按路径的样本均值或样本方差重新标准化。")
-    A(f"- 三个批次各 {p['batches']['calibration_valid']} 条，参数与噪声**逐批独立抽取**；"
-      "两个测试批次在所有方法之间共享，因此比较是配对的。")
-    A(f"- 每种方法在**整个混合总体**上只校准一个门槛，然后冻结："
-      f"规则数 {rk['n_rules']}、δ = {rk['delta']:g}、δ/规则 = {rk['delta_per_rule']:g}、"
-      f"秩 **{rk['rank']}**（二项式与 Beta 两路一致）。")
-    A("- 门槛**没有**使用真实 A、kappa、事后分组或测试结果。")
-    A("")
-    A(f"**这个预算保证的范围**：{rk['scope']}")
+    A(f"**Scope statement.** These two ranges are **simulation choices** written down before the run; "
+      "they were not estimated from any market and were not specified by the supervisor.")
     A("")
 
-    A("## 3. 主结果")
+    A("## 2. Normalisation and thresholds")
+    A("")
+    A(f"- Standardisation uses **the theoretical constant for that path's own kappa** "
+      f"`sqrt(1 + kappa_i^2 * lambda/D)`; there is **no** re-standardisation by a path's sample mean or sample variance.")
+    A(f"- Three batches of {p['batches']['calibration_valid']} paths each; parameters and noise are **drawn independently per batch**; "
+      "the two test batches are shared across all methods, so the comparisons are paired.")
+    A(f"- Each method calibrates only one threshold on **the whole mixed population**, which is then frozen: "
+      f"{rk['n_rules']} rules, δ = {rk['delta']:g}, δ/rule = {rk['delta_per_rule']:g}, "
+      f"rank **{rk['rank']}** (the binomial and Beta routes agree).")
+    A("- The thresholds do **not** use the true A, kappa, post-hoc groups or test results.")
+    A("")
+    A(f"**Scope of this budget guarantee**: {rk['scope']}")
+    A("")
+
+    A("## 3. Main results")
     A("")
     rows = [r for _, r in m.iterrows()]
-    L.extend(_t(rows, ["方法"] + [f"检出 d{d}" for d in DAYS]
-                + [f"误杀 d{d}" for d in DAYS] + ["中位检出"],
+    L.extend(_t(rows, ["Method"] + [f"Detection d{d}" for d in DAYS]
+                + [f"False alarm d{d}" for d in DAYS] + ["Median detection"],
                 lambda r: [CN[r["method"]]]
                 + [f"{r[f'detect_d{d}']:.4f}" for d in DAYS]
                 + [f"{r[f'far_d{d}']:.4f}" for d in DAYS]
@@ -343,52 +343,52 @@ def write(out_dir: Path) -> Path:
                    if r["median_detect_days"] == r["median_detect_days"]
                    else str(r["median_detect_note"])]))
     A("")
-    A(f"样本量：无效测试路径 {int(m.n_test_invalid.iloc[0])} 条，"
-      f"有效测试路径 {int(m.n_test_valid.iloc[0])} 条。"
-      "Wilson 区间见 `mixed_noise_metrics.csv` 的 `*_lo` / `*_hi` 列。"
-      "中位检出的定义是**全部无效路径**的累计检出率首次达到一半的那一天。")
+    A(f"Sample sizes: {int(m.n_test_invalid.iloc[0])} invalid test paths, "
+      f"{int(m.n_test_valid.iloc[0])} valid test paths. "
+      "Wilson intervals are in the `*_lo` / `*_hi` columns of `mixed_noise_metrics.csv`. "
+      "Median detection is defined as the first day on which the cumulative detection rate over **all invalid paths** reaches one half.")
     A("")
 
-    A("## 4. 两个预设比较（504 日）")
+    A("## 4. Two pre-specified comparisons (504 days)")
     A("")
-    A(f"{S['config']['mixed_bootstrap_reps']} 次配对 bootstrap，"
-      "重抽单位是整条路径，校准与测试同时重抽，**每次重新校准门槛**；"
-      "同一批次内各方法共用重抽下标。区间为逐项 95% 区间。")
+    A(f"{S['config']['mixed_bootstrap_reps']} paired bootstrap replicates; "
+      "the resampling unit is a whole path, calibration and test are resampled together, and **the thresholds are re-calibrated in every replicate**; "
+      "within a batch all methods share the same resampling indices. Intervals are per-item (unadjusted) 95% intervals.")
     A("")
     rows = [r for _, r in b.iterrows()]
-    L.extend(_t(rows, ["比较", "量", "点估计", "95% 区间", "排除 0"],
+    L.extend(_t(rows, ["Comparison", "Quantity", "Point estimate", "95% interval", "Excludes 0"],
                 lambda r: [f"{CN[r['method_a']]} − {CN[r['method_b']]}",
-                           "检出率" if r["quantity"] == "detect" else "误杀率",
+                           "Detection rate" if r["quantity"] == "detect" else "False-alarm rate",
                            f"{r['point_pp']:+.2f} pp",
                            f"[{r['lo_pp']:+.2f}, {r['hi_pp']:+.2f}]",
-                           "是" if r["excludes_zero"] else "否"]))
+                           "Yes" if r["excludes_zero"] else "No"]))
     A("")
     d1 = b[(b.method_a == "binary_student_t") & (b.quantity == "detect")].iloc[0]
     d2 = b[(b.method_a == "ewma_student_t") & (b.quantity == "detect")].iloc[0]
-    A(f"**读法。** 重尾似然的收益在混合总体里仍然测得到："
-      f"{d1['point_pp']:+.2f} pp [{d1['lo_pp']:+.2f}, {d1['hi_pp']:+.2f}]，"
-      "且同预算下的误杀差区间覆盖 0，即这份收益不是用更多误杀换来的。")
+    A(f"**How to read this.** The gain from the heavy-tailed likelihood is still measurable in the mixed population: "
+      f"{d1['point_pp']:+.2f} pp [{d1['lo_pp']:+.2f}, {d1['hi_pp']:+.2f}], "
+      "and at the same budget the interval for the false-alarm difference covers 0, i.e. this gain was not bought with more false alarms.")
     A("")
-    A(f"**EWMA 相对固定 Student-t 的收益在这里测不出来**："
-      f"{d2['point_pp']:+.2f} pp [{d2['lo_pp']:+.2f}, {d2['hi_pp']:+.2f}]，区间覆盖 0。")
+    A(f"**The gain of EWMA over fixed Student-t is not measurable here**: "
+      f"{d2['point_pp']:+.2f} pp [{d2['lo_pp']:+.2f}, {d2['hi_pp']:+.2f}]; the interval covers 0.")
     A("")
-    A("**但不要把这个差异全部归因于参数随机化。**相对此前的固定情境实验，"
-      "本轮同时改变了两件事：(一) 每条策略的参数不同；"
-      "(二) 门槛从按情境分别校准改成整个混合总体只用一个。"
-      "本轮没有设计实验去分离这两者的贡献。")
+    A("**But do not attribute this difference entirely to parameter randomisation.** Relative to the earlier fixed-scenario experiments, "
+      "this round changed two things at once: (1) each strategy has different parameters; "
+      "(2) the thresholds went from being calibrated separately per scenario to a single threshold for the whole mixed population. "
+      "This round had no experiment designed to separate the contributions of the two.")
     A("")
 
-    A("## 5. 分组读回（同一冻结门槛，未重新校准）")
+    A("## 5. Subgroup read-back (same frozen threshold, not re-calibrated)")
     A("")
     aS = S["config"]["mixed_subgroup_A_split"]
     kS = S["config"]["mixed_subgroup_kappa_split"]
-    A(f"按 A = {aS:g}、kappa = {kS:g} 预先划分四个子群。"
-      "**“低 A”不等于“没有随机波动率”**：A 只是更小，波动仍然起伏，"
-      "而且 rho = 0.98 的持续性对每条路径都一样。")
+    A(f"Four subgroups were defined in advance by splitting at A = {aS:g} and kappa = {kS:g}. "
+      "**\"Low A\" does not mean \"no stochastic volatility\"**: A is only smaller, volatility still swings, "
+      "and the persistence rho = 0.98 is the same for every path.")
     A("")
     rows = [r for _, r in g.iterrows()]
-    L.extend(_t(rows, ["方法", "子群", "无效样本", "检出 d504", "有效样本",
-                       "误杀 d504", "95% 区间"],
+    L.extend(_t(rows, ["Method", "Subgroup", "Invalid paths", "Detection d504", "Valid paths",
+                       "False alarm d504", "95% interval"],
                 lambda r: [CN[r["method"]], r["subgroup"], f"{int(r['n_invalid'])}",
                            f"{r['detect_d504']:.4f}", f"{int(r['n_valid'])}",
                            f"{r['far_d504']:.4f}",
@@ -396,37 +396,37 @@ def write(out_dir: Path) -> Path:
     A("")
     over = g[g.far_d504 > p["far_budget"]]
     if len(over):
-        A(f"**{len(over)} 个子群的实测误杀率高于 {p['far_budget']:.0%} 的名义预算：**")
+        A(f"**{len(over)} subgroups have a realised false-alarm rate above the {p['far_budget']:.0%} nominal budget:**")
         A("")
         for _, r in over.sort_values("far_d504", ascending=False).iterrows():
-            A(f"- {CN[r['method']]}，{r['subgroup']}："
-              f"**{r['far_d504']:.2%}** [{r['far_d504_lo']:.2%}, {r['far_d504_hi']:.2%}]，"
+            A(f"- {CN[r['method']]}, {r['subgroup']}: "
+              f"**{r['far_d504']:.2%}** [{r['far_d504_lo']:.2%}, {r['far_d504_hi']:.2%}], "
               f"n = {int(r['n_valid'])}")
         A("")
-        A("这正是第 2 节那条范围声明的含义：一个在整个混合总体上成立的预算，"
-          "**不是**每个参数点上的同一保证。最安静的一类策略（低 A、小跳跃）"
-          "被多花了误杀预算。")
+        A("This is exactly what the scope statement in Section 2 means: a budget that holds over the whole mixed population "
+          "is **not** the same guarantee at every parameter point. The quietest class of strategies (low A, small jumps) "
+          "overspent the false-alarm budget.")
         A("")
     A("")
-    A("## 6. 限制")
+    A("## 6. Limitations")
     A("")
-    A("- 全部为模拟。独立测试路径确实是样本外评估，"
-      "**但它们来自与校准路径同一个生成模型族**；随机化参数**没有**解决真实市场的泛化问题。")
-    A("- 参数范围是运行前的模拟选择，不是市场估计。")
-    A(f"- 只做了一个误杀预算（{p['far_budget']:g}）、一个信号强度"
-      f"（Sharpe {p['states']['valid_sharpe']:g} 对 {p['states']['invalid_sharpe']:g}）、"
-      "策略从上线起状态不变；本轮不含随机失效时间。")
-    A("- 区间为逐项区间，未做多重比较校正。")
-    A("- 子群表用的是同一个冻结门槛读回，不是按子群重新校准的结果。")
+    A("- Everything is simulated. The independent test paths are a genuine out-of-sample evaluation, "
+      "**but they come from the same generating model family as the calibration paths**; randomising the parameters does **not** solve the problem of generalising to real markets.")
+    A("- The parameter ranges are simulation choices made before the run, not market estimates.")
+    A(f"- Only one false-alarm budget ({p['far_budget']:g}) and one signal strength "
+      f"(Sharpe {p['states']['valid_sharpe']:g} vs {p['states']['invalid_sharpe']:g}) were run, "
+      "and each strategy keeps the same state from launch onward; this round contains no random failure times.")
+    A("- Intervals are per-item intervals, with no multiple-comparison correction.")
+    A("- The subgroup table reads back the same frozen threshold; it is not the result of re-calibrating per subgroup.")
     A("")
-    A("## 7. 复现")
+    A("## 7. Reproduction")
     A("")
     A("```bash")
     A("uv run python -m strategy_survivorship.mixed_noise")
     A("```")
     A("")
-    A(f"耗时 {S['elapsed_s']:.1f} 秒。配置、随机流指纹与协议见 "
-      "`mixed_noise_summary.json` 与 `mixed_noise_protocol.json`。")
+    A(f"Run time {S['elapsed_s']:.1f} s. The configuration, random-stream fingerprints and protocol are in "
+      "`mixed_noise_summary.json` and `mixed_noise_protocol.json`.")
     path = out_dir / "mixed_noise_report.md"
     path.write_text("\n".join(L) + "\n", encoding="utf-8")
     return path

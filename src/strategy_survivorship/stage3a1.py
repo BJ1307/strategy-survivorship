@@ -518,9 +518,9 @@ import pandas as pd
 from .gaussian_bound import max_detection
 
 
-CN = {"binary_gaussian": "固定 Gaussian", "binary_student_t": "固定 Student-t",
-      "ewma_student_t": "普通 EWMA Student-t", "ewma_trunc_student_t": "截断 EWMA Student-t"}
-SC = {"gaussian_ctrl": "独立同分布高斯对照", "sv_jump": "SV+跳跃 (A=1, ρ=0.98, κ=5, λ=2/年)"}
+CN = {"binary_gaussian": "fixed Gaussian", "binary_student_t": "fixed Student-t",
+      "ewma_student_t": "plain EWMA Student-t", "ewma_trunc_student_t": "truncated EWMA Student-t"}
+SC = {"gaussian_ctrl": "iid Gaussian control", "sv_jump": "SV+jumps (A=1, ρ=0.98, κ=5, λ=2/yr)"}
 
 
 def _t(rows, header, render):
@@ -531,7 +531,7 @@ def _t(rows, header, render):
 
 
 def _med(v, note):
-    return f"{int(v)}d" if v == v else (note or "本窗口内未达到")
+    return f"{int(v)}d" if v == v else (note or "not reached within this window")
 
 
 def write_stage3a1_report(cfg, S, metrics, boot, ptime, outside, ref, path: Path) -> Path:
@@ -559,75 +559,83 @@ def write_stage3a1_report(cfg, S, metrics, boot, ptime, outside, ref, path: Path
                  & (boot.sharpe_valid == s) & (boot.method == m) & (boot.cutoff_H == H)]
         return r.iloc[0] if len(r) else None
 
-    A("# Stage 3A.1 报告：监测期限诊断")
+    A("# Stage 3A.1 report: monitoring-horizon diagnostic")
     A("")
-    A("本文件由 `python -m strategy_survivorship.stage3a1` 自动生成，"
-      "所有数字取自同一次运行的结果表。")
+    A("This file is generated automatically by `python -m strategy_survivorship.stage3a1`; "
+      "every number is taken from the result tables of the same run.")
     A("")
-    A("**本轮只改变用于校准误杀约束的监测期限。**检测器、DGP 参数、EWMA 系数、"
-      "Student-t 自由度、截断参数、候选均值传入、因果方差更新与首次越界规则全部不变；"
-      "不搜索模型参数，不优化动态边界，不做随机 T 或 BOCPD。")
+    A("**This round changes only the monitoring horizon used to calibrate the false-alarm constraint.** "
+      "The detectors, DGP parameters, EWMA coefficients, "
+      "Student-t degrees of freedom, truncation parameters, candidate-mean inputs, causal variance update "
+      "and first-passage rule are all unchanged; "
+      "no model parameters are searched, no dynamic boundary is optimised, and no random T or BOCPD is used.")
     A("")
 
     # ---------------- 1 ----------------
-    A("## 1. 两种安排回答的是不同的问题")
+    A("## 1. The two arrangements answer different questions")
     A("")
-    A(f"- **安排 A**：按 {CAL_HORIZON_A} 天校准**一个**门槛，再读它在第 "
-      f"{'、'.join(str(h) for h in Hs)} 天的累计表现。")
-    A(f"- **安排 B**：分别按 H = {'、'.join(str(h) for h in Hs)} 校准门槛，"
-      f"并在各自截止日评价。")
+    A(f"- **Arrangement A**: calibrate **one** threshold over {CAL_HORIZON_A} days, then read its "
+      f"cumulative performance on days {', '.join(str(h) for h in Hs)}.")
+    A(f"- **Arrangement B**: calibrate a separate threshold for each H = {', '.join(str(h) for h in Hs)}, "
+      f"and evaluate each one at its own cutoff.")
     A("")
-    A("**B 的四个期限是四个独立设计的监测方案。**每一个都在自己的窗口里花掉自己的 α，"
-      "不能把它们依次拼起来还声称共享同一个两年预算。因此，"
-      "**B 相对 A 的早期检出提升是提前动用误杀预算的结果，"
-      "不是模型从同一批数据里提取到了更多信息**——两种安排看到的收益、"
-      "统计量与似然增量逐日完全相同。")
+    A("**B's four horizons are four independently designed monitoring schemes.** Each one spends its "
+      "own α inside its own window; "
+      "they cannot be chained together while still claiming one shared two-year budget. Therefore "
+      "**B's gain in early detection over A is the result of spending the false-alarm budget earlier, "
+      "not of the model extracting more information from the same data**: the two arrangements see "
+      "identical returns, statistics and likelihood increments on every day.")
     A("")
-    A(f"主设定提前写定：**s={s0:g}、{SC[sc0]}、α={a_main:g}、H={H0}**。"
-      f"首要比较是 {CN[MAIN_METHOD]} 在 B 与 A 下的半年检出率差及**同期误杀率差**。")
+    A(f"Main setting written down in advance: **s={s0:g}, {SC[sc0]}, α={a_main:g}, H={H0}**. "
+      f"The primary comparison is the half-year detection-rate difference of {CN[MAIN_METHOD]} "
+      "under B versus A, together with the **same-period false-alarm-rate difference**.")
     A("")
 
     # ---------------- 2 ----------------
-    A("## 2. 数据、期限前缀与校准协议")
+    A("## 2. Data, horizon prefixes and calibration protocol")
     A("")
     sp = S["sampling"]
-    A(f"- 两个噪声情境（{SC['gaussian_ctrl']}、{SC['sv_jump']}），"
-      f"四个方法，两个 Sharpe，四个期限，两个预算。")
-    A(f"- 每个情境三块数据：{cfg.stage3a1_calibration_paths} 条校准有效路径、"
-      f"{cfg.stage3a1_test_paths} 条测试有效路径、{cfg.stage3a1_test_paths} 条测试无效路径，"
-      f"每条均生成 {CAL_HORIZON_A} 天。")
-    A(f"- 共 **{sp['base_noise_paths']:,} 条基础噪声路径**；两个 Sharpe 与全部期限"
-      f"共享各自数据块中的基础噪声，因此 {sp['return_path_evaluations']:,} 次评估"
-      "**不是**同样数量的独立路径。校准与测试数据块独立。")
-    A(f"- 使用独立于 Stage 3A 的新随机流（`stage3a1_calibration` / `_test` / `_bootstrap`）。")
+    A(f"- Two noise scenarios ({SC['gaussian_ctrl']}; {SC['sv_jump']}), "
+      f"four methods, two Sharpe values, four horizons, two budgets.")
+    A(f"- Three data blocks per scenario: {cfg.stage3a1_calibration_paths} calibration valid paths, "
+      f"{cfg.stage3a1_test_paths} test valid paths and {cfg.stage3a1_test_paths} test invalid paths, "
+      f"each generated for {CAL_HORIZON_A} days.")
+    A(f"- **{sp['base_noise_paths']:,} base noise paths** in total; the two Sharpe values and all horizons "
+      f"share the base noise within each data block, so the {sp['return_path_evaluations']:,} evaluations "
+      "are **not** the same number of independent paths. The calibration and test data blocks are independent.")
+    A(f"- New random streams independent of Stage 3A are used (`stage3a1_calibration` / `_test` / `_bootstrap`).")
     A("")
-    A("**不同期限只截取同一条完整统计量路径的前缀。**统计量在 504 天上算一次，"
-      "各期限取 `[起始日, H]` 的最小值；改变 H 不会改变此前任何一天的 EWMA 状态、"
-      "收益或似然增量。测试套件对此逐点核验（见 `tests/test_stage3a1.py`）。")
+    A("**Different horizons only take prefixes of the same full statistic path.** The statistic is "
+      "computed once over 504 days, "
+      "and each horizon takes the minimum over `[start day, H]`; changing H does not change the EWMA state, "
+      "return or likelihood increment on any earlier day. The test suite checks this point by point "
+      "(see `tests/test_stage3a1.py`).")
     A("")
-    A(f"本轮实际有 **{S['n_rules_this_round']} 条规则**"
-      f"（4 方法 × 2 情境 × 2 s × 2 α × 4 H）。为保持与 Stage 3A 相同的校准缓冲强度，"
-      f"仍采用每条规则 δ = 0.05/{S['delta_denominator_used']} = "
-      f"{S['delta_per_cell']:.4e}，比按 128 条规则拆分更保守。")
+    A(f"This round actually has **{S['n_rules_this_round']} rules** "
+      f"(4 methods × 2 scenarios × 2 s × 2 α × 4 H). To keep the same calibration-buffer strength "
+      f"as Stage 3A, each rule still uses δ = 0.05/{S['delta_denominator_used']} = "
+      f"{S['delta_per_cell']:.4e}, which is more conservative than splitting over 128 rules.")
     A("")
     for a in sorted(cfg.far_targets):
         v = S["ranks"][str(a)] if str(a) in S["ranks"] else S["ranks"][a]
-        A(f"- α={a:g}：秩 **{v['buffered']}**（二项式与 Beta 两路一致：{v['beta_route']}）。")
+        A(f"- α={a:g}: rank **{v['buffered']}** (the binomial and Beta routes agree: {v['beta_route']}).")
     A("")
-    A(f"**范围声明**：{S['calibration_scope']}。这不是跨全部历史阶段的统一保证。"
-      "全部门槛在正式测试前冻结并写入 `stage3a1_thresholds.csv`。")
+    A(f"**Scope statement**: {S['calibration_scope']}. This is not a unified guarantee across all "
+      "earlier stages. "
+      "All thresholds were frozen before formal testing and written to `stage3a1_thresholds.csv`.")
     A("")
 
     # ---------------- 3 ----------------
-    A("## 3. 主结果：专门为半年校准之后")
+    A("## 3. Main results: after calibrating specifically for half a year")
     A("")
     for s in sharpes:
-        A(f"**s = {s:g}**，{SC[sc0]}，α={a_main:g}")
+        A(f"**s = {s:g}**, {SC[sc0]}, α={a_main:g}")
         A("")
         rows = [(m, arm, H) for m in METHODS_3A1 for H in Hs for arm in ("A", "B")]
-        L.extend(_t(rows, ["方法", "安排", "截止日 H", "检出率", "95% 区间", "累计误杀率",
-                           "95% 区间", "E[min(τ,H)]", "中位首次报警", "未检出比例",
-                           "门槛", "工作概率门槛"],
+        L.extend(_t(rows, ["Method", "Arrangement", "Cutoff H", "Detection rate", "95% interval",
+                           "Cumulative false-alarm rate",
+                           "95% interval", "E[min(τ,H)]", "Median first alarm", "Undetected fraction",
+                           "Threshold", "Working-probability threshold"],
                     lambda r: [
                         CN[r[0]], r[1], str(r[2]),
                         f"{g(sc0, s, a_main, r[1], r[2], r[0], 'detect'):.4f}",
@@ -638,31 +646,37 @@ def write_stage3a1_report(cfg, S, metrics, boot, ptime, outside, ref, path: Path
                         f"{g(sc0, s, a_main, r[1], r[2], r[0], 'far_hi'):.4f}]",
                         f"{g(sc0, s, a_main, r[1], r[2], r[0], 'expected_min_tau_H'):.1f}",
                         _med(g(sc0, s, a_main, r[1], r[2], r[0], 'median_first_alarm'),
-                             f"H={r[2]} 内未达到"),
+                             f"not reached within H={r[2]} days"),
                         f"{g(sc0, s, a_main, r[1], r[2], r[0], 'undetected_at_H'):.4f}",
                         f"{g(sc0, s, a_main, r[1], r[2], r[0], 'threshold'):.4f}",
                         f"{g(sc0, s, a_main, r[1], r[2], r[0], 'working_prob_threshold'):.4f}"]))
         A("")
-    A(f"样本量：每格有效路径 {cfg.stage3a1_test_paths}、无效路径 {cfg.stage3a1_test_paths}。"
-      "区间为 Wilson 区间。")
+    A(f"Sample size per cell: {cfg.stage3a1_test_paths} valid paths and {cfg.stage3a1_test_paths} "
+      "invalid paths. Intervals are Wilson intervals.")
     A("")
-    A("**`E[min(τ,H)]` 的上限随 H 变化，不同 H 的这个数不可直接比较**："
-      "H=63 的截断均值最大只能是 63 天。跨期限比较“更快”是没有意义的；"
-      "本报告的所有时间比较都在**同一截止日**上进行。")
+    A("**The ceiling of `E[min(τ,H)]` changes with H, so this number cannot be compared directly "
+      "across H**: "
+      "at H=63 the truncated mean can be at most 63 days. Comparing \"faster\" across horizons is "
+      "meaningless; "
+      "every time comparison in this report is made at **the same cutoff**.")
     A("")
-    A("工作概率门槛指的是同一条规则写成 `q > q*` 时的 `q*`（`q = expit(−L)`），"
-      "只对贝叶斯统计量有这个读法。")
+    A("The working-probability threshold is the `q*` obtained when the same rule is written as "
+      "`q > q*` (`q = expit(−L)`); "
+      "this reading applies only to the Bayesian statistics.")
     A("")
 
     # ---------------- 4 ----------------
-    A("## 4. 首要比较：B − A")
+    A("## 4. Primary comparison: B − A")
     A("")
-    A(f"{cfg.stage3a1_bootstrap_reps} 次配对 bootstrap，同时重抽校准与测试路径；"
-      "同一次重抽在两个安排、各期限与相关方法之间共用路径索引，各自重算门槛。"
-      "**区间是逐项区间**，校准缓冲不覆盖这些差。")
+    A(f"{cfg.stage3a1_bootstrap_reps} paired bootstrap replicates, resampling calibration and test "
+      "paths together; "
+      "each resample shares its path indices across the two arrangements, all horizons and the "
+      "relevant methods, and each cell recomputes its own threshold. "
+      "**The intervals are per-item (unadjusted) intervals**; the calibration buffer does not cover "
+      "these differences.")
     A("")
     for s in sharpes:
-        A(f"**s = {s:g}**，{SC[sc0]}，α={a_main:g}")
+        A(f"**s = {s:g}**, {SC[sc0]}, α={a_main:g}")
         A("")
         rows = [(m, H) for m in METHODS_3A1 for H in Hs]
         def rd(r):
@@ -680,21 +694,23 @@ def write_stage3a1_report(cfg, S, metrics, boot, ptime, outside, ref, path: Path
                     f"[{float(f.lo) * 100:+.2f}, {float(f.hi) * 100:+.2f}]" if f is not None else "-",
                     f"{float(tm.trunc_time_diff_days.iloc[0]):+.2f}" if len(tm) else "-",
                     f"[{float(tm.lo.iloc[0]):+.2f}, {float(tm.hi.iloc[0]):+.2f}]" if len(tm) else "-"]
-        L.extend(_t(rows, ["方法", "H", "检出率差", "95% 区间", "同期误杀率差", "95% 区间",
-                           "配对 E[min(τ,H)] 差（天）", "95% 区间"], rd))
+        L.extend(_t(rows, ["Method", "H", "Detection-rate difference", "95% interval",
+                           "Same-period false-alarm-rate difference", "95% interval",
+                           "Paired E[min(τ,H)] difference (days)", "95% interval"], rd))
         A("")
     d0 = bo("detect_B_minus_A", sc0, a_main, s0, MAIN_METHOD, H0)
     f0 = bo("far_B_minus_A", sc0, a_main, s0, MAIN_METHOD, H0)
-    A(f"**首要比较（{CN[MAIN_METHOD]}，s={s0:g}，H={H0}，α={a_main:g}）**："
-      f"检出率差 {float(d0.point) * 100:+.2f} pp "
-      f"[{float(d0.lo) * 100:+.2f}, {float(d0.hi) * 100:+.2f}]，"
-      f"同期误杀率差 {float(f0.point) * 100:+.2f} pp "
-      f"[{float(f0.lo) * 100:+.2f}, {float(f0.hi) * 100:+.2f}]。"
-      "两个数必须一起读。")
+    A(f"**Primary comparison ({CN[MAIN_METHOD]}, s={s0:g}, H={H0}, α={a_main:g})**: "
+      f"detection-rate difference {float(d0.point) * 100:+.2f} pp "
+      f"[{float(d0.lo) * 100:+.2f}, {float(d0.hi) * 100:+.2f}]; "
+      f"same-period false-alarm-rate difference {float(f0.point) * 100:+.2f} pp "
+      f"[{float(f0.lo) * 100:+.2f}, {float(f0.hi) * 100:+.2f}]. "
+      "The two numbers must be read together.")
     A("")
 
     # ---------------- 5 ----------------
-    A("## 5. 第二项比较：各期限自校准后，方差自适应的增益是否仍在")
+    A("## 5. Second comparison: does the variance-adaptation gain survive once each horizon is "
+      "calibrated for itself?")
     A("")
     rows = []
     for s in sharpes:
@@ -703,140 +719,164 @@ def write_stage3a1_report(cfg, S, metrics, boot, ptime, outside, ref, path: Path
                 r = bo(f"gain_B_{ma}_minus_{mb}", sc0, a_main, s, f"{ma}|{mb}", H)
                 if r is not None:
                     rows.append((s, ma, mb, H, r))
-    L.extend(_t(rows, ["s", "比较（均按该期限自校准）", "H", "检出率差", "95% 区间", "排除 0"],
+    L.extend(_t(rows, ["s", "Comparison (both calibrated at this horizon)", "H",
+                       "Detection-rate difference", "95% interval", "Excludes 0"],
                 lambda r: [f"{r[0]:g}", f"{CN[r[1]]} − {CN[r[2]]}", str(r[3]),
                            f"{float(r[4].point) * 100:+.2f} pp",
                            f"[{float(r[4].lo) * 100:+.2f}, {float(r[4].hi) * 100:+.2f}]",
-                           "是" if bool(r[4].excludes_zero) else "否"]))
+                           "yes" if bool(r[4].excludes_zero) else "no"]))
     A("")
-    A("截断的额外增益一并报告；**本轮不据此搜索截断参数**。")
+    A("The additional gain from truncation is reported alongside; **this round does not search the "
+      "truncation parameters on that basis**.")
     A("")
 
     # ---------------- 6 ----------------
-    A("## 6. 期限外诊断：短期门槛继续用下去会怎样")
+    A("## 6. Out-of-horizon diagnostic: what happens if a short-horizon threshold stays in use")
     A("")
-    A("把按 H=63、126、252 校准的门槛继续用到第 504 天，"
-      "看实际累计误杀率变成多少。**短期门槛不自动继承两年保证**："
-      "它得到的预算是针对自己那个窗口的。")
+    A("The thresholds calibrated at H=63, 126 and 252 are kept in use up to day 504, "
+      "to see what the realised cumulative false-alarm rate becomes. **A short-horizon threshold "
+      "does not automatically inherit a two-year guarantee**: "
+      "the budget it was given applies to its own window.")
     A("")
     for s in sharpes:
-        A(f"**s = {s:g}**，{SC[sc0]}，各自窗口的预算 α={a_main:g}")
+        A(f"**s = {s:g}**, {SC[sc0]}, budget per own window α={a_main:g}")
         A("")
         d = outside[(outside.scenario == sc0) & (outside.sharpe_valid == s)
                     & (outside.far_target == a_main)]
         rows = [r for _, r in d.sort_values(["threshold_calibrated_over", "method"]).iterrows()]
-        L.extend(_t(rows, ["门槛校准期限", "方法", "自身窗口内误杀"]
-                    + [f"延用到 d{h} 的累计误杀" for h in Hs],
+        L.extend(_t(rows, ["Threshold calibration horizon", "Method", "False alarms within own window"]
+                    + [f"Extended to d{h}: cumulative false alarms" for h in Hs],
                     lambda r: [str(int(r["threshold_calibrated_over"])), CN[r["method"]],
                                f"{r['far_at_own_H']:.4f}"]
                     + [f"{r[f'far_extended_to_d{h}']:.4f}" for h in Hs]))
         A("")
 
     # ---------------- 7 ----------------
-    A("## 7. 高斯参照")
+    A("## 7. Gaussian reference")
     A("")
     A("```")
-    A("    D_max(h, α) = Φ( s·√h − Φ⁻¹(1−α) ),   h 以年为单位")
+    A("    D_max(h, α) = Φ( s·√h − Φ⁻¹(1−α) ),   h in years")
     A("```")
     A("")
-    A("**只适用于已知方差、独立同分布高斯、两个简单假设的情境。**"
-      "它在每个截止时间上分别计算，每次都把全部 α 用在那一个截止日；"
-      "因此它不是一条可以同时达到的监测曲线。"
-      "组合情境的剩余差距**不能**叫作信息上限——本项目没有为组合情境推导过任何上界。")
+    A("**Applies only to the known-variance, iid Gaussian setting with two simple hypotheses.** "
+      "It is computed separately at each cutoff, each time spending the whole α at that one cutoff; "
+      "it is therefore not a monitoring curve that can be attained simultaneously. "
+      "The remaining gap in the combined scenario **cannot** be called an information limit: this "
+      "project has not derived any upper bound for the combined scenario.")
     A("")
     rows = [r for _, r in ref.iterrows()]
-    L.extend(_t(rows, ["s", "α", "h（年）", "天数", "该截止日的最强检验检出率"],
+    L.extend(_t(rows, ["s", "α", "h (years)", "Days", "Most-powerful-test detection rate at this cutoff"],
                 lambda r: [f"{r['sharpe_valid']:g}", f"{r['far_budget']:g}",
                            f"{r['years']:.4g}", f"{int(r['days'])}",
                            f"{r['max_detection']:.4f}"]))
     A("")
     gc = [(g("gaussian_ctrl", s0, a_main, "B", H0, m, "detect"), m) for m in METHODS_3A1]
     best = max(gc)
-    A(f"高斯对照、s={s0:g}、H={H0}、α={a_main:g}：安排 B 下最好的方法检出 "
-      f"{best[0]:.2%}（{CN[best[1]]}），该截止日的参照为 "
-      f"{max_detection(s0, H0 / cfg.D, a_main):.2%}。"
-      "代入经验误杀率所得的比较仍称**估计参照**；"
-      "“没有越界”只作一致性检查，不构成对实现的数学验证。")
+    A(f"Gaussian control, s={s0:g}, H={H0}, α={a_main:g}: under arrangement B the best method detects "
+      f"{best[0]:.2%} ({CN[best[1]]}); the reference at this cutoff is "
+      f"{max_detection(s0, H0 / cfg.D, a_main):.2%}. "
+      "A comparison that plugs in the empirical false-alarm rate is still called an **estimated "
+      "reference**; "
+      "\"no crossing of the reference\" serves only as a consistency check and does not constitute a "
+      "mathematical verification of the implementation.")
     A("")
 
     # ---------------- 8 ----------------
-    A("## 8. 直接回答")
+    A("## 8. Direct answers")
     A("")
     dB = g(sc0, s0, a_main, "B", H0, MAIN_METHOD, "detect")
     dA = g(sc0, s0, a_main, "A", H0, MAIN_METHOD, "detect")
     fB = g(sc0, s0, a_main, "B", H0, MAIN_METHOD, "far")
     fA = g(sc0, s0, a_main, "A", H0, MAIN_METHOD, "far")
     bestB = max((g(sc0, s0, a_main, "B", H0, m, "detect"), m) for m in METHODS_3A1)
-    A(f"**（一）专门为半年监测校准后，弱信号能检出多少？** "
-      f"s={s0:g}、{SC[sc0]}、α={a_main:g}、H={H0} 天，安排 B 下 {CN[MAIN_METHOD]} 检出 "
-      f"{dB:.2%}，最好的方法是 {CN[bestB[1]]} 的 {bestB[0]:.2%}。")
+    A(f"**(1) After calibrating specifically for half-year monitoring, how much of the weak signal "
+      f"can be detected?** "
+      f"At s={s0:g}, {SC[sc0]}, α={a_main:g}, H={H0} days, {CN[MAIN_METHOD]} under arrangement B "
+      f"detects {dB:.2%}; the best method is {CN[bestB[1]]} at {bestB[0]:.2%}.")
     A("")
-    A(f"**（二）相对当前两年规则的半年表现，增加了多少检出、多少同期误杀？** "
-      f"同一方法在安排 A 下的半年检出为 {dA:.2%}，误杀 {fA:.2%}；"
-      f"安排 B 为 {dB:.2%} / {fB:.2%}。"
-      f"即多检出 {(dB - dA) * 100:+.2f} pp，同期多误杀 {(fB - fA) * 100:+.2f} pp。")
+    A(f"**(2) Relative to the half-year performance of the current two-year rule, how much detection "
+      f"and how many same-period false alarms are added?** "
+      f"Under arrangement A the same method has half-year detection {dA:.2%} and false alarms {fA:.2%}; "
+      f"under arrangement B the figures are {dB:.2%} / {fB:.2%}. "
+      f"That is {(dB - dA) * 100:+.2f} pp more detection and {(fB - fA) * 100:+.2f} pp more "
+      f"same-period false alarms.")
     A("")
-    A("**这一提升来自监测期限与早期误杀安排的改变，不是模型获得了新的收益数据。**"
-      "两种安排的输入逐日完全相同；B 把原本留给后一年半的误杀预算提前花在了前半年。")
+    A("**This gain comes from changing the monitoring horizon and the early allocation of false "
+      "alarms, not from the model obtaining new return data.** "
+      "The inputs of the two arrangements are identical on every day; B spends in the first half "
+      "year the false-alarm budget originally reserved for the remaining year and a half.")
     A("")
     dA504 = g(sc0, s0, a_main, "A", CAL_HORIZON_A, MAIN_METHOD, "detect")
     fA504 = g(sc0, s0, a_main, "A", CAL_HORIZON_A, MAIN_METHOD, "far")
-    A("**把“花掉的预算”对齐之后再看一次。**同一个方法：")
+    A("**Look again after aligning the \"budget spent\".** For the same method:")
     A("")
     L.extend(_t([("B", H0, dB, fB), ("A", CAL_HORIZON_A, dA504, fA504)],
-                ["安排", "窗口（天）", "检出率", "已花掉的累计误杀"],
+                ["Arrangement", "Window (days)", "Detection rate", "Cumulative false alarms spent"],
                 lambda r: [r[0], str(r[1]), f"{r[2]:.2%}", f"{r[3]:.2%}"]))
     A("")
-    A(f"**在相近的累计误杀率下（{fB:.2%} 对 {fA504:.2%}），更长的观察期得到更高的"
-      f"累计检出率**（{dB:.2%} 对 {dA504:.2%}，比值 {dA504 / dB:.2f}）。"
-      "这一点单看 B−A 的正差是看不出来的。")
+    A(f"**At similar cumulative false-alarm rates ({fB:.2%} vs {fA504:.2%}), the longer observation "
+      f"window gives a higher cumulative detection rate** ({dB:.2%} vs {dA504:.2%}, ratio "
+      f"{dA504 / dB:.2f}). "
+      "This cannot be seen from the positive B−A difference alone.")
     A("")
-    A("**但这不是一个完整的成本比较。**本项目的评价里**没有**纳入等待成本："
-      "多监测一年半意味着一个无效策略在此期间继续运行、继续消耗资金与风险额度，"
-      "而这些代价不在检出率与误杀率两个指标之内。"
-      "因此上面这句只能读作“在这两个指标上，更长的窗口给出更高的检出”，"
-      "不能读作“更长的窗口在整体上更划算”。")
+    A("**But this is not a complete cost comparison.** The evaluation in this project does **not** "
+      "include the cost of waiting: "
+      "monitoring for another year and a half means that an invalid strategy keeps running during "
+      "that time, continuing to consume capital and risk limits, "
+      "and these costs lie outside the two metrics of detection rate and false-alarm rate. "
+      "The sentence above can therefore only be read as \"on these two metrics, the longer window "
+      "gives higher detection\", "
+      "not as \"the longer window is better value overall\".")
     A("")
     rows2 = [r for r in rows if False]
     sec = [bo(f"gain_B_{ma}_minus_{mb}", sc0, a_main, s0, f"{ma}|{mb}", H0)
            for ma, mb in SECOND_PAIRS]
     if sec[0] is not None:
-        A(f"**（三）方差自适应的收益是否仍在？** 在按 H={H0} 自校准之后，"
-          f"{CN[SECOND_PAIRS[0][0]]} − {CN[SECOND_PAIRS[0][1]]} 为 "
+        A(f"**(3) Does the variance-adaptation gain survive?** After calibrating at H={H0} itself, "
+          f"{CN[SECOND_PAIRS[0][0]]} − {CN[SECOND_PAIRS[0][1]]} is "
           f"{float(sec[0].point) * 100:+.2f} pp "
-          f"[{float(sec[0].lo) * 100:+.2f}, {float(sec[0].hi) * 100:+.2f}]，"
-          f"区间{'排除' if bool(sec[0].excludes_zero) else '覆盖'} 0。"
-          + (f"截断的额外增益为 {float(sec[1].point) * 100:+.2f} pp "
-             f"[{float(sec[1].lo) * 100:+.2f}, {float(sec[1].hi) * 100:+.2f}]。"
+          f"[{float(sec[0].lo) * 100:+.2f}, {float(sec[0].hi) * 100:+.2f}], "
+          f"and the interval {'excludes' if bool(sec[0].excludes_zero) else 'covers'} 0."
+          + (f" The additional gain from truncation is {float(sec[1].point) * 100:+.2f} pp "
+             f"[{float(sec[1].lo) * 100:+.2f}, {float(sec[1].hi) * 100:+.2f}]."
              if sec[1] is not None else ""))
         A("")
-    A(f"**（四）能否支持“半年内发现大多数无效策略”？** "
-      f"**在本轮测试的这四个方法与这两个情境下不能**："
-      f"s={s0:g}、{SC[sc0]}、α={a_main:g}、H={H0}，安排 B 里最好的方法只有 "
-      f"{bestB[0]:.1%}，远不到多数。"
-      "这是对**已测方法与已测情境**的陈述，不是关于所有可能的检测规则的一般结论："
-      "本轮没有考察任何本项目之外的方法，也只在两个 s、两个 α、四个 H 上有测量。")
+    A(f"**(4) Can this support \"detecting most invalid strategies within half a year\"?** "
+      f"**Not for the four methods and two scenarios tested in this round**: "
+      f"at s={s0:g}, {SC[sc0]}, α={a_main:g}, H={H0}, the best method under arrangement B reaches only "
+      f"{bestB[0]:.1%}, far short of a majority. "
+      "This is a statement about **the methods and scenarios tested**, not a general conclusion about "
+      "all possible detection rules: "
+      "this round examined no method outside this project, and has measurements at only two s, "
+      "two α and four H.")
     A("")
-    A(f"**（五）对两年结果的理解有什么改变？** 两年检出率偏低**不能**归因于"
-      "“门槛是按两年校准的”这一件事："
-      f"即便专门为半年重新校准，半年检出也只从 {dA:.2%} 升到 {dB:.2%}，"
-      f"而这已经动用了 {fB:.2%} 的误杀（安排 A 在同一天只用了 {fA:.2%}）。"
-      "期限的重新设定改变的是**预算的时间分配**，不改变数据里的信息量。")
+    A(f"**(5) What changes in how the two-year results are understood?** The low two-year detection "
+      "rate **cannot** be attributed to "
+      "the single fact that \"the threshold was calibrated over two years\": "
+      f"even when recalibrated specifically for half a year, half-year detection rises only from "
+      f"{dA:.2%} to {dB:.2%}, "
+      f"and this already uses {fB:.2%} in false alarms (arrangement A used only {fA:.2%} by the same day). "
+      "Resetting the horizon changes **the allocation of the budget over time**, not the amount of "
+      "information in the data.")
     A("")
 
     # ---------------- 9 ----------------
-    A("## 9. 限制")
+    A("## 9. Limitations")
     A("")
-    A("- B 的四个期限是四个独立方案，不能拼接成一个共享两年预算的计划。")
-    A("- 所有区间都是逐项区间，未做多重比较校正；校准缓冲只约束门槛的误杀，"
-      "不覆盖检出率差。")
-    A(f"- 只测了 s ∈ {{{s_hi:g}, {s_lo:g}}}、α ∈ {{{a_alt:g}, {a_main:g}}}、"
-      f"H ∈ {{{', '.join(str(h) for h in Hs)}}}，不外推到其它取值。")
-    A("- 不同 H 的 `E[min(τ,H)]` 上限不同，跨期限不可比。")
-    A("- 高斯参照只适用于 iid 高斯对照；组合情境没有已知上界。")
-    A("- 本轮不含 252 日 rolling 方法：把它改成短窗口会改变模型，超出本轮范围。")
+    A("- B's four horizons are four independent schemes and cannot be spliced into one plan that "
+      "shares a two-year budget.")
+    A("- All intervals are per-item intervals with no multiple-comparison correction; the calibration "
+      "buffer only constrains the thresholds' false alarms "
+      "and does not cover the detection-rate differences.")
+    A(f"- Only s ∈ {{{s_hi:g}, {s_lo:g}}}, α ∈ {{{a_alt:g}, {a_main:g}}} and "
+      f"H ∈ {{{', '.join(str(h) for h in Hs)}}} were tested; no extrapolation to other values.")
+    A("- The ceiling of `E[min(τ,H)]` differs across H, so it is not comparable across horizons.")
+    A("- The Gaussian reference applies only to the iid Gaussian control; the combined scenario has "
+      "no known upper bound.")
+    A("- This round excludes the 252-day rolling method: changing it to a short window would change "
+      "the model, which is outside the scope of this round.")
     A("")
-    A("## 10. 复现")
+    A("## 10. Reproduction")
     A("")
     A("```bash")
     A("uv run python -m strategy_survivorship.stage3a1")
@@ -844,8 +884,8 @@ def write_stage3a1_report(cfg, S, metrics, boot, ptime, outside, ref, path: Path
     A("uv run python -m strategy_survivorship.stage3a1 --report-only")
     A("```")
     A("")
-    A(f"本轮耗时 {S['elapsed_s']:.1f} 秒。`--figures-only` 与 `--report-only` "
-      "只读取已生成的 CSV，不重跑模拟。")
+    A(f"This round took {S['elapsed_s']:.1f} seconds. `--figures-only` and `--report-only` "
+      "only read the CSVs already generated and do not rerun the simulation.")
     path.write_text("\n".join(L) + "\n", encoding="utf-8")
     return path
 

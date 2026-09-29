@@ -504,18 +504,18 @@ from .stage2d import COMBINED, SCEN_LABEL
 from .stage2e import LABEL_2E, METHODS_2E
 
 
-SC = {"gaussian_ctrl": "高斯对照 (A=0, κ=0)", "sv_ctrl": "SV 对照 (A=1, κ=0)",
-      "jump_ctrl": "跳跃对照 (A=0, κ=5)", "sv_jump": "SV+跳跃 (A=1, κ=5)",
-      "sv_jump_big": "SV+较大跳跃 (A=1, κ=8)"}
-CN = {"binary_gaussian": "固定 Gaussian", "binary_student_t": "固定 Student-t",
-      "trailing_sharpe_252": "252 日 trailing Sharpe",
-      "known_vol_rolling_252": "固定尺度 rolling 对照",
-      "ewma_gaussian": "普通 EWMA Gaussian", "ewma_student_t": "普通 EWMA Student-t",
-      "ewma_trunc_gaussian": "截断 EWMA Gaussian",
-      "ewma_trunc_student_t": "截断 EWMA Student-t"}
-PAIR_CN = {("ewma_student_t", "binary_student_t"): "普通 EWMA t − 固定 t",
-           ("ewma_trunc_student_t", "ewma_student_t"): "截断 t − 普通 EWMA t",
-           ("ewma_trunc_student_t", "trailing_sharpe_252"): "截断 t − trailing Sharpe"}
+SC = {"gaussian_ctrl": "Gaussian control (A=0, κ=0)", "sv_ctrl": "SV control (A=1, κ=0)",
+      "jump_ctrl": "jump control (A=0, κ=5)", "sv_jump": "SV+jumps (A=1, κ=5)",
+      "sv_jump_big": "SV+larger jumps (A=1, κ=8)"}
+CN = {"binary_gaussian": "fixed Gaussian", "binary_student_t": "fixed Student-t",
+      "trailing_sharpe_252": "252-day trailing Sharpe",
+      "known_vol_rolling_252": "fixed-scale rolling control",
+      "ewma_gaussian": "plain EWMA Gaussian", "ewma_student_t": "plain EWMA Student-t",
+      "ewma_trunc_gaussian": "truncated EWMA Gaussian",
+      "ewma_trunc_student_t": "truncated EWMA Student-t"}
+PAIR_CN = {("ewma_student_t", "binary_student_t"): "plain EWMA t − fixed t",
+           ("ewma_trunc_student_t", "ewma_student_t"): "truncated t − plain EWMA t",
+           ("ewma_trunc_student_t", "trailing_sharpe_252"): "truncated t − trailing Sharpe"}
 
 
 def _t(rows, header, render):
@@ -528,7 +528,7 @@ def _t(rows, header, render):
 def _med(v, note=""):
     if v == v and v not in ("", None):
         return f"{int(v)}d"
-    return "超过两年（本观察期未达到）"
+    return "beyond two years (not reached within the observation window)"
 
 
 def write_stage3a_report(cfg, S, metrics, boot, ptime, qrows, plevel, brier, ref,
@@ -558,109 +558,109 @@ def write_stage3a_report(cfg, S, metrics, boot, ptime, qrows, plevel, brier, ref
                  & (boot.sharpe_valid.astype(str) == str(s))]
         return r.iloc[0] if len(r) else None
 
-    A("# Stage 3A 报告：Sharpe 0.6 对 0 需要观察多久")
+    A("# Stage 3A report: how long Sharpe 0.6 vs 0 must be observed")
     A("")
-    A("本文件由 `python -m strategy_survivorship.stage3a` 自动生成，"
-      "所有数字取自同一次运行的结果表。")
+    A("This file is generated automatically by `python -m strategy_survivorship.stage3a`; "
+      "every number is taken from the result tables of the same run.")
     A("")
 
     # ---------------- 1 ----------------
-    A("## 1. 本轮只改了什么")
+    A("## 1. The only change in this round")
     A("")
-    A("**只有信号强度变化。**五个噪声情境、八个检测方法、EWMA 系数 0.94、"
-      "Student-t 自由度 5、截断参数 4、初值、下限、首次报警规则、D=252、H=504、"
-      "年化无条件波动率 0.10、初始先验 0.5 全部沿用。")
+    A("**Only the signal strength changes.** The five noise scenarios, the eight detection methods, EWMA coefficient 0.94, "
+      "Student-t degrees of freedom 5, truncation parameter 4, initial values, floor, first-alarm rule, D=252, H=504, "
+      "annualised unconditional volatility 0.10 and initial prior 0.5 are all carried over unchanged.")
     A("")
     A("```")
     A("    r_t = mu_S + sigma_0 * eps_t")
-    A(f"    有效:  mu_1(s) = s * sigma_ann / D     s in {{{s_hi:g}, {s_lo:g}}}")
-    A("    无效:  mu_0 = 0")
+    A(f"    valid:    mu_1(s) = s * sigma_ann / D     s in {{{s_hi:g}, {s_lo:g}}}")
+    A("    invalid:  mu_0 = 0")
     A("```")
     A("")
-    A("**候选均值设定正确。**在 s=0.6 这一组，检测器知道候选状态是 0.6 或 0，"
-      "但不知道某条路径属于哪一个。生成器的漂移、检测器似然比里的候选均值、"
-      "以及 EWMA 中点 `m=(mu_0+mu_1)/2` 全部同步使用 0.6。"
-      "**本轮不是模型设定错误实验**：没有出现“生成器降到 0.6 而检测器仍假设 1”的情况。")
+    A("**The candidate means are correctly specified.** In the s=0.6 group the detector knows the candidate states are 0.6 or 0, "
+      "but not which one a given path belongs to. The generator's drift, the candidate mean in the detector's likelihood ratio, "
+      "and the EWMA midpoint `m=(mu_0+mu_1)/2` all use 0.6 together. "
+      "**This round is not a model-misspecification experiment**: there is no case of \"the generator drops to 0.6 while the detector still assumes 1\".")
     A("")
-    A("有一条必须说明的例外：八个方法里有两个——252 日 trailing Sharpe 与"
-      "固定尺度 rolling 对照——的**统计量本身不含候选均值**（它们是 √D·mean/std 一类的"
-      "滚动样本统计量）。对这两个方法，s 只通过校准门槛和数据进入，这是定义使然，不是遗漏。"
-      "其余六个方法的统计量都随 s 改变。")
+    A("One exception must be stated: two of the eight methods (the 252-day trailing Sharpe and "
+      "the fixed-scale rolling control) have **statistics that do not contain the candidate mean at all** (they are rolling sample statistics "
+      "of the √D·mean/std type). For these two methods s enters only through the calibrated threshold and the data; this is by definition, not an omission. "
+      "The statistics of the other six methods all change with s.")
     A("")
 
     # ---------------- 2 ----------------
-    A("## 2. 数据与校准协议")
+    A("## 2. Data and calibration protocol")
     A("")
     sp = S["sampling"]
-    A(f"- 每个情境三个独立噪声块（有效校准 / 有效测试 / 无效测试），各 "
-      f"{cfg.stage3a_test_paths} 条 × {cfg.horizon_days} 天。")
-    A(f"- 共 **{sp['base_noise_paths']:,} 条基础噪声路径**，在两个 s 设定下产生 "
-      f"**{sp['return_path_evaluations']:,} 次收益路径评估**。"
-      "两个 s **共用同一批噪声**（有意使用共同随机数，使 s=1 与 s=0.6 的比较成为配对比较），"
-      "所以这不是 300,000 条彼此独立的噪声路径。")
-    A("- 校准块与测试块**绝不共享**；所有方法共用相应路径。")
-    A("- 噪声按理论常数归一化，没有逐路径缩放或去均值。")
-    A(f"- 本阶段使用独立于 Stage 2E 的新随机流（`stage3a_calibration` / `_test` / "
-      f"`_bootstrap`），追加式加入，既有阶段指纹不变。")
+    A(f"- Each scenario has three independent noise blocks (valid calibration / valid test / invalid test), each of "
+      f"{cfg.stage3a_test_paths} paths × {cfg.horizon_days} days.")
+    A(f"- In total **{sp['base_noise_paths']:,} base noise paths**, which give "
+      f"**{sp['return_path_evaluations']:,} return-path evaluations** under the two s settings. "
+      "The two s values **share the same noise** (common random numbers are used deliberately, so that the s=1 vs s=0.6 comparison is paired), "
+      "so these are not 300,000 mutually independent noise paths.")
+    A("- Calibration and test blocks are **never shared**; all methods share the corresponding paths.")
+    A("- The noise is normalised by the theoretical constant; there is no per-path rescaling or demeaning.")
+    A(f"- This stage uses new random streams independent of Stage 2E (`stage3a_calibration` / `_test` / "
+      f"`_bootstrap`), added append-only, so the fingerprints of existing stages are unchanged.")
     A("")
     rk = S["ranks"]
-    A(f"逐情境校准，两个累计误杀预算 α ∈ {{{a_alt:g}, {a_main:g}}}。"
-      f"本轮把**两个 s 都纳入同时校准范围**：")
+    A(f"Per-scenario calibration at two cumulative false-alarm budgets α ∈ {{{a_alt:g}, {a_main:g}}}. "
+      f"This round **brings both s values into the simultaneous calibration scope**:")
     A("")
     A("```")
-    A(f"    J = 8 模型 × 5 情境 × 2 预算 × 2 信号强度 = {S['J']}")
+    A(f"    J = 8 models × 5 scenarios × 2 budgets × 2 signal strengths = {S['J']}")
     A(f"    delta = {cfg.stage2c_delta:g},   delta/J = {S['delta_per_comparison']:.4e}")
     A("```")
     A("")
     for a in sorted(cfg.far_targets):
         v = rk[str(a)] if str(a) in rk else rk[a]
-        A(f"- α={a:g}：带缓冲的顺序统计量秩 **{v['buffered']}**"
-          f"（二项式与 Beta 两条路径独立算得同一个秩：{v['beta_route']}）。")
+        A(f"- α={a:g}: buffered order-statistic rank **{v['buffered']}**"
+          f" (the binomial and Beta routes compute the same rank independently: {v['beta_route']}).")
     A("")
-    A("**全部门槛在正式测试之前冻结并写入 `stage3a_thresholds.csv`。**"
-      "没有从测试结果挑选门槛，也没有把 s=1 的门槛直接用来给 s=0.6 的方法排名——"
-      "两个 s 各自校准。")
+    A("**All thresholds are frozen before the formal test and written to `stage3a_thresholds.csv`.** "
+      "No threshold was picked from the test results, and the s=1 thresholds were not reused to rank the methods at s=0.6; "
+      "each s is calibrated separately.")
     A("")
-    A("**覆盖范围声明**：该校准覆盖上列五个固定情境，"
-      "**不构成未知环境下的统一门槛保证**。")
+    A("**Coverage statement**: this calibration covers the five fixed scenarios listed above and "
+      "**does not constitute a unified-threshold guarantee for an unknown environment**.")
     A("")
 
     # ---------------- 3 ----------------
-    A("## 3. 主结果：弱信号下两年、一年、半年、一个季度各能判断多少")
+    A("## 3. Main result: how much can be decided at two years, one year, half a year and one quarter under a weak signal")
     A("")
-    A(f"主设定：**s={MAIN_SHARPE:g}、{SC[MAIN_SCENARIO]}、α={a_main:g}**。")
+    A(f"Main setting: **s={MAIN_SHARPE:g}, {SC[MAIN_SCENARIO]}, α={a_main:g}**.")
     A("")
     for s in sharpes:
-        A(f"**s = {s:g} 对 0**，{SC[MAIN_SCENARIO]}，α={a_main:g}")
+        A(f"**s = {s:g} vs 0**, {SC[MAIN_SCENARIO]}, α={a_main:g}")
         A("")
         rows = [m for m in METHODS_2E]
-        L.extend(_t(rows, ["方法", "实际误杀率"] + [f"检出 d{d}" for d in days]
-                    + ["截断平均天数", "中位检出", "两年未检出"],
+        L.extend(_t(rows, ["Method", "Realised false-alarm rate"] + [f"Detection d{d}" for d in days]
+                    + ["Truncated mean days", "Median detection", "Undetected at two years"],
                     lambda m: [CN[m], f"{g(m, MAIN_SCENARIO, s, a_main, 'far_total'):.4f}"]
                     + [f"{g(m, MAIN_SCENARIO, s, a_main, f'detect_d{d}'):.4f}" for d in days]
                     + [f"{g(m, MAIN_SCENARIO, s, a_main, 'trunc_mean_detect_days'):.1f}",
                        _med(g(m, MAIN_SCENARIO, s, a_main, 'median_detect_days')),
                        f"{g(m, MAIN_SCENARIO, s, a_main, 'undetected_at_H'):.4f}"]))
         A("")
-    A(f"**每个方法只有一个两年门槛。**第 {days[0]}、{days[1]}、{days[2]} 天的数字读的是"
-      f"同一个门槛，不是在每个期限各花一次完整的 {a_main:.0%} 误杀预算。"
-      f"未检出路径在截断平均里记为第 {cfg.horizon_days} 天；"
-      "检出率不足一半时中位数记为“超过两年（本观察期未达到）”，不据两年曲线外推十年。")
+    A(f"**Each method has only one two-year threshold.** The numbers at days {days[0]}, {days[1]} and {days[2]} read "
+      f"the same threshold; a full {a_main:.0%} false-alarm budget is not spent separately at each horizon. "
+      f"Undetected paths count as day {cfg.horizon_days} in the truncated mean; "
+      "when the detection rate is below one half, the median is recorded as \"beyond two years (not reached within the observation window)\", and the two-year curve is not extrapolated to ten years.")
     A("")
     best_lo = max((g(m, MAIN_SCENARIO, s_lo, a_main, "detect_d504"), m) for m in METHODS_2E)
     best_hi = max((g(m, MAIN_SCENARIO, s_hi, a_main, "detect_d504"), m) for m in METHODS_2E)
-    A(f"一句话：主情境、α={a_main:g} 下，s={s_hi:g} 时最好的方法两年检出 "
-      f"{best_hi[0]:.1%}（{CN[best_hi[1]]}），s={s_lo:g} 时降到 "
-      f"{best_lo[0]:.1%}（{CN[best_lo[1]]}）。")
+    A(f"In one sentence: in the main scenario at α={a_main:g}, the best method at s={s_hi:g} detects "
+      f"{best_hi[0]:.1%} within two years ({CN[best_hi[1]]}); at s={s_lo:g} this falls to "
+      f"{best_lo[0]:.1%} ({CN[best_lo[1]]}).")
     A("")
-    A(f"α={a_alt:g} 的同一张表：")
+    A(f"The same table at α={a_alt:g}:")
     A("")
     for s in sharpes:
         rows = [m for m in HEADLINE]
-        A(f"s={s:g}，α={a_alt:g}")
+        A(f"s={s:g}, α={a_alt:g}")
         A("")
-        L.extend(_t(rows, ["方法", "实际误杀率"] + [f"检出 d{d}" for d in days]
-                    + ["截断平均天数", "中位检出"],
+        L.extend(_t(rows, ["Method", "Realised false-alarm rate"] + [f"Detection d{d}" for d in days]
+                    + ["Truncated mean days", "Median detection"],
                     lambda m: [CN[m], f"{g(m, MAIN_SCENARIO, s, a_alt, 'far_total'):.4f}"]
                     + [f"{g(m, MAIN_SCENARIO, s, a_alt, f'detect_d{d}'):.4f}" for d in days]
                     + [f"{g(m, MAIN_SCENARIO, s, a_alt, 'trunc_mean_detect_days'):.1f}",
@@ -668,23 +668,23 @@ def write_stage3a_report(cfg, S, metrics, boot, ptime, qrows, plevel, brier, ref
         A("")
 
     # ---------------- 4 ----------------
-    A("## 4. 三条预设比较")
+    A("## 4. Three pre-specified comparisons")
     A("")
-    A("这三条在看到本轮任何测试结果之前写定：")
+    A("These three were fixed before any test result of this round was seen:")
     A("")
     for i, (ma, mb) in enumerate(MAIN_PAIRS, 1):
         A(f"{i}. {PAIR_CN[(ma, mb)]}")
     A("")
-    A(f"区间为 {cfg.stage3a_bootstrap_reps} 次配对 bootstrap，同时重抽校准与测试路径；"
-      "同一比较中的两个方法与两个 s 设定共用重采样下标，每个 (s, α) 单元在同一份重抽"
-      "校准样本上重算自己的门槛。")
+    A(f"Intervals come from {cfg.stage3a_bootstrap_reps} paired bootstrap replications that resample both calibration and test paths; "
+      "the two methods and the two s settings within one comparison share resampling indices, and each (s, α) cell recomputes its own threshold "
+      "on the same resampled calibration sample.")
     A("")
-    A("**区间是逐项区间。**校准协议的 δ/J 保护的是门槛的误杀约束，"
-      "**不**为这些检出率差异提供同时置信保证。")
+    A("**The intervals are per-item (unadjusted) intervals.** The calibration protocol's δ/J protects the false-alarm constraint on the thresholds; "
+      "it does **not** provide simultaneous confidence guarantees for these detection-rate differences.")
     A("")
     for sc in COMBINED:
         for a in sorted(cfg.far_targets, reverse=True):
-            A(f"**{SC[sc]}**，α={a:g}")
+            A(f"**{SC[sc]}**, α={a:g}")
             A("")
             rows = [(ma, mb, s) for ma, mb in MAIN_PAIRS for s in sharpes]
             def rend(r):
@@ -695,31 +695,31 @@ def write_stage3a_report(cfg, S, metrics, boot, ptime, qrows, plevel, brier, ref
                     return [PAIR_CN[(ma, mb)], f"{s:g}", "-", "-", "-", "-"]
                 return [PAIR_CN[(ma, mb)], f"{s:g}", f"{float(b.point) * 100:+.2f} pp",
                         f"[{float(b.lo) * 100:+.2f}, {float(b.hi) * 100:+.2f}]",
-                        "是" if bool(b.excludes_zero) else "否",
+                        "yes" if bool(b.excludes_zero) else "no",
                         f"[{float(f.lo) * 100:+.2f}, {float(f.hi) * 100:+.2f}]"
                         if f is not None else "-"]
-            L.extend(_t(rows, ["比较", "s", "检出率之差", "95% 区间", "排除 0",
-                               "同预算下误杀差的区间"], rend))
+            L.extend(_t(rows, ["Comparison", "s", "Detection-rate difference", "95% interval", "Excludes 0",
+                               "Interval of the false-alarm difference at the same budget"], rend))
             A("")
-    A("配对检测时间差（同一批无效路径，门槛冻结；负值表示前者更快）：")
+    A("Paired detection-time difference (same invalid paths, frozen thresholds; a negative value means the first method is faster):")
     A("")
     pt = ptime[(ptime.scenario == MAIN_SCENARIO)]
     rows = [r for _, r in pt.sort_values(["far_target", "sharpe_valid"]).iterrows()]
-    L.extend(_t(rows, ["α", "s", "比较", "时间差（天）", "95% 区间", "排除 0"],
+    L.extend(_t(rows, ["α", "s", "Comparison", "Time difference (days)", "95% interval", "Excludes 0"],
                 lambda r: [f"{r['far_target']:g}", f"{r['sharpe_valid']:g}",
                            PAIR_CN[(r["method_a"], r["method_b"])],
                            f"{r['trunc_time_diff_days']:+.2f}",
                            f"[{r['trunc_time_diff_lo']:+.2f}, {r['trunc_time_diff_hi']:+.2f}]",
-                           "是" if r["excludes_zero"] else "否"]))
+                           "yes" if r["excludes_zero"] else "no"]))
     A("")
-    A("**区间包含零不等于两个方法等效**：那只说明本轮的样本量没有把差别与零分开。")
+    A("**An interval containing zero does not mean the two methods are equivalent**: it only says that this round's sample size did not separate the difference from zero.")
     A("")
 
     # ---------------- 5 ----------------
-    A("## 5. 次要预设比较：增益随信号强度如何变化")
+    A("## 5. Secondary pre-specified comparison: how the gain changes with signal strength")
     A("")
-    A(f"同一对方法在 s={s_lo:g} 与 s={s_hi:g} 的增益之差，配对估计，"
-      "两个 s 各自重算门槛：")
+    A(f"The difference between the gains of the same method pair at s={s_lo:g} and s={s_hi:g}, estimated paired, "
+      "with thresholds recomputed separately for each s:")
     A("")
     rows = []
     for sc in COMBINED:
@@ -728,22 +728,22 @@ def write_stage3a_report(cfg, S, metrics, boot, ptime, qrows, plevel, brier, ref
                 b = bo("gain_change_with_s", sc, a, ma, mb, f"{s_lo:g}-{s_hi:g}")
                 if b is not None:
                     rows.append((sc, a, ma, mb, b))
-    L.extend(_t(rows, ["情境", "α", "比较", f"增益(s={s_lo:g}) − 增益(s={s_hi:g})",
-                       "95% 区间", "排除 0"],
+    L.extend(_t(rows, ["Scenario", "α", "Comparison", f"Gain(s={s_lo:g}) − gain(s={s_hi:g})",
+                       "95% interval", "Excludes 0"],
                 lambda r: [SC[r[0]], f"{r[1]:g}", PAIR_CN[(r[2], r[3])],
                            f"{float(r[4].point) * 100:+.2f} pp",
                            f"[{float(r[4].lo) * 100:+.2f}, {float(r[4].hi) * 100:+.2f}]",
-                           "是" if bool(r[4].excludes_zero) else "否"]))
+                           "yes" if bool(r[4].excludes_zero) else "no"]))
     A("")
 
     # ---------------- 6 ----------------
-    A("## 6. 失效概率")
+    A("## 6. Failure probability")
     A("")
-    A("两种真实状态的**全部路径**都保留，报警之后的概率继续计入。"
-      f"测试为 50/50（有效 / 无效各 {cfg.stage3a_test_paths} 条），先验 0.5。")
+    A("**All paths** of both true states are kept, and probabilities after an alarm continue to be counted. "
+      f"The test mix is 50/50 ({cfg.stage3a_test_paths} paths each for valid / invalid), prior 0.5.")
     A("")
     for s in sharpes:
-        A(f"**s = {s:g}**，{SC[MAIN_SCENARIO]}：q 的中位数与 10–90% 分位")
+        A(f"**s = {s:g}**, {SC[MAIN_SCENARIO]}: median and 10–90% quantiles of q")
         A("")
         rows = [(m, st, d) for m in ("binary_student_t", "ewma_student_t",
                                      "ewma_trunc_student_t")
@@ -755,24 +755,24 @@ def write_stage3a_report(cfg, S, metrics, boot, ptime, qrows, plevel, brier, ref
             if not len(x):
                 return [CN[m], st, str(d), "-", "-"]
             x = x.iloc[0]
-            return [CN[m], "无效" if st == "invalid" else "有效", str(d),
+            return [CN[m], "invalid" if st == "invalid" else "valid", str(d),
                     f"{x.median_q:.4f}", f"[{x.q10:.4f}, {x.q90:.4f}]"]
-        L.extend(_t(rows, ["方法", "真实状态", "日", "q 中位数", "10–90% 分位"], rq))
+        L.extend(_t(rows, ["Method", "True state", "Day", "Median q", "10–90% quantiles"], rq))
         A("")
     if len(brier):
-        A("Brier 分数（越小越好）与可靠性分箱见 `stage3a_brier.csv` / `stage3a_reliability.csv`，"
-          "每箱带样本量：")
+        A("Brier scores (lower is better) and reliability bins are in `stage3a_brier.csv` / `stage3a_reliability.csv`, "
+          "with the sample size for each bin:")
         A("")
         rows = [r for _, r in brier.sort_values(["sharpe_valid", "detector", "day"]).iterrows()]
-        L.extend(_t(rows, ["s", "方法", "日", "Brier", "常数基准 Brier", "样本量"],
+        L.extend(_t(rows, ["s", "Method", "Day", "Brier", "Constant-baseline Brier", "Sample size"],
                     lambda r: [f"{r['sharpe_valid']:g}", CN.get(r["detector"], r["detector"]),
                                f"{int(r['day'])}", f"{r['brier']:.5f}",
                                f"{r['brier_base_rate']:.5f}", f"{int(r['n'])}"]))
         A("")
     lvl = cfg.stage3a_prob_level
-    A(f"**解释性指标：首次达到 q ≥ {lvl:g} 的累计比例。**"
-      f"必须同时读有效策略错误达到该水平的比例。"
-      f"它**不是** α={1 - lvl:.0%} 的误杀控制，也不用于替代正式排名。")
+    A(f"**Explanatory metric: cumulative share of paths that first reach q ≥ {lvl:g}.** "
+      f"It must be read together with the share of valid strategies that wrongly reach this level. "
+      f"It is **not** a false-alarm control at α={1 - lvl:.0%}, and it is not used to replace the formal ranking.")
     A("")
     rows = []
     for s in sharpes:
@@ -782,141 +782,141 @@ def write_stage3a_report(cfg, S, metrics, boot, ptime, qrows, plevel, brier, ref
                            & (plevel.method == m) & (plevel.true_state == st)]
                 if len(x):
                     rows.append((s, m, st, x.iloc[0]))
-    L.extend(_t(rows, ["s", "方法", "真实状态"] + [f"d{d}" for d in days],
-                lambda r: [f"{r[0]:g}", CN[r[1]], "无效" if r[2] == "invalid" else "有效"]
+    L.extend(_t(rows, ["s", "Method", "True state"] + [f"d{d}" for d in days],
+                lambda r: [f"{r[0]:g}", CN[r[1]], "invalid" if r[2] == "invalid" else "valid"]
                 + [f"{r[3][f'reached_by_d{d}']:.4f}" for d in days]))
     A("")
 
     # ---------------- 7 ----------------
-    A("## 7. 高斯理论参照")
+    A("## 7. Gaussian theoretical reference")
     A("")
-    A("仅在 iid Gaussian 对照中使用：")
+    A("Used only in the iid Gaussian control:")
     A("")
     A("```")
     A("    D_max(h, alpha) = Phi( s*sqrt(h) - Phi^{-1}(1 - alpha) )")
     A("```")
     A("")
     rows = [r for _, r in ref.iterrows()]
-    L.extend(_t(rows, ["s", "α", "h（年）", "天数", "检出率上界"],
+    L.extend(_t(rows, ["s", "α", "h (years)", "Days", "Detection-rate upper bound"],
                 lambda r: [f"{r['sharpe_valid']:g}", f"{r['far_budget']:g}",
                            f"{r['years']:g}", f"{int(r['days'])}",
                            f"{r['max_detection']:.4f}"]))
     A("")
-    A(f"因此 s={s_lo:g} 的两年上界为 α={a_main:g} 时 "
-      f"{max_detection(s_lo, cfg.horizon_days / cfg.D, a_main):.2%}、"
-      f"α={a_alt:g} 时 {max_detection(s_lo, cfg.horizon_days / cfg.D, a_alt):.2%}。"
-      "**所以这一组方法两年内没有达到 50% 检出，不应自动称为方法失败**——"
-      "在满足该参照条件的模型里，50% 本来就在上界之外。")
+    A(f"Hence, for s={s_lo:g}, the two-year upper bound at α={a_main:g} is "
+      f"{max_detection(s_lo, cfg.horizon_days / cfg.D, a_main):.2%}, and at "
+      f"α={a_alt:g} it is {max_detection(s_lo, cfg.horizon_days / cfg.D, a_alt):.2%}. "
+      "**So the fact that this group of methods does not reach 50% detection within two years should not automatically be called a method failure**: "
+      "in models that satisfy the conditions of this reference, 50% lies above the upper bound to begin with.")
     A("")
-    A("**这条参照有明确边界。**它只约束同一 iid 高斯模型、同一期限、满足累计误杀约束的规则。"
-      "SV+跳跃情境的数据分布与时间结构都与该模型不同，**参照在那里不适用**，"
-      "因此不能用来给组合情境的方法排名，检出率高于这个数也不构成矛盾。"
-      "本轮**没有**分解各机制对这一差别的贡献。")
+    A("**This reference has clear boundaries.** It constrains only rules under the same iid Gaussian model and the same horizon that satisfy the cumulative false-alarm constraint. "
+      "The data distribution and the time structure of the SV+jumps scenario both differ from that model, so **the reference does not apply there**; "
+      "it therefore cannot be used to rank methods in the combined scenarios, and a detection rate above this number is not a contradiction. "
+      "This round does **not** decompose how much each mechanism contributes to this difference.")
     A("")
-    A("图 4 里的虚线是**在每一个截止时间上分别计算的最强检验参照**，"
-      "不是一条可以同时达到的监测曲线：它在每个期限各用满一次 α，"
-      "而我们的规则在整个两年里只花一次预算。")
+    A("The dashed curve in figure 4 is **the strongest-test reference computed separately at each cutoff time**, "
+      "not a monitoring curve that can be attained simultaneously: it uses the full α once at each horizon, "
+      "whereas our rules spend one budget over the entire two years.")
     A("")
     ev = pd.DataFrame(S["evidence_check"])
-    A("同时核验纯高斯二值模型在无效状态、初始赔率为 1 时的证据积累：")
+    A("The evidence accumulation of the pure Gaussian binary model in the invalid state, with initial odds 1, is also verified:")
     A("")
     A("```")
     A("    E[U_n] = s^2 n / (2D),    Var(U_n) = s^2 n / D")
     A("```")
     A("")
     rows = [r for _, r in ev.iterrows()]
-    L.extend(_t(rows, ["s", "n", "E[U] 理论", "E[U] 实测", "Var 理论", "Var 实测",
-                       "最大相对误差"],
+    L.extend(_t(rows, ["s", "n", "E[U] theory", "E[U] measured", "Var theory", "Var measured",
+                       "Max relative error"],
                 lambda r: [f"{r['sharpe_valid']:g}", f"{int(r['day'])}",
                            f"{r['mean_U_theory']:.4f}", f"{r['mean_U_measured']:.4f}",
                            f"{r['var_U_theory']:.4f}", f"{r['var_U_measured']:.4f}",
                            f"{max(r['mean_rel_err'], r['var_rel_err']):.2e}"]))
     A("")
-    A(f"平均对数证据的积累速度随 s² 缩放，故 1/0.6² ≈ {1 / 0.36:.2f}。"
-      "**这只是该模型下的证据时间尺度参照**，不宣称所有噪声、门槛和实际停止时间"
-      "都严格按这个倍数缩放——下一节的实测数字就不按它缩放。")
+    A(f"The mean log-evidence accumulates at a rate that scales with s², so 1/0.6² ≈ {1 / 0.36:.2f}. "
+      "**This is only an evidence time-scale reference under this model**; it does not claim that all noises, thresholds and actual stopping times "
+      "scale exactly by this factor. The measured numbers in the next section do not scale by it.")
     A("")
 
     # ---------------- 8 ----------------
-    A("## 8. 五个问题的回答")
+    A("## 8. Answers to the five questions")
     A("")
     hb = max((g(m, MAIN_SCENARIO, s_lo, a_main, "detect_d504"), m) for m in METHODS_2E)
-    A(f"**（一）弱 Sharpe 下，两年、一年、半年分别能判断多少？** "
-      f"主情境、α={a_main:g}、s={s_lo:g}，最好的方法（{CN[hb[1]]}）两年检出 "
-      f"{hb[0]:.1%}，一年 {g(hb[1], MAIN_SCENARIO, s_lo, a_main, 'detect_d252'):.1%}，"
-      f"半年 {g(hb[1], MAIN_SCENARIO, s_lo, a_main, 'detect_d126'):.1%}，"
-      f"一个季度 {g(hb[1], MAIN_SCENARIO, s_lo, a_main, 'detect_d63'):.1%}。"
-      f"对照 s={s_hi:g} 的同一方法两年 "
-      f"{g(hb[1], MAIN_SCENARIO, s_hi, a_main, 'detect_d504'):.1%}。")
+    A(f"**(1) Under a weak Sharpe, how much can be decided at two years, one year and half a year?** "
+      f"Main scenario, α={a_main:g}, s={s_lo:g}: the best method ({CN[hb[1]]}) detects "
+      f"{hb[0]:.1%} within two years, {g(hb[1], MAIN_SCENARIO, s_lo, a_main, 'detect_d252'):.1%} within one year, "
+      f"{g(hb[1], MAIN_SCENARIO, s_lo, a_main, 'detect_d126'):.1%} within half a year and "
+      f"{g(hb[1], MAIN_SCENARIO, s_lo, a_main, 'detect_d63'):.1%} within one quarter. "
+      f"For comparison, the same method at s={s_hi:g} detects "
+      f"{g(hb[1], MAIN_SCENARIO, s_hi, a_main, 'detect_d504'):.1%} within two years.")
     A("")
     b1 = bo("detection_diff", MAIN_SCENARIO, a_main, *MAIN_PAIRS[0], f"{s_lo:g}")
     gc15 = bo("gain_change_with_s", MAIN_SCENARIO, a_main, *MAIN_PAIRS[0], f"{s_lo:g}-{s_hi:g}")
     gc05 = bo("gain_change_with_s", MAIN_SCENARIO, a_alt, *MAIN_PAIRS[0], f"{s_lo:g}-{s_hi:g}")
-    A(f"**（二）方差自适应的主要收益还在不在？** 在。主设定下 {PAIR_CN[MAIN_PAIRS[0]]} 为 "
-      f"{float(b1.point) * 100:+.2f} pp [{float(b1.lo) * 100:+.2f}, {float(b1.hi) * 100:+.2f}]，"
-      f"区间{'排除' if bool(b1.excludes_zero) else '覆盖'} 0。")
+    A(f"**(2) Is the main gain from variance adaptation still there?** Yes. In the main setting, {PAIR_CN[MAIN_PAIRS[0]]} is "
+      f"{float(b1.point) * 100:+.2f} pp [{float(b1.lo) * 100:+.2f}, {float(b1.hi) * 100:+.2f}]; "
+      f"the interval {'excludes' if bool(b1.excludes_zero) else 'covers'} 0.")
     A("")
-    A(f"这一增益随信号强度如何变化：α={a_main:g} 下配对差为 "
+    A(f"How this gain changes with signal strength: at α={a_main:g} the paired difference is "
       f"{float(gc15.point) * 100:+.2f} pp [{float(gc15.lo) * 100:+.2f}, "
-      f"{float(gc15.hi) * 100:+.2f}]，**本轮未检测到增益的明确变化**"
-      f"（区间覆盖 0，不等于已经证明增益不变）。"
-      f"α={a_alt:g} 下为 {float(gc05.point) * 100:+.2f} pp "
-      f"[{float(gc05.lo) * 100:+.2f}, {float(gc05.hi) * 100:+.2f}]，"
-      "该预算下有增益缩小的证据。")
+      f"{float(gc15.hi) * 100:+.2f}]; **this round detects no clear change in the gain**"
+      f" (the interval covers 0, which does not prove that the gain is unchanged). "
+      f"At α={a_alt:g} it is {float(gc05.point) * 100:+.2f} pp "
+      f"[{float(gc05.lo) * 100:+.2f}, {float(gc05.hi) * 100:+.2f}]; "
+      "under this budget there is evidence that the gain shrinks.")
     A("")
-    A("**两个预算的结果不同，但本轮没有直接检验这两个数之间的差**，"
-      "因此不宣称已经证明存在预算效应——“一个显著、一个不显著”本身不是对差异的检验。")
+    A("**The two budgets give different results, but this round does not directly test the difference between these two numbers**, "
+      "so it does not claim to have shown that a budget effect exists: \"one significant, one not significant\" is not in itself a test of the difference.")
     A("")
     b2 = bo("detection_diff", MAIN_SCENARIO, a_main, *MAIN_PAIRS[1], f"{s_lo:g}")
-    A(f"**（三）截断的小幅收益是否仍值得保留？** 主设定下 {PAIR_CN[MAIN_PAIRS[1]]} 为 "
-      f"{float(b2.point) * 100:+.2f} pp [{float(b2.lo) * 100:+.2f}, {float(b2.hi) * 100:+.2f}]，"
-      f"区间{'排除' if bool(b2.excludes_zero) else '覆盖'} 0。"
-      "结合配对时间差与其它情境的敏感性结果一并判断；本轮不为它单独下保留或删除的结论。")
+    A(f"**(3) Is the small gain from truncation still worth keeping?** In the main setting, {PAIR_CN[MAIN_PAIRS[1]]} is "
+      f"{float(b2.point) * 100:+.2f} pp [{float(b2.lo) * 100:+.2f}, {float(b2.hi) * 100:+.2f}]; "
+      f"the interval {'excludes' if bool(b2.excludes_zero) else 'covers'} 0. "
+      "It should be judged together with the paired time difference and the sensitivity results in the other scenarios; this round draws no separate conclusion on keeping or removing it.")
     A("")
     bnd = max_detection(s_lo, cfg.horizon_days / cfg.D, a_main)
     gc = max((g(m, "gaussian_ctrl", s_lo, a_main, "detect_d504"), m) for m in METHODS_2E)
-    A(f"**（四）哪些困难有理论参照支持，哪些仍属于模型或门槛问题？** "
-      f"**有参照支持的部分**：在 iid 高斯对照里，s={s_lo:g}、两年、α={a_main:g} 的检出率"
-      f"存在一个与规则无关的上界 {bnd:.2%}；本轮该情境下最好的方法达到 {gc[0]:.2%}，"
-      "在上界之下。所以那里“两年抓不到一半”不是方法的问题，是这个信号强度本身的性质。")
+    A(f"**(4) Which difficulties are supported by a theoretical reference, and which remain model or threshold issues?** "
+      f"**The part supported by a reference**: in the iid Gaussian control, the detection rate at s={s_lo:g}, two years and α={a_main:g} "
+      f"has a rule-independent upper bound of {bnd:.2%}; the best method in that scenario in this round reaches {gc[0]:.2%}, "
+      "below the bound. So \"not catching half within two years\" there is not a problem of the methods but a property of this signal strength itself.")
     A("")
-    A(f"**但这条参照不能搬到主情境。**同一设定下 {SC[MAIN_SCENARIO]} 里最好的方法"
-      f"两年检出 {hb[0]:.1%}，数值上高于 {bnd:.2%}，这不构成矛盾："
-      "两者的数据分布与时间结构不同，**高斯参照在组合情境不适用**。"
-      "本轮没有分解是哪些机制造成了这个差别，也没有为组合情境推导任何上界，"
-      "因此这里既不能说“已经接近上限”，也不能说“突破了上限”。"
-      "能说的只是：**同一个年化 Sharpe 不唯一决定一条收益序列的可辨识程度**。")
+    A(f"**But this reference cannot be carried over to the main scenario.** Under the same setting, the best method in {SC[MAIN_SCENARIO]} "
+      f"detects {hb[0]:.1%} within two years, numerically above {bnd:.2%}. This is not a contradiction: "
+      "the two differ in data distribution and time structure, and **the Gaussian reference does not apply in the combined scenarios**. "
+      "This round did not decompose which mechanisms cause this difference, nor did it derive any upper bound for the combined scenarios, "
+      "so here one can say neither \"already close to the limit\" nor \"broke through the limit\". "
+      "All that can be said is: **the same annualised Sharpe does not uniquely determine how identifiable a return series is**.")
     A("")
-    A("**没有参照支持的部分**：SV+跳跃情境里方法之间的差距、门槛缓冲的代价、"
-      "以及组合情境下的最优检出率是多少——本项目至今没有推导过后者，"
-      "因此不能把任何一段差距归因于“信息上限”。")
+    A("**The part without reference support**: the gaps between methods in the SV+jumps scenario, the cost of the threshold buffer, "
+      "and what the optimal detection rate in the combined scenarios is. This project has not yet derived the latter, "
+      "so no part of any gap can be attributed to an \"information limit\".")
     A("")
-    A("**（五）下一步是否仍适合进入随机 T 的有限扩展？** "
-      "本轮不作这一步，也不预先断言其结论；判断依据应是："
-      "在弱信号下，正面的早期历史会把识别推迟多久，"
-      "以及这一延迟是否大到改变监督者的决策窗口。本轮的数字给出了这个问题的基线。")
+    A("**(5) Is it still appropriate to move next to the limited extension with a random T?** "
+      "This round does not take that step and does not assert its conclusion in advance; the basis for the decision should be: "
+      "under a weak signal, how long a positive early history delays identification, "
+      "and whether this delay is large enough to change the supervisor's decision window. This round's numbers give the baseline for this question.")
     A("")
 
     # ---------------- 9 ----------------
-    A("## 9. 限制")
+    A("## 9. Limitations")
     A("")
-    A(f"- 两个 s 共用噪声块，这使 s 之间的比较是配对的，但也意味着"
-      f"{sp['return_path_evaluations']:,} 次评估**不是**同样数量的独立样本。")
-    A("- 逐情境校准只覆盖这五个固定情境，不构成未知环境下的统一门槛保证。")
-    A("- 主比较与次要比较的区间都是逐项区间，未做多重比较校正。")
-    A("- 高斯参照只在 iid 高斯对照中适用；组合情境没有已知上界。")
-    A(f"- 只测了 s ∈ {{{s_hi:g}, {s_lo:g}}} 与 α ∈ {{{a_alt:g}, {a_main:g}}} 各两点，"
-      "不外推整条曲线。")
-    A("- 中位检出时间在检出率不足一半时不可得，本报告不据两年曲线外推更长期限。")
+    A(f"- The two s values share noise blocks. This makes comparisons across s paired, but it also means that the "
+      f"{sp['return_path_evaluations']:,} evaluations are **not** the same number of independent samples.")
+    A("- Per-scenario calibration covers only these five fixed scenarios and does not constitute a unified-threshold guarantee for an unknown environment.")
+    A("- The intervals for both the main and the secondary comparisons are per-item intervals, with no multiple-comparison correction.")
+    A("- The Gaussian reference applies only in the iid Gaussian control; the combined scenarios have no known upper bound.")
+    A(f"- Only two points each were tested, s ∈ {{{s_hi:g}, {s_lo:g}}} and α ∈ {{{a_alt:g}, {a_main:g}}}; "
+      "the whole curve is not extrapolated.")
+    A("- The median detection time is not available when the detection rate is below one half; this report does not extrapolate the two-year curve to longer horizons.")
     A("")
-    A("## 10. 复现")
+    A("## 10. Reproduction")
     A("")
     A("```bash")
     A("uv run python -m strategy_survivorship.stage3a")
     A("uv run python -m strategy_survivorship.stage3a --figures-only")
     A("```")
     A("")
-    A(f"本轮耗时 {S['elapsed_s']:.1f} 秒。")
+    A(f"This run took {S['elapsed_s']:.1f} seconds.")
     path.write_text("\n".join(L) + "\n", encoding="utf-8")
     return path
 

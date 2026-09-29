@@ -500,10 +500,10 @@ import pandas as pd
 from .stage2c import LATE_STARTERS, METHODS
 
 
-SC = {"gaussian_ctrl": "高斯对照 (A=0, κ=0)", "sv_ctrl": "SV 对照 (A=1, κ=0)",
-      "jump_ctrl": "跳跃对照 (A=0, κ=5)", "sv_jump": "**SV+跳跃 (A=1, κ=5)**",
-      "sv_jump_big": "**SV+较大跳跃 (A=1, κ=8)**"}
-ARM_REPORT = {"transfer": "第一组：Stage 2C 冻结门槛迁移", "diagnostic": "第二组：按情境独立校准（诊断）"}
+SC = {"gaussian_ctrl": "Gaussian control (A=0, κ=0)", "sv_ctrl": "SV control (A=1, κ=0)",
+      "jump_ctrl": "Jump control (A=0, κ=5)", "sv_jump": "**SV+jumps (A=1, κ=5)**",
+      "sv_jump_big": "**SV+larger jumps (A=1, κ=8)**"}
+ARM_REPORT = {"transfer": "Condition 1: Stage 2C frozen thresholds transferred", "diagnostic": "Condition 2: independent per-scenario calibration (diagnostic)"}
 
 
 def _t(rows, header, render):
@@ -515,7 +515,7 @@ def _t(rows, header, render):
 
 def _med(r):
     v = r.get("median_detect_days", "")
-    return f"{int(v)}d" if v not in ("", None) and v == v else "未达到"
+    return f"{int(v)}d" if v not in ("", None) and v == v else "not reached"
 
 
 def write_stage2d_report(cfg, summary, metrics, diag, boot, brier, shock, path: Path) -> Path:
@@ -527,36 +527,36 @@ def write_stage2d_report(cfg, summary, metrics, diag, boot, brier, shock, path: 
     g = lambda meth, sc, arm, col, a=a_main: float(
         M[(M.scenario == sc) & (M.arm == arm) & (M.far_target == a) & (M.method == meth)][col].iloc[0])
 
-    A("# Stage 2D 报告：持续性随机波动率与孤立跳跃同时存在时的检测")
+    A("# Stage 2D report: detection when persistent stochastic volatility and isolated jumps are present together")
     A("")
-    A("本文件由 `python -m strategy_survivorship.stage2d` 自动生成，"
-      "所有数字取自同一次运行的结果表。")
+    A("This file is generated automatically by `python -m strategy_survivorship.stage2d`; "
+      "every number is taken from the result tables of a single run.")
     A("")
 
     # -------- 1 --------
-    A("## 1. 主问题的回答")
+    A("## 1. Answer to the main question")
     A("")
     sc = "sv_jump"
     et = g("ewma_student_t", sc, "diagnostic", "detect_d504")
     eg = g("ewma_gaussian", sc, "diagnostic", "detect_d504")
     bt = g("binary_student_t", sc, "diagnostic", "detect_d504")
     bg = g("binary_gaussian", sc, "diagnostic", "detect_d504")
-    A(f"**在按情境独立校准的诊断条件下（α={a_main:g}，主组合情境 SV+跳跃）**，两年检出率："
-      f"EWMA Student-t {et:.4f}、EWMA Gaussian {eg:.4f}、固定 Student-t {bt:.4f}、"
-      f"固定 Gaussian {bg:.4f}。相对各自的固定尺度对应方法，差为 "
-      f"**{et - bt:+.4f}**（Student-t 家族）与 **{eg - bg:+.4f}**（Gaussian 家族）。")
+    A(f"**Under the diagnostic condition with independent per-scenario calibration (α={a_main:g}, main combined scenario SV+jumps)**, two-year detection rates: "
+      f"EWMA Student-t {et:.4f}, EWMA Gaussian {eg:.4f}, fixed Student-t {bt:.4f}, "
+      f"fixed Gaussian {bg:.4f}. Relative to each method's fixed-scale counterpart, the differences are "
+      f"**{et - bt:+.4f}** (Student-t family) and **{eg - bg:+.4f}** (Gaussian family).")
     A("")
     tet = g("ewma_student_t", sc, "transfer", "detect_d504")
     tft = g("ewma_student_t", sc, "transfer", "far_d504")
-    A(f"**在直接迁移 Stage 2C 冻结门槛的条件下**，EWMA Student-t 的两年检出率为 {tet:.4f}，"
-      f"但其实测两年 FAR 为 **{tft:.4f}**（名义预算 {a_main:g}）。"
-      f"{'**该规则不满足预算，因此其较高的检出率不能称为提升。**' if tft > a_main else '实测 FAR 在预算内。'}")
+    A(f"**Under the condition that transfers the Stage 2C frozen thresholds directly**, the two-year detection rate of EWMA Student-t is {tet:.4f}, "
+      f"but its realised two-year FAR is **{tft:.4f}** (nominal budget {a_main:g}). "
+      f"{'**This rule does not meet the budget, so its higher detection rate cannot be called an improvement.**' if tft > a_main else 'The realised FAR is within the budget.'}")
     A("")
-    A("详细分解见第 4–6 节；两个组合情境**不属于** Stage 2C 保证的覆盖范围。")
+    A("See Sections 4–6 for the detailed breakdown; the two combined scenarios are **not** within the coverage of the Stage 2C guarantee.")
     A("")
 
     # -------- 2 --------
-    A("## 2. 组合 DGP（运行前固定）")
+    A("## 2. Combined DGP (fixed before the run)")
     A("")
     A("```")
     A("r_t = mu_S + sigma_0 eps_t")
@@ -566,75 +566,75 @@ def write_stage2d_report(cfg, summary, metrics, diag, boot, brier, shock, path: 
     A("eps_t = ( sqrt(v_t) z_t + kappa sqrt(K_t) w_t ) / sqrt(1 + kappa^2 lambda/D)")
     A("```")
     A("")
-    A(f"`xi, z, w, K` 的基础随机来源相互独立；`rho = {cfg.noise_sv_rho:g}`、"
-      f"`lambda = {cfg.noise_jump_lambda_annual:g}`/年、`D = {cfg.D}`、`H = {cfg.horizon_days}`、"
-      f"年化波动率基准 {cfg.sigma_annual:g}，有效/无效 Sharpe 为 1/0，**平均收益不随波动改变**。")
+    A(f"The underlying random sources of `xi, z, w, K` are mutually independent; `rho = {cfg.noise_sv_rho:g}`, "
+      f"`lambda = {cfg.noise_jump_lambda_annual:g}`/year, `D = {cfg.D}`, `H = {cfg.horizon_days}`, "
+      f"baseline annualised volatility {cfg.sigma_annual:g}, valid/invalid Sharpe 1/0; **the mean return does not change with volatility**.")
     A("")
-    A("**跳跃是独立加性成分**：它的幅度**不**乘以当天的背景波动，"
-      "所以落在平静日上的跳跃相对更大。这是本轮要检验的设计选择。")
+    A("**Jumps are an independent additive component**: their size is **not** multiplied by that day's background volatility, "
+      "so a jump that lands on a quiet day is relatively larger. This is the design choice this round is meant to test.")
     A("")
-    A("| 情境 | SV 振幅 A | 跳跃幅度 κ | 在 Stage 2C 覆盖集内 |")
+    A("| Scenario | SV amplitude A | Jump size κ | In Stage 2C coverage set |")
     A("|---|---|---|---|")
     for s in summary["scenarios"]:
         A(f"| {SC[s['key']]} | {s['A']:g} | {s['kappa']:g} | "
-          f"{'是' if s['in_stage2c_coverage'] else '**否**'} |")
+          f"{'yes' if s['in_stage2c_coverage'] else '**no**'} |")
     A("")
-    A("**归一化只用理论常数**：`a_t` 边际为 `N(0,1)`，故 `E[v_t] = exp(A^2/2 - A^2/2) = 1`；"
-      "两个分子项独立，方差分别为 1 与 `kappa^2 lambda/D`，因此对**任意** `(A, kappa)` 都有 "
-      "`E[eps]=0`、`Var(eps)=1`。**不做任何按整条路径的样本均值或方差标准化。**")
+    A("**Normalisation uses theoretical constants only**: `a_t` is marginally `N(0,1)`, so `E[v_t] = exp(A^2/2 - A^2/2) = 1`; "
+      "the two numerator terms are independent with variances 1 and `kappa^2 lambda/D`, so for **any** `(A, kappa)` "
+      "`E[eps]=0` and `Var(eps)=1`. **No standardisation by a whole-path sample mean or variance is applied.**")
     A("")
     quiet = {k: 1 / math.sqrt(1 + k ** 2 * cfg.noise_jump_lambda_annual / cfg.D) for k in (0, 5, 8)}
-    A(f"> **κ 越大不等于任务必然更难。** 单位方差常数同时压低了无跳跃日的扩散尺度。"
-      f"**跨全部无跳跃日的总体尺度**为 σ₀/c（因 E[v]=1）：κ=0 时 {quiet[0]:.4f}、"
-      f"κ=5 时 {quiet[5]:.4f}、κ=8 时 {quiet[8]:.4f}。"
-      "也就是说 κ=8 的普通交易日整体上比 κ=0 **更安静**，单日信噪比反而更高。"
-      "**但这是总体尺度，不是某个具体潜在状态下的尺度**——"
-      "给定 v_t 时的条件尺度是 `σ₀√v_t/c`，在 A=1 下其 90/10 分位比超过 3。"
-      "本轮报告不预设 κ 的单调效应。")
+    A(f"> **A larger κ does not mean the task is necessarily harder.** The unit-variance constant also lowers the diffusive scale on jump-free days. "
+      f"**The overall scale across all jump-free days** is σ₀/c (because E[v]=1): at κ=0 {quiet[0]:.4f}, "
+      f"at κ=5 {quiet[5]:.4f}, at κ=8 {quiet[8]:.4f}. "
+      "That is, ordinary trading days at κ=8 are, overall, **quieter** than at κ=0, and the single-day signal-to-noise ratio is actually higher. "
+      "**But this is the overall scale, not the scale under any specific latent state**: "
+      "the conditional scale given v_t is `σ₀√v_t/c`, and at A=1 its 90/10 quantile ratio exceeds 3. "
+      "This report does not presuppose a monotone effect of κ.")
     A("")
-    A("**两个潜在方差的命名与定义**（评分与诊断用，**任何检测器都看不到，也都不是实时预测**）：")
+    A("**Names and definitions of the two latent variances** (for scoring and diagnostics; **no detector sees either of them, and neither is a real-time forecast**):")
     A("")
     A("```")
-    A("扩散方差（给定 v_t 且当日无跳跃）      : sigma_0^2 * v_t / c^2")
-    A("给定 v_t、未观察当日跳跃的总方差        : sigma_0^2 * (v_t + kappa^2 lambda/D) / c^2")
+    A("diffusive variance (given v_t and no jump that day)     : sigma_0^2 * v_t / c^2")
+    A("total variance given v_t (that day's jump unobserved)   : sigma_0^2 * (v_t + kappa^2 lambda/D) / c^2")
     A("c^2 = 1 + kappa^2 lambda/D")
     A("```")
     A("")
-    A("> **已修正**：上一版的 `true_daily_sigma` 返回 `sigma_0 sqrt(v_t)`，"
-      "漏掉了组合归一化 `c`，也没有区分是否包含跳跃风险。"
-      "已逐一检查全部调用点：该量在 Stage 2D 中**只写不读**，"
-      "唯一的消费者是单次冲击诊断里的一列与图 2D.4 的一条参考线；"
-      "Stage 2A/2B 使用无跳跃的 SV 生成器（c=1），其 oracle 输入与全部数值**不受影响**（已重跑验证）。"
-      "**因此主分数、oracle、概率评分均保持原值，只有诊断被修正。**")
+    A("> **Corrected**: in the previous version `true_daily_sigma` returned `sigma_0 sqrt(v_t)`, "
+      "which omitted the combined normalisation `c` and did not distinguish whether jump risk is included. "
+      "Every call site has been checked one by one: in Stage 2D this quantity is **written but never read**; "
+      "its only consumers are one column in the single-shock diagnostic and one reference line in Fig 2D.4. "
+      "Stage 2A/2B use the jump-free SV generator (c=1), so their oracle inputs and all their numbers are **unaffected** (verified by rerunning). "
+      "**Hence the main scores, the oracle and the probability scores all keep their original values; only the diagnostic is corrected.**")
     A("")
-    A(f"每个情境：{cfg.stage2d_calibration_paths} 条有效校准路径、"
-      f"{cfg.stage2d_test_paths} 条有效测试路径、{cfg.stage2d_test_paths} 条无效测试路径；"
-      "校准与测试独立，同一数据块内各检测器共用收益路径。"
-      "检测器只接收收益与公共模型配置，**不获得真实状态、潜在波动、跳跃标记或情境参数**。")
+    A(f"Per scenario: {cfg.stage2d_calibration_paths} valid calibration paths, "
+      f"{cfg.stage2d_test_paths} valid test paths and {cfg.stage2d_test_paths} invalid test paths; "
+      "calibration and test are independent, and within one data block all detectors share the same return paths. "
+      "Detectors receive only the returns and the shared model configuration; **they do not get the true state, the latent volatility, jump markers or the scenario parameters**.")
     A("")
 
     # -------- 3 --------
-    A("## 3. 两个比较条件")
+    A("## 3. The two comparison conditions")
     A("")
-    A(f"**第一组（门槛迁移）**：直接读取 Stage 2C 冻结的统一门槛"
-      f"（来源 `{summary['transfer_thresholds_source']}`），五种情境中原样使用，"
-      "**不根据本轮测试结果调整**。三个对照对应既有覆盖分布；两个组合情境不属于原保证范围。")
+    A(f"**Condition 1 (threshold transfer)**: reads the Stage 2C frozen unified thresholds directly "
+      f"(source `{summary['transfer_thresholds_source']}`) and uses them unchanged in all five scenarios, "
+      "**with no adjustment based on this round's test results**. The three controls correspond to distributions in the existing coverage set; the two combined scenarios are outside the original guarantee.")
     A("")
-    A(f"**第二组（诊断校准）**：复用同一校准误差缓冲方法，分别为五种情境校准门槛"
-      f"（J = {summary['diagnostic_J']}，秩 "
-      + "、".join(f"α={float(a):g}→k={v['buffered']}"
+    A(f"**Condition 2 (diagnostic calibration)**: reuses the same calibration-error buffer method to calibrate thresholds separately for each of the five scenarios "
+      f"(J = {summary['diagnostic_J']}, ranks "
+      + ", ".join(f"α={float(a):g}→k={v['buffered']}"
                    for a, v in summary["diagnostic_ranks"].items())
-      + "）。")
+      + ").")
     A("")
-    A("> **第二组具有环境信息**：它知道自己身处哪个情境。它的作用是判断第一组的变化"
-      "来自门槛迁移还是模型在该环境中的检测能力，**不能包装成未知环境下的部署结果**。")
+    A("> **Condition 2 has environment information**: it knows which scenario it is in. Its role is to judge whether the changes in Condition 1 "
+      "come from the threshold transfer or from the model's detection ability in that environment; **it must not be presented as a deployment result in an unknown environment**.")
     A("")
-    A("> **保证范围要分开说。** 两个组合情境**不在** Stage 2C 迁移保证的覆盖集内，"
-      "所以第一组在这两个情境中没有概率保证。"
-      "但第二组是**按本轮五个情境自己校准**的，它有**自己的**有限样本保证："
-      "在这五种路径生成规律及其假设下，以至少 "
-      f"{1-cfg.stage2c_delta:.0%} 的概率同时把各自的真实两年 FAR 控制在目标以内。"
-      "**不能笼统说所有规则都没有保证。**")
+    A("> **The scope of each guarantee must be stated separately.** The two combined scenarios are **not** in the coverage set of the Stage 2C transfer guarantee, "
+      "so Condition 1 has no probabilistic guarantee in these two scenarios. "
+      "But Condition 2 is **calibrated on this round's five scenarios themselves**, and it has **its own** finite-sample guarantee: "
+      "under these five path-generating laws and their assumptions, with probability at least "
+      f"{1-cfg.stage2c_delta:.0%} it simultaneously keeps each scenario's true two-year FAR within the target. "
+      "**It cannot be said in general that none of the rules has a guarantee.**")
     A("")
 
     # -------- 4 --------
@@ -643,180 +643,180 @@ def write_stage2d_report(cfg, summary, metrics, diag, boot, brier, shock, path: 
         A(f"## {n}. {ARM_REPORT[arm]}")
         A("")
         for alpha in cfg.far_targets:
-            tag = "主结果" if alpha == a_main else "敏感性"
-            A(f"### {n}.{list(cfg.far_targets).index(alpha)+1} α = {alpha:g}（{tag}）")
+            tag = "main result" if alpha == a_main else "sensitivity"
+            A(f"### {n}.{list(cfg.far_targets).index(alpha)+1} α = {alpha:g} ({tag})")
             A("")
             sub = M[(M.arm == arm) & (M.far_target == alpha)].to_dict("records")
             L.extend(_t(sub,
-                        ["情境", "方法", "两年实测 FAR", "FAR 95%", "超预算"]
-                        + [f"检出 {d}d" for d in days]
-                        + ["截断均检(日)", "中位检测", "两年未检出"],
+                        ["Scenario", "Method", "Realised 2y FAR", "FAR 95%", "Over budget"]
+                        + [f"Detection {d}d" for d in days]
+                        + ["Trunc. mean detection (days)", "Median detection", "Undetected at 2y"],
                         lambda r: [SC[r["scenario"]], LABEL_2D[r["method"]],
                                    f"{r['far_d504']:.4f}",
                                    f"[{r['far_lo']:.4f}, {r['far_hi']:.4f}]",
-                                   "**是**" if r["far_d504"] > alpha else "否"]
+                                   "**yes**" if r["far_d504"] > alpha else "no"]
                                   + [f"{r[f'detect_d{d}']:.4f}" for d in days]
                                   + [f"{r['trunc_mean_detect_days']:.0f}", _med(r),
                                      f"{r['undetected_at_H']:.4f}"]))
             A("")
         if arm == "transfer":
-            A(f"> 第 {days[0]} 天与第 {days[1]} 天，两个 252 日滚动方法的检出率与误杀率"
-              f"结构性为 0：它们要到第 {cfg.rolling_window} 天才能启动，这是窗口设置而非性能。")
+            A(f"> On day {days[0]} and day {days[1]}, the detection rates and false-alarm rates of the two 252-day rolling methods "
+              f"are structurally 0: they cannot start until day {cfg.rolling_window}; this is a window setting, not performance.")
             A("")
 
     # -------- 6 --------
-    A("## 6. 主要比较与不确定性")
+    A("## 6. Main comparisons and uncertainty")
     A("")
-    A("在两个组合情境中，运行前预先指定三组比较："
-      "EWMA Student-t 对固定 Student-t、EWMA Gaussian 对固定 Gaussian、两个 EWMA 之间。")
+    A("In the two combined scenarios, three comparisons were pre-specified before the run: "
+      "EWMA Student-t vs fixed Student-t, EWMA Gaussian vs fixed Gaussian, and the two EWMA methods against each other.")
     A("")
-    A("**冻结门槛的配对区间**（同一批测试路径，仅覆盖测试抽样），并列实测 FAR：")
+    A("**Paired intervals under frozen thresholds** (same test paths; covers test sampling only), shown alongside the realised FAR:")
     A("")
     pr = [r for r in summary["paired"] if r["far_target"] == a_main]
-    L.extend(_t(pr, ["情境", "条件", "A", "B", "A 检出", "B 检出", "A FAR", "B FAR",
-                     "检出差", "95% 区间", "排除零"],
-                lambda r: [SC[r["scenario"]], "迁移" if r["arm"] == "transfer" else "诊断",
+    L.extend(_t(pr, ["Scenario", "Condition", "A", "B", "A detection", "B detection", "A FAR", "B FAR",
+                     "Detection diff", "95% interval", "Excludes zero"],
+                lambda r: [SC[r["scenario"]], "transfer" if r["arm"] == "transfer" else "diagnostic",
                            LABEL_2D[r["method_a"]], LABEL_2D[r["method_b"]],
                            f"{r['detect_a']:.4f}", f"{r['detect_b']:.4f}",
                            f"{r['far_a']:.4f}", f"{r['far_b']:.4f}",
                            f"{r['detect_diff']:+.4f}",
                            f"[{r['detect_diff_lo']:+.4f}, {r['detect_diff_hi']:+.4f}]",
-                           "是" if r["detect_excludes_zero"] else "否"]))
+                           "yes" if r["detect_excludes_zero"] else "no"]))
     A("")
-    A(f"（α={a_alt:g} 档见 `stage2d_paired.csv`。）")
+    A(f"(For α={a_alt:g}, see `stage2d_paired.csv`.)")
     A("")
-    A(f"**含校准抽样的敏感性区间**（{cfg.stage2d_bootstrap_reps} 次；每次重采样该情境的诊断校准块、"
-      "按冻结的秩重新取门槛，再重采样测试块；块内各方法共用路径索引）：")
+    A(f"**Sensitivity intervals including calibration sampling** ({cfg.stage2d_bootstrap_reps} replicates; each resamples the scenario's diagnostic calibration block, "
+      "re-picks the threshold at the frozen rank, then resamples the test block; within a block all methods share path indices):")
     A("")
     bb = boot[(boot.far_target == a_main) & (boot.scenario.isin(COMBINED))].to_dict("records")
-    L.extend(_t(bb, ["情境", "A", "B", "检出差", "95% 敏感性区间", "排除零"],
+    L.extend(_t(bb, ["Scenario", "A", "B", "Detection diff", "95% sensitivity interval", "Excludes zero"],
                 lambda r: [SC[r["scenario"]], LABEL_2D[r["method_a"]], LABEL_2D[r["method_b"]],
                            f"{r['detect_diff']:+.4f}",
                            f"[{r['detect_diff_lo']:+.4f}, {r['detect_diff_hi']:+.4f}]",
-                           "是" if r["excludes_zero"] else "否"]))
+                           "yes" if r["excludes_zero"] else "no"]))
     A("")
-    A("> **两类区间覆盖的随机性不同**：配对区间只覆盖测试抽样，敏感性区间还包含选门槛这一步。"
-      "两者都是逐点区间，不构成所有比较同时成立的保证。")
+    A("> **The two kinds of interval cover different sources of randomness**: the paired intervals cover test sampling only, while the sensitivity intervals also include the threshold-selection step. "
+      "Both are per-item (unadjusted) intervals and do not constitute a guarantee that all comparisons hold simultaneously.")
     A("")
-    A("**两个 EWMA 方法的配对 Brier 差异**（EWMA Student-t 减 EWMA Gaussian；"
-      "有效/无效两组分别重采样，保持 50/50 评价权重）：")
+    A("**Paired Brier difference between the two EWMA methods** (EWMA Student-t minus EWMA Gaussian; "
+      "the valid and invalid groups are resampled separately, keeping the 50/50 evaluation weights):")
     A("")
     L.extend(_t(brier.to_dict("records"),
-                ["情境", "天数", "Brier(EWMA t)", "Brier(EWMA G)", "差", "95% 区间", "排除零"],
+                ["Scenario", "Day", "Brier(EWMA t)", "Brier(EWMA G)", "Diff", "95% interval", "Excludes zero"],
                 lambda r: [SC[r["scenario"]], str(int(r["day"])), f"{r['brier_a']:.5f}",
                            f"{r['brier_b']:.5f}", f"{r['diff']:+.5f}",
                            f"[{r['lo']:+.5f}, {r['hi']:+.5f}]",
-                           "是" if r["excludes_zero"] else "否"]))
+                           "yes" if r["excludes_zero"] else "no"]))
     A("")
-    A("> Brier 改善**不等同于**所有概率区间都校准准确；它是一个综合评分，"
-      "分箱可靠性需要单独看。")
+    A("> A Brier improvement **is not the same as** accurate calibration across all probability ranges; it is a composite score, "
+      "and binned reliability has to be examined separately.")
     A("")
 
     # -------- 7 --------
-    A("## 7. 全部路径的失效概率分布")
+    A("## 7. Distribution of the failure probability over all paths")
     A("")
-    A("报警后仍继续计算原始分数用于概率诊断，但**报警规则仍按第一次穿越计分**。")
+    A("After an alarm the raw score is still computed for the probability diagnostics, but **the alarm rule is still scored by first passage**.")
     A("")
     fp = [r for r in summary["failure_probability"] if r["scenario"] == "sv_jump"]
     L.extend(_t(sorted(fp, key=lambda r: (r["method"], r["true_state"], r["day"])),
-                ["方法", "真实状态", "天数", "均值 q", "中位 q", "10%", "90%"],
-                lambda r: [LABEL_2D[r["method"]], "有效" if r["true_state"] == "valid" else "无效",
+                ["Method", "True state", "Day", "Mean q", "Median q", "10%", "90%"],
+                lambda r: [LABEL_2D[r["method"]], "valid" if r["true_state"] == "valid" else "invalid",
                            str(int(r["day"])), f"{r['mean_q']:.4f}", f"{r['median_q']:.4f}",
                            f"{r['q10']:.4f}", f"{r['q90']:.4f}"]))
     A("")
-    A("（上表为主组合情境；全部情境见 `stage2d_failure_probability.csv`。）")
+    A("(The table above is for the main combined scenario; for all scenarios see `stage2d_failure_probability.csv`.)")
     A("")
 
     # -------- 8 --------
-    A("## 8. 单次冲击诊断")
+    A("## 8. Single-shock diagnostic")
     A("")
     d0 = cfg.stage2d_shock_day
-    A(f"在**一条预先固定的有效 SV+跳跃路径**（路径编号 {cfg.stage2d_shock_path_index}）上，"
-      f"于第 {d0} 日分别加入 ±{cfg.stage2d_shock_sigmas:g}σ₀ 的单次收益冲击，"
-      "保留未修改路径作对照；其余各日收益完全相同。")
+    A(f"On **one pre-fixed valid SV+jumps path** (path index {cfg.stage2d_shock_path_index}), "
+      f"on day {d0} a single return shock of ±{cfg.stage2d_shock_sigmas:g}σ₀ is added (one variant for each sign), "
+      "with the unmodified path kept as the control; returns on all other days are identical.")
     A("")
-    A("> **这是人为扰动诊断，不属于主 benchmark**，不贡献任何检出率或误杀率估计。")
+    A("> **This is an artificial-perturbation diagnostic and not part of the main benchmark**; it contributes no detection-rate or false-alarm-rate estimate.")
     A("")
     b = shock[shock.variant == "base"].set_index("day")
     p_ = shock[shock.variant == "plus"].set_index("day")
     mn = shock[shock.variant == "minus"].set_index("day")
-    A("| 量 | 未修改 | +8σ₀ | −8σ₀ |")
+    A("| Quantity | Unmodified | +8σ₀ | −8σ₀ |")
     A("|---|---|---|---|")
-    A(f"| 冲击当日 EWMA Gaussian 增量 | {b.ewma_gaussian_increment[d0]:+.5f} | "
+    A(f"| EWMA Gaussian increment on the shock day | {b.ewma_gaussian_increment[d0]:+.5f} | "
       f"{p_.ewma_gaussian_increment[d0]:+.5f} | {mn.ewma_gaussian_increment[d0]:+.5f} |")
-    A(f"| 冲击当日 EWMA Student-t 增量 | {b.ewma_student_t_increment[d0]:+.5f} | "
+    A(f"| EWMA Student-t increment on the shock day | {b.ewma_student_t_increment[d0]:+.5f} | "
       f"{p_.ewma_student_t_increment[d0]:+.5f} | {mn.ewma_student_t_increment[d0]:+.5f} |")
     for h in (1, 5, 21, 63):
         d = d0 + h
         if d in b.index:
-            A(f"| 第 {d0}+{h} 日预测方差 / σ₀² | {b.forecast_var_over_sigma0sq[d]:.4f} | "
+            A(f"| Forecast variance / σ₀² on day {d0}+{h} | {b.forecast_var_over_sigma0sq[d]:.4f} | "
               f"{p_.forecast_var_over_sigma0sq[d]:.4f} | {mn.forecast_var_over_sigma0sq[d]:.4f} |")
-    A(f"| 第 {cfg.horizon_days} 日累计证据 (Gaussian) | {b.ewma_gaussian_cum.iloc[-1]:+.4f} | "
+    A(f"| Cumulative evidence on day {cfg.horizon_days} (Gaussian) | {b.ewma_gaussian_cum.iloc[-1]:+.4f} | "
       f"{p_.ewma_gaussian_cum.iloc[-1]:+.4f} | {mn.ewma_gaussian_cum.iloc[-1]:+.4f} |")
-    A(f"| 第 {cfg.horizon_days} 日累计证据 (Student-t) | {b.ewma_student_t_cum.iloc[-1]:+.4f} | "
+    A(f"| Cumulative evidence on day {cfg.horizon_days} (Student-t) | {b.ewma_student_t_cum.iloc[-1]:+.4f} | "
       f"{p_.ewma_student_t_cum.iloc[-1]:+.4f} | {mn.ewma_student_t_cum.iloc[-1]:+.4f} |")
     A("")
     lam = cfg.ewma_lambda
     extra = (1 - lam) * (cfg.stage2d_shock_sigmas * cfg.sigma_daily) ** 2 / cfg.sigma_daily ** 2
     hl = math.log(0.5) / math.log(lam)
-    A(f"**验算冲击引入的方差预测差异如何衰减**：冲击把当日平方残差抬高，"
-      f"次日预测方差因此多出约 `(1-λ)·(8σ₀)²/σ₀² = {extra:.3f}`（以 σ₀² 为单位，忽略中点项），"
-      f"此后按 λ={lam:g} 每日衰减，半衰期 `ln0.5/lnλ = {hl:.1f}` 个交易日。"
-      "实测差值见上表与 `stage2d_shock.csv`。")
+    A(f"**Check of how the shock-induced difference in the variance forecast decays**: the shock raises that day's squared residual, "
+      f"so the next day's forecast variance is higher by about `(1-λ)·(8σ₀)²/σ₀² = {extra:.3f}` (in units of σ₀², ignoring the midpoint term), "
+      f"and thereafter decays by a factor λ={lam:g} per day, with a half-life of `ln0.5/lnλ = {hl:.1f}` trading days. "
+      "The measured differences are in the table above and in `stage2d_shock.csv`.")
     A("")
-    A("Student-t 在**冲击当日**把证据增量压得比 Gaussian 小得多，"
-      "但**随后各日**它与 Gaussian 共用同一个被抬高的方差预测，因此同样受到影响。"
-      "**本轮不把这一现象写成主要性能瓶颈**：单条人为扰动路径不足以支持那样的结论。")
+    A("On **the shock day** Student-t keeps the evidence increment much smaller than Gaussian does, "
+      "but **on the following days** it shares the same inflated variance forecast with Gaussian and is therefore affected in the same way. "
+      "**This round does not present this effect as a main performance bottleneck**: a single artificially perturbed path is not enough to support that conclusion.")
     A("")
 
     # -------- 8.5 follow-up --------
-    A("## 9. 追加证据（follow-up）")
+    A("## 9. Additional evidence (follow-up)")
     A("")
-    A("> 以下为 Stage 2E 阶段追加，**不是运行前预先指定的发现**；使用的是同一批 Stage 2D 数据。")
+    A("> The following was added during Stage 2E and **is not a finding pre-specified before the run**; it uses the same Stage 2D data.")
     A("")
-    A("### 9.1 截断检测时间的配对差异（冻结门槛，仅覆盖测试抽样）")
+    A("### 9.1 Paired differences in truncated detection time (frozen thresholds; covers test sampling only)")
     A("")
     tt = [r for r in summary.get("paired_time", []) if r["far_target"] == a_main]
     if tt:
-        L.extend(_t(tt, ["情境", "条件", "A", "B", "A 截断均检", "B 截断均检", "差(日)", "95% 区间"],
-                    lambda r: [SC[r["scenario"]], "迁移" if r["arm"] == "transfer" else "诊断",
+        L.extend(_t(tt, ["Scenario", "Condition", "A", "B", "A trunc. mean detection", "B trunc. mean detection", "Diff (days)", "95% interval"],
+                    lambda r: [SC[r["scenario"]], "transfer" if r["arm"] == "transfer" else "diagnostic",
                                LABEL_2D[r["method_a"]], LABEL_2D[r["method_b"]],
                                f"{r['trunc_mean_a']:.1f}", f"{r['trunc_mean_b']:.1f}",
                                f"{r['trunc_time_diff_days']:+.2f}",
                                f"[{r['trunc_time_diff_lo']:+.2f}, {r['trunc_time_diff_hi']:+.2f}]"]))
         A("")
-        A(f"（α={a_alt:g} 档见 `stage2d_paired_time.csv`。）")
+        A(f"(For α={a_alt:g}, see `stage2d_paired_time.csv`.)")
         A("")
-    A("### 9.2 配对 Brier：EWMA Student-t 对固定 Student-t")
+    A("### 9.2 Paired Brier: EWMA Student-t vs fixed Student-t")
     A("")
     fb = [r for r in summary["brier"] if r.get("followup")]
     if fb:
-        L.extend(_t(fb, ["情境", "天数", "Brier(EWMA t)", "Brier(固定 t)", "差", "95% 区间", "排除零"],
+        L.extend(_t(fb, ["Scenario", "Day", "Brier(EWMA t)", "Brier(fixed t)", "Diff", "95% interval", "Excludes zero"],
                     lambda r: [SC[r["scenario"]], str(int(r["day"])), f"{r['brier_a']:.5f}",
                                f"{r['brier_b']:.5f}", f"{r['diff']:+.5f}",
                                f"[{r['lo']:+.5f}, {r['hi']:+.5f}]",
-                               "是" if r["excludes_zero"] else "否"]))
+                               "yes" if r["excludes_zero"] else "no"]))
         A("")
-    A("> **Brier 改善与概率校准改善是两件事**：Brier 是分辨力与校准的合成评分，"
-      "分箱可靠性单独见 `stage2d_reliability.csv`（含每箱样本数）。"
-      "全部概率诊断使用**所有路径**，不因报警而删去后续概率。")
+    A("> **A Brier improvement and an improvement in probability calibration are two different things**: Brier is a composite score of discrimination and calibration; "
+      "binned reliability is reported separately in `stage2d_reliability.csv` (with the sample count per bin). "
+      "All probability diagnostics use **all paths** and do not drop later probabilities because of an alarm.")
     A("")
 
     # -------- 9 --------
-    A("## 10. 复现")
+    A("## 10. Reproduction")
     A("")
     A("```bash")
     A(".venv/bin/python -m pytest")
-    A(".venv/bin/python -m strategy_survivorship.stage2d                # 正式实验")
-    A(".venv/bin/python -m strategy_survivorship.stage2d --figures-only # 仅重绘")
+    A(".venv/bin/python -m strategy_survivorship.stage2d                # formal experiment")
+    A(".venv/bin/python -m strategy_survivorship.stage2d --figures-only # redraw only")
     A("```")
     A("")
-    A("`--figures-only` 从磁盘上的 CSV 重绘，**不会重跑实验**，"
-      "因此调整图例不可能覆盖正式的重采样结果。")
+    A("`--figures-only` redraws from the CSVs on disk and **does not rerun the experiment**, "
+      "so adjusting a legend cannot overwrite the formal resampling results.")
     A("")
     e = summary["environment"]
-    A(f"Python {e['python']} / NumPy {e['numpy']} / SciPy {e['scipy']}；"
-      f"本次耗时 {summary['elapsed_s']:.1f} s。")
+    A(f"Python {e['python']} / NumPy {e['numpy']} / SciPy {e['scipy']}; "
+      f"this run took {summary['elapsed_s']:.1f} s.")
     A("")
     path.write_text("\n".join(L), encoding="utf-8")
     return path
