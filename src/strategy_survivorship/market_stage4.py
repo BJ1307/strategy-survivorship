@@ -7,6 +7,8 @@
 """
 from __future__ import annotations
 
+from .config import require_input
+
 
 # ============================================================================
 # Model and computation
@@ -1101,6 +1103,7 @@ def main(argv: list[str] | None = None) -> int:
     out.mkdir(parents=True, exist_ok=True)
     cfg = DEFAULT
 
+    require_input(IN / "market_sp500_returns.csv", "run `python -m strategy_survivorship.market_stage1 --reuse-snapshot` first")
     raw = pd.read_csv(IN / "market_sp500_returns.csv",
                       parse_dates=["date", "prev_date"])
     returns = data_up_to(raw, DEV_END)

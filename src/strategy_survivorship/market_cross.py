@@ -6,6 +6,8 @@
 """
 from __future__ import annotations
 
+from .config import raw_data_dir, require_input
+
 
 # ============================================================================
 # Model and computation
@@ -470,7 +472,7 @@ from . import market_stage4 as m4
 from .config import DEFAULT
 
 OUT = Path("outputs/market")
-RAW = Path("data/raw")
+RAW = raw_data_dir()
 
 
 def protocol(cfg, paths: int) -> dict:
@@ -568,6 +570,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--paths", type=int, default=PATHS)
     ap.add_argument("--out", type=Path, default=OUT)
     args = ap.parse_args(argv)
+    require_input(RAW, "set STRATEGY_SURVIVORSHIP_DATA_DIR or place the snapshots under data/raw; see docs/DATA.md")
     out = args.out
     out.mkdir(parents=True, exist_ok=True)
     cfg = DEFAULT

@@ -5,6 +5,8 @@
 """
 from __future__ import annotations
 
+from .config import raw_data_dir, require_input
+
 
 # ============================================================================
 # Model and computation
@@ -20,7 +22,7 @@ import pandas as pd
 from . import market_assets as ma
 from . import market_data as md
 
-RAW = Path("data/raw")
+RAW = raw_data_dir()
 
 #: Calendar days of run-up kept before `start` so the previous close can be found.
 #: Ample for any holiday run; a gap longer than this is itself a defect and shows
@@ -251,7 +253,7 @@ from . import market_stage4 as m4
 from . import market_assets as ra
 
 OUT = Path("outputs/market")
-RAW = Path("data/raw")
+RAW = raw_data_dir()
 #: objects both entry points can produce, so the comparison is like for like
 OVERLAP = ("sp500", "nasdaq100", "nikkei225", "ff_momentum")
 
@@ -327,6 +329,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Return-boundary agreement check.")
     ap.add_argument("--out", type=Path, default=OUT)
     a = ap.parse_args(argv)
+    require_input(RAW / "acquisition.provenance.json", "set STRATEGY_SURVIVORSHIP_DATA_DIR or place the snapshots under data/raw; see docs/DATA.md")
     a.out.mkdir(parents=True, exist_ok=True)
 
     agree, impact = [], []

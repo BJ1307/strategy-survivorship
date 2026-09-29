@@ -18,7 +18,9 @@ does not deduct a second cost layer.
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import asdict, dataclass, field
+from pathlib import Path
 from typing import Any
 
 # Order in which independent random streams are spawned from the root
@@ -394,3 +396,35 @@ class Stage1Config:
 
 
 DEFAULT = Stage1Config()
+
+
+# --------------------------------------------------------------------------- #
+# Input locations.  Nothing here changes a computation: the default is the
+# directory every entry point has always read (data/raw, relative to the
+# working directory).
+# --------------------------------------------------------------------------- #
+
+DATA_DIR_ENV = "STRATEGY_SURVIVORSHIP_DATA_DIR"
+
+
+def raw_data_dir() -> Path:
+    """Directory holding the raw market-data snapshots.
+
+    ``$STRATEGY_SURVIVORSHIP_DATA_DIR`` when it is set, otherwise ``data/raw``
+    relative to the working directory. The repository ships no data; the files
+    each command needs are listed in docs/DATA.md.
+    """
+    return Path(os.environ.get(DATA_DIR_ENV) or "data/raw")
+
+
+def require_input(path: str | Path, hint: str) -> Path:
+    """Stop with an explicit message when an input is missing.
+
+    Entry points call this before reading an upstream file, so a missing input
+    never turns into a traceback deep in a computation and is never replaced by
+    synthetic data.
+    """
+    p = Path(path)
+    if not p.exists():
+        raise SystemExit(f"missing input: {p}\n{hint}")
+    return p

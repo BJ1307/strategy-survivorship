@@ -6,6 +6,8 @@
 """
 from __future__ import annotations
 
+from .config import raw_data_dir
+
 
 # ============================================================================
 # Figures
@@ -455,7 +457,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--reuse-snapshot", action="store_true",
                     help="use the newest snapshot under data/raw instead of downloading")
     ap.add_argument("--no-vix", action="store_true", help="skip the auxiliary VIX series")
-    ap.add_argument("--raw", type=Path, default=Path("data/raw"))
+    ap.add_argument("--raw", type=Path, default=raw_data_dir())
     ap.add_argument("--out", type=Path, default=Path("outputs/market"))
     args = ap.parse_args(argv)
 

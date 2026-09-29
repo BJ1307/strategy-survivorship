@@ -6,6 +6,8 @@
 """
 from __future__ import annotations
 
+from .config import raw_data_dir, require_input
+
 
 # ============================================================================
 # Model and computation
@@ -300,7 +302,7 @@ from . import market_stage4 as m4
 from .config import DEFAULT
 
 OUT = Path("outputs/market")
-RAW = Path("data/raw")
+RAW = raw_data_dir()
 
 
 def _provenance() -> dict:
@@ -476,6 +478,7 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--smoke", action="store_true",
                     help="a cheap check; it MUST write somewhere other than outputs/market")
     args = ap.parse_args(argv)
+    require_input(RAW / "acquisition.provenance.json", "set STRATEGY_SURVIVORSHIP_DATA_DIR or place the snapshots under data/raw; see docs/DATA.md")
     out = args.out
     if args.smoke and out.resolve() == OUT.resolve():
         raise SystemExit("--smoke must not write to outputs/market; pass --out to a "
