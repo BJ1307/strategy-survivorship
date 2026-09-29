@@ -7,6 +7,8 @@
 """
 from __future__ import annotations
 
+from .config import require_input
+
 
 # ============================================================================
 # Model and computation
@@ -1350,6 +1352,7 @@ def main(argv: list[str] | None = None) -> int:
     # mechanism-only control: each truncated variant borrows its plain counterpart's
     # Stage 2C threshold. No guarantee attaches to it and it is never used for a
     # same-budget ranking.
+    require_input(args.stage2c_thresholds, "run `python -m strategy_survivorship.stage2c` first, or pass --stage2c-thresholds")
     s2c = load_frozen_thresholds(cfg, args.stage2c_thresholds)
     legacy = {}
     for plain, trunc_m in (("ewma_gaussian", "ewma_trunc_gaussian"),

@@ -8,6 +8,8 @@
 """
 from __future__ import annotations
 
+from .config import require_input
+
 
 # ============================================================================
 # Model and computation
@@ -882,6 +884,7 @@ def main(argv: list[str] | None = None) -> int:
     t0 = time.perf_counter()
     days = tuple(cfg.stage2c_report_days)
 
+    require_input(args.stage2c_thresholds, "run `python -m strategy_survivorship.stage2c` first, or pass --stage2c-thresholds")
     transfer = load_frozen_thresholds(cfg, args.stage2c_thresholds)
     status("Stage 2C unified thresholds loaded", n=len(transfer),
            source=str(args.stage2c_thresholds))

@@ -7,6 +7,8 @@
 """
 from __future__ import annotations
 
+from .config import require_input
+
 
 # ============================================================================
 # Model and computation
@@ -1062,6 +1064,7 @@ def main(argv: list[str] | None = None) -> int:
     pd.DataFrame(ev_check).to_csv(out_dir / "stage3b_identity_check.csv", index=False)
     status("analytic identity checked", worst_z=round(worst, 2))
 
+    require_input(args.thresholds, "run `python -m strategy_survivorship.stage3a` first, or pass --thresholds")
     thr = load_stage3a_thresholds(args.thresholds)
     need = [(m, sc, s, a) for m in METHODS_3B for sc in SCENARIOS_3B
             for s in cfg.stage3a_sharpes for a in cfg.far_targets]

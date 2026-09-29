@@ -6,6 +6,8 @@
 """
 from __future__ import annotations
 
+from .config import require_input
+
 
 # ============================================================================
 # Model and computation
@@ -726,6 +728,9 @@ def main(argv: list[str] | None = None) -> int:
             raise AssertionError(f"rank routes disagree at alpha={a}")
     status("ranks re-derived", J=J, ranks={a: v["buffered"] for a, v in ranks.items()})
 
+    if not args.smoke:
+        require_input(args.frozen, "run `python -m strategy_survivorship.stage2e` first, or pass --frozen")
+        require_input("outputs/stage2e_metrics.csv", "run `python -m strategy_survivorship.stage2e` first")
     frozen = exact_frozen_thresholds(args.frozen) if not args.smoke else None
 
     checks, timing, summary, ptime, cross = [], [], [], [], []
