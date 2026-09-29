@@ -17,7 +17,7 @@ from pathlib import Path
 from strategy_survivorship import market_assets as ma
 from strategy_survivorship import market_cross as mc
 from strategy_survivorship import market_returns as mr
-from strategy_survivorship import run_market_assets as ra
+from strategy_survivorship import market_assets as ra
 
 NYSE = "nyse"
 RAW = Path("data/raw")

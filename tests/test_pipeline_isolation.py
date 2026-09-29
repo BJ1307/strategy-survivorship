@@ -6,7 +6,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from strategy_survivorship import run_stage1, simulate
+from strategy_survivorship import simulate
+from strategy_survivorship import stage1 as run_stage1
 from strategy_survivorship.detectors import DETECTORS_BY_KEY
 
 

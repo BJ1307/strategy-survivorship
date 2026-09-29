@@ -144,7 +144,7 @@ def test_stage3b_has_the_full_two_sharpe_protocol():
 def test_the_probability_threshold_is_blank_for_non_log_odds_methods():
     """expit of an annualised Sharpe ratio is not a probability."""
     _needs(OUT / "stage3b_metrics.csv")
-    from strategy_survivorship.stage3b_scales import LOG_ODDS_METHODS, NOT_LOG_ODDS
+    from strategy_survivorship.evaluate import LOG_ODDS_METHODS, NOT_LOG_ODDS
     m = pd.read_csv(OUT / "stage3b_metrics.csv")
     bad = m[m.method.isin(NOT_LOG_ODDS)]
     assert len(bad) and bad.working_prob_threshold.isna().all()

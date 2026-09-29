@@ -1,16 +1,14 @@
-"""Threshold calibration, first-passage bookkeeping and the Stage 1 metrics.
+"""evaluate: 
 
-Decision protocol (identical for every detector)
------------------------------------------------
-* A detector may only speak from its first eligible day onwards.
-* It raises an alarm on the first eligible day whose statistic is **strictly
-  below** the threshold.  ``nan`` never triggers an alarm.
-* The first alarm closes the decision: tau is a first-passage time and the run is
-  absorbed.  Statistics may still be *plotted* afterwards, but tau never moves.
-* Cumulative false-alarm rate over the horizon:  F_H = P_{S=1}(tau <= H).
+- Model and computation: Threshold calibration, first-passage bookkeeping and the Stage 1 metrics.
+- Model and computation: Which statistics live on a log-odds scale.
 """
-
 from __future__ import annotations
+
+
+# ============================================================================
+# Model and computation
+# ============================================================================
 
 import math
 from dataclasses import dataclass
@@ -348,3 +346,11 @@ def median_first_passage_day(tau: np.ndarray, horizon: int, sentinel: int = -1) 
     if hit.size:
         return int(hit[0]) + 1, ""
     return "", f"not reached within {horizon}d"
+
+# ============================================================================
+# Model and computation
+# ============================================================================
+
+LOG_ODDS_METHODS = ("binary_gaussian", "binary_student_t", "ewma_gaussian",
+                    "ewma_student_t", "ewma_trunc_gaussian", "ewma_trunc_student_t")
+NOT_LOG_ODDS = ("trailing_sharpe_252", "known_vol_rolling_252")

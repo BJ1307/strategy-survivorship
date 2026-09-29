@@ -15,7 +15,7 @@ import pytest
 
 from strategy_survivorship.config import DEFAULT
 from strategy_survivorship.detectors import DETECTORS
-from strategy_survivorship.robustness import calibration_robustness
+from strategy_survivorship.stage1 import calibration_robustness
 from strategy_survivorship.simulate import build_pathsets
 
 

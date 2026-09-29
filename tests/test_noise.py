@@ -100,13 +100,13 @@ def test_stochastic_volatility_persistence_and_stationarity():
         lo, hi = _path_level_ci(a[:, t] ** 2)
         assert lo <= amp2 <= hi, (t, lo, hi)
     # the other three models must show no clustering at all
-    from strategy_survivorship.run_stage2a import pooled_autocorr
+    from strategy_survivorship.stage2a import pooled_autocorr
 
     for other in ("gaussian", "student_t", "jump"):
         assert abs(pooled_autocorr(np.abs(_draw(other).eps), 1)) < 0.01
     # lag-1 autocorrelation must be POOLED: demeaning each path by its own mean
     # removes the persistent level and biases the estimate ~23 SE low.
-    from strategy_survivorship.run_stage2a import pooled_autocorr
+    from strategy_survivorship.stage2a import pooled_autocorr
 
     rho_hat = pooled_autocorr(a, 1)
     # path-level SE of the per-path estimate, used as the tolerance scale
@@ -303,7 +303,7 @@ def test_pooled_abs_eps_autocorr_matches_the_analytic_population_value():
     0.27300 at lag 1. The per-path estimator this replaced returned 0.216.
     """
     from strategy_survivorship.noise import stoch_vol_abs_eps_autocorr
-    from strategy_survivorship.run_stage2a import pooled_autocorr
+    from strategy_survivorship.stage2a import pooled_autocorr
 
     d = _draw("stoch_vol", seed=77, n_paths=6000)
     for lag in (1, 10, 40):

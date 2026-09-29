@@ -10,10 +10,10 @@ test:
 ## redraw every figure from the CSVs already in outputs/ -- no simulation runs
 figures:
 	$(PY) -m strategy_survivorship.figures_brief
-	$(PY) -m strategy_survivorship.run_stage2e  --figures-only
-	$(PY) -m strategy_survivorship.run_stage3a  --figures-only
-	$(PY) -m strategy_survivorship.run_stage3a1 --figures-only
-	$(PY) -m strategy_survivorship.run_stage3b  --figures-only
+	$(PY) -m strategy_survivorship.stage2e  --figures-only
+	$(PY) -m strategy_survivorship.stage3a  --figures-only
+	$(PY) -m strategy_survivorship.stage3a1 --figures-only
+	$(PY) -m strategy_survivorship.stage3b  --figures-only
 
 ## rebuild the four brief figures only
 brief:
@@ -21,8 +21,8 @@ brief:
 
 ## regenerate stage reports from existing CSVs -- no simulation runs
 report-only:
-	$(PY) -m strategy_survivorship.run_stage3a1 --report-only
-	$(PY) -m strategy_survivorship.run_stage3b  --report-only
+	$(PY) -m strategy_survivorship.stage3a1 --report-only
+	$(PY) -m strategy_survivorship.stage3b  --report-only
 
 clean-scratch:
 	rm -rf outputs/smoke*/ outputs/review_bundle*/ outputs/*.zip outputs/status.json

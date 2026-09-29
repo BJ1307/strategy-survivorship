@@ -1,27 +1,15 @@
-"""mixed_noise: strategies that differ from one another.
+"""mixed_noise: one module per research stage.
 
-Every earlier experiment fixed one pair of noise parameters and asked how the
-monitors do there.  This one gives every simulated strategy its OWN volatility
-swing amplitude and its OWN jump scale, so a result cannot rest on a single
-parameter point.
-
-    A_i     ~ Uniform(0, 1)     amplitude of the volatility swings
-    kappa_i ~ Uniform(0, 8)     scale of a jump
-    rho     = 0.98              persistence of the latent volatility state
-    lambda  = 2 per year        how often a jump lands
-
-A and kappa are drawn ONCE per strategy, held for the whole window, and drawn
-independently of the state and of every noise stream.  The monitor never sees
-them; it sees returns.
-
-**Scope.**  Those ranges are a simulation choice written down before the run.
-They are not estimated from any market, and randomising them does NOT make the
-result a statement about real strategies: the independent test paths are a
-genuine out-of-sample evaluation, but they come from the same generating family
-as the calibration paths.
+- Model and computation: mixed_noise: strategies that differ from one another.
+- Report: Generate ``mixed_noise_report.md``. Every number is read from the result tables.
+- Command-line entry: mixed_noise: every simulated strategy draws its own (A, kappa).
 """
-
 from __future__ import annotations
+
+
+# ============================================================================
+# Model and computation
+# ============================================================================
 
 import math
 
@@ -268,3 +256,340 @@ def bootstrap(cfg: Stage1Config, cal_minima: dict, minima: dict, rk: dict,
                                       "re-derived in every replicate",
                         "interval_type": "per-comparison 95%"})
     return out
+
+# ============================================================================
+# Report
+# ============================================================================
+
+import json
+from pathlib import Path
+
+import pandas as pd
+
+CN = {"binary_gaussian": "固定 Gaussian", "binary_student_t": "固定 Student-t",
+      "trailing_sharpe_252": "滚动一年 Sharpe", "ewma_student_t": "EWMA Student-t",
+      "ewma_trunc_student_t": "截断 EWMA Student-t"}
+DAYS = (63, 126, 252, 504)
+
+
+def _t(rows, header, render):
+    out = ["| " + " | ".join(header) + " |", "|" + "|".join(["---"] * len(header)) + "|"]
+    for r in rows:
+        out.append("| " + " | ".join(render(r)) + " |")
+    return out
+
+
+def write(out_dir: Path) -> Path:
+    S = json.loads((out_dir / "mixed_noise_summary.json").read_text())
+    m = pd.read_csv(out_dir / "mixed_noise_metrics.csv")
+    b = pd.read_csv(out_dir / "mixed_noise_bootstrap.csv")
+    g = pd.read_csv(out_dir / "mixed_noise_subgroups.csv")
+    p, rk = S["protocol"], S["ranks"]
+    L: list[str] = []
+    A = L.append
+
+    A("# mixed_noise 实验报告：每条策略的噪声参数都不同")
+    A("")
+    A("由 `python -m strategy_survivorship.mixed_noise` 自动生成，"
+      "所有数字取自同一次运行的结果表。**本轮没有新增任何检测模型。**")
+    A("")
+
+    A("## 1. 运行前写定的设计")
+    A("")
+    A("```")
+    A(f"    A_i     ~ Uniform(0, {S['config']['mixed_A_max']:g})   波动起伏幅度")
+    A(f"    kappa_i ~ Uniform(0, {S['config']['mixed_kappa_max']:g})   跳跃尺度")
+    A(f"    rho = {p['held_fixed']['rho']}    lambda = "
+      f"{p['held_fixed']['jump_intensity_per_year']:g}/年    潜在 AR(1) 从平稳分布起步")
+    A(f"    有效 Sharpe = {p['states']['valid_sharpe']:g}，无效 = "
+      f"{p['states']['invalid_sharpe']:g}，先验各 {p['states']['prior']:g}")
+    A(f"    D = {p['days_per_year']}，H = {p['horizon_days']}，"
+      f"两年累计误杀预算 = {p['far_budget']:g}")
+    A("```")
+    A("")
+    A("四个参数的角色不同，不要混：**A** 控制波动起伏的幅度；**rho** 控制一个波动水平"
+      "能持续多久；**kappa** 控制单次跳跃有多大；**K** 是某一天落下几次跳跃。")
+    A("")
+    A("每条策略只抽一次 (A, kappa)，整个观察期固定，且**独立于状态与全部噪声流**。"
+      "监测器看不到它们，只看到收益。")
+    A("")
+    A(f"**范围声明。** 这两个取值范围是运行前写定的**模拟选择**，"
+      "不是从任何市场估计出来的，也不是导师指定的。")
+    A("")
+
+    A("## 2. 归一化与门槛")
+    A("")
+    A(f"- 标准化用的是**该路径自己 kappa 对应的理论常数** "
+      f"`sqrt(1 + kappa_i^2 * lambda/D)`；**没有**按路径的样本均值或样本方差重新标准化。")
+    A(f"- 三个批次各 {p['batches']['calibration_valid']} 条，参数与噪声**逐批独立抽取**；"
+      "两个测试批次在所有方法之间共享，因此比较是配对的。")
+    A(f"- 每种方法在**整个混合总体**上只校准一个门槛，然后冻结："
+      f"规则数 {rk['n_rules']}、δ = {rk['delta']:g}、δ/规则 = {rk['delta_per_rule']:g}、"
+      f"秩 **{rk['rank']}**（二项式与 Beta 两路一致）。")
+    A("- 门槛**没有**使用真实 A、kappa、事后分组或测试结果。")
+    A("")
+    A(f"**这个预算保证的范围**：{rk['scope']}")
+    A("")
+
+    A("## 3. 主结果")
+    A("")
+    rows = [r for _, r in m.iterrows()]
+    L.extend(_t(rows, ["方法"] + [f"检出 d{d}" for d in DAYS]
+                + [f"误杀 d{d}" for d in DAYS] + ["中位检出"],
+                lambda r: [CN[r["method"]]]
+                + [f"{r[f'detect_d{d}']:.4f}" for d in DAYS]
+                + [f"{r[f'far_d{d}']:.4f}" for d in DAYS]
+                + [f"{int(r['median_detect_days'])}d"
+                   if r["median_detect_days"] == r["median_detect_days"]
+                   else str(r["median_detect_note"])]))
+    A("")
+    A(f"样本量：无效测试路径 {int(m.n_test_invalid.iloc[0])} 条，"
+      f"有效测试路径 {int(m.n_test_valid.iloc[0])} 条。"
+      "Wilson 区间见 `mixed_noise_metrics.csv` 的 `*_lo` / `*_hi` 列。"
+      "中位检出的定义是**全部无效路径**的累计检出率首次达到一半的那一天。")
+    A("")
+
+    A("## 4. 两个预设比较（504 日）")
+    A("")
+    A(f"{S['config']['mixed_bootstrap_reps']} 次配对 bootstrap，"
+      "重抽单位是整条路径，校准与测试同时重抽，**每次重新校准门槛**；"
+      "同一批次内各方法共用重抽下标。区间为逐项 95% 区间。")
+    A("")
+    rows = [r for _, r in b.iterrows()]
+    L.extend(_t(rows, ["比较", "量", "点估计", "95% 区间", "排除 0"],
+                lambda r: [f"{CN[r['method_a']]} − {CN[r['method_b']]}",
+                           "检出率" if r["quantity"] == "detect" else "误杀率",
+                           f"{r['point_pp']:+.2f} pp",
+                           f"[{r['lo_pp']:+.2f}, {r['hi_pp']:+.2f}]",
+                           "是" if r["excludes_zero"] else "否"]))
+    A("")
+    d1 = b[(b.method_a == "binary_student_t") & (b.quantity == "detect")].iloc[0]
+    d2 = b[(b.method_a == "ewma_student_t") & (b.quantity == "detect")].iloc[0]
+    A(f"**读法。** 重尾似然的收益在混合总体里仍然测得到："
+      f"{d1['point_pp']:+.2f} pp [{d1['lo_pp']:+.2f}, {d1['hi_pp']:+.2f}]，"
+      "且同预算下的误杀差区间覆盖 0，即这份收益不是用更多误杀换来的。")
+    A("")
+    A(f"**EWMA 相对固定 Student-t 的收益在这里测不出来**："
+      f"{d2['point_pp']:+.2f} pp [{d2['lo_pp']:+.2f}, {d2['hi_pp']:+.2f}]，区间覆盖 0。")
+    A("")
+    A("**但不要把这个差异全部归因于参数随机化。**相对此前的固定情境实验，"
+      "本轮同时改变了两件事：(一) 每条策略的参数不同；"
+      "(二) 门槛从按情境分别校准改成整个混合总体只用一个。"
+      "本轮没有设计实验去分离这两者的贡献。")
+    A("")
+
+    A("## 5. 分组读回（同一冻结门槛，未重新校准）")
+    A("")
+    aS = S["config"]["mixed_subgroup_A_split"]
+    kS = S["config"]["mixed_subgroup_kappa_split"]
+    A(f"按 A = {aS:g}、kappa = {kS:g} 预先划分四个子群。"
+      "**“低 A”不等于“没有随机波动率”**：A 只是更小，波动仍然起伏，"
+      "而且 rho = 0.98 的持续性对每条路径都一样。")
+    A("")
+    rows = [r for _, r in g.iterrows()]
+    L.extend(_t(rows, ["方法", "子群", "无效样本", "检出 d504", "有效样本",
+                       "误杀 d504", "95% 区间"],
+                lambda r: [CN[r["method"]], r["subgroup"], f"{int(r['n_invalid'])}",
+                           f"{r['detect_d504']:.4f}", f"{int(r['n_valid'])}",
+                           f"{r['far_d504']:.4f}",
+                           f"[{r['far_d504_lo']:.4f}, {r['far_d504_hi']:.4f}]"]))
+    A("")
+    over = g[g.far_d504 > p["far_budget"]]
+    if len(over):
+        A(f"**{len(over)} 个子群的实测误杀率高于 {p['far_budget']:.0%} 的名义预算：**")
+        A("")
+        for _, r in over.sort_values("far_d504", ascending=False).iterrows():
+            A(f"- {CN[r['method']]}，{r['subgroup']}："
+              f"**{r['far_d504']:.2%}** [{r['far_d504_lo']:.2%}, {r['far_d504_hi']:.2%}]，"
+              f"n = {int(r['n_valid'])}")
+        A("")
+        A("这正是第 2 节那条范围声明的含义：一个在整个混合总体上成立的预算，"
+          "**不是**每个参数点上的同一保证。最安静的一类策略（低 A、小跳跃）"
+          "被多花了误杀预算。")
+        A("")
+    A("")
+    A("## 6. 限制")
+    A("")
+    A("- 全部为模拟。独立测试路径确实是样本外评估，"
+      "**但它们来自与校准路径同一个生成模型族**；随机化参数**没有**解决真实市场的泛化问题。")
+    A("- 参数范围是运行前的模拟选择，不是市场估计。")
+    A(f"- 只做了一个误杀预算（{p['far_budget']:g}）、一个信号强度"
+      f"（Sharpe {p['states']['valid_sharpe']:g} 对 {p['states']['invalid_sharpe']:g}）、"
+      "策略从上线起状态不变；本轮不含随机失效时间。")
+    A("- 区间为逐项区间，未做多重比较校正。")
+    A("- 子群表用的是同一个冻结门槛读回，不是按子群重新校准的结果。")
+    A("")
+    A("## 7. 复现")
+    A("")
+    A("```bash")
+    A("uv run python -m strategy_survivorship.mixed_noise")
+    A("```")
+    A("")
+    A(f"耗时 {S['elapsed_s']:.1f} 秒。配置、随机流指纹与协议见 "
+      "`mixed_noise_summary.json` 与 `mixed_noise_protocol.json`。")
+    path = out_dir / "mixed_noise_report.md"
+    path.write_text("\n".join(L) + "\n", encoding="utf-8")
+    return path
+
+# ============================================================================
+# Command-line entry
+# ============================================================================
+
+import argparse
+import json
+import time
+from pathlib import Path
+
+import numpy as np
+import pandas as pd
+
+from .config import DEFAULT
+
+from .stage1 import environment_info
+from .stage11 import Status
+from .simulate import make_streams, stream_fingerprint
+
+
+def protocol(cfg) -> dict:
+    """Written before the run; the report quotes it verbatim."""
+    ec = experiment_cfg(cfg)
+    return {
+        "question": "Do the monitors still work when every strategy has different "
+                    "noise characteristics, instead of one fixed parameter point?",
+        "states": {"valid_sharpe": ec.sharpe_valid, "invalid_sharpe": ec.sharpe_invalid,
+                   "prior": ec.prior_valid, "fixed_from_day_one": True},
+        "horizon_days": ec.horizon_days, "days_per_year": ec.D,
+        "annual_vol": ec.sigma_annual, "far_budget": ec.far_targets[-1],
+        "per_strategy_parameters": {
+            "A": f"Uniform(0, {cfg.mixed_A_max:g})   volatility swing amplitude",
+            "kappa": f"Uniform(0, {cfg.mixed_kappa_max:g})   jump scale",
+            "drawn": "once per strategy, held for the whole window, independent of "
+                     "the state and of every noise stream",
+            "status": "a simulation choice fixed before the run; not estimated from "
+                      "any market and not specified by the supervisor",
+        },
+        "held_fixed": {"rho": ec.noise_sv_rho,
+                       "jump_intensity_per_year": ec.noise_jump_lambda_annual,
+                       "latent_AR1_init": "stationary"},
+        "parameter_roles": {
+            "A": "how far the volatility level swings",
+            "rho": "how long a volatility level persists",
+            "kappa": "how large a jump is",
+            "K": "how many jumps land on a given day",
+        },
+        "normalisation": "divide by the THEORETICAL constant sqrt(1 + kappa_i^2 "
+                         "lambda/D) for that path's own kappa; never by a path's "
+                         "sample mean or sample variance",
+        "batches": {b: (cfg.mixed_calibration_paths if b == BATCHES[0]
+                        else cfg.mixed_test_paths) for b in BATCHES},
+        "batch_independence": "parameters and noise are drawn independently per batch; "
+                              "the two test batches are shared across methods so the "
+                              "comparisons are paired",
+        "thresholds": "one per method, calibrated on the whole mixed calibration "
+                      "population, then frozen; never chosen using true A, kappa, "
+                      "post-hoc groups or test results",
+        "detector_inputs": "returns only; no latent volatility, no jump labels, no "
+                           "true parameters",
+        "methods": list(METHODS_MIX),
+        "pre_specified_comparisons": [f"{a} - {b}" for a, b in MAIN_PAIRS],
+        "out_of_sample_scope": "the test batches are genuinely out of sample, but they "
+                               "come from the SAME generating family as calibration; "
+                               "this is not evidence about real strategy returns",
+    }
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description="mixed_noise: strategies that differ.")
+    ap.add_argument("--smoke", action="store_true")
+    ap.add_argument("--out", type=Path, default=None)
+    args = ap.parse_args(argv)
+
+    from dataclasses import replace as _r
+
+    cfg = DEFAULT
+    if args.smoke:
+        cfg = _r(cfg, mixed_calibration_paths=800, mixed_test_paths=800,
+                 mixed_bootstrap_reps=40)
+    cfg.validate()
+    out_dir = args.out or (Path("outputs/smokemix") if args.smoke else Path("outputs"))
+    out_dir.mkdir(parents=True, exist_ok=True)
+    status = Status(out_dir / "status.json")
+    t0 = time.perf_counter()
+
+    proto = protocol(cfg)
+    (out_dir / "mixed_noise_protocol.json").write_text(
+        json.dumps(proto, indent=2, ensure_ascii=False), encoding="utf-8")
+    status("protocol written", methods=len(METHODS_MIX),
+           A_max=cfg.mixed_A_max, kappa_max=cfg.mixed_kappa_max)
+
+    seeds = streams_for(cfg)
+    cal = calibrate(cfg, seeds)
+    cal["table"].to_csv(out_dir / "mixed_noise_thresholds.csv", index=False)
+    rk = cal["ranks"]
+    status("thresholds frozen", n_rules=rk["n_rules"], rank=rk["rank"],
+           delta_per_rule=rk["delta_per_rule"])
+
+    rows, minima, taus, bv, bi = evaluate(cfg, seeds, cal["thresholds"])
+    metrics = pd.DataFrame(rows)
+    order = {m: i for i, m in enumerate(METHODS_MIX)}
+    metrics = metrics.sort_values(by="method", key=lambda s: s.map(order))
+    metrics.to_csv(out_dir / "mixed_noise_metrics.csv", index=False)
+    status("test scored", rows=len(metrics))
+
+    sg = subgroups(cfg, taus, bv, bi)
+    pd.DataFrame(sg).to_csv(out_dir / "mixed_noise_subgroups.csv", index=False)
+    status("subgroups done", rows=len(sg))
+
+    # the drawn parameters themselves, so the mixture can be checked
+    pd.DataFrame({"batch": "test_invalid", "A": bi["A"], "kappa": bi["kappa"]}
+                 ).describe().to_csv(out_dir / "mixed_noise_parameter_summary.csv")
+
+    boots = bootstrap(cfg, cal["minima"], minima, rk,
+                      make_streams(cfg)["mixed_noise_bootstrap"])
+    pd.DataFrame(boots).to_csv(out_dir / "mixed_noise_bootstrap.csv", index=False)
+    status("bootstrap done", rows=len(boots), reps=cfg.mixed_bootstrap_reps)
+
+    elapsed = time.perf_counter() - t0
+    summary = {
+        "experiment": "mixed_noise", "protocol": proto,
+        "config": cfg.to_dict(), "environment": environment_info(),
+        "random_streams": stream_fingerprint(make_streams(cfg)),
+        "ranks": rk, "report_days": list(REPORT_DAYS),
+        "metrics": json.loads(metrics.to_json(orient="records")),
+        "subgroups": sg, "bootstrap": boots,
+        "parameter_check": {
+            "A_mean": float(bi["A"].mean()), "A_min": float(bi["A"].min()),
+            "A_max": float(bi["A"].max()),
+            "kappa_mean": float(bi["kappa"].mean()), "kappa_min": float(bi["kappa"].min()),
+            "kappa_max": float(bi["kappa"].max()),
+        },
+        "elapsed_s": elapsed,
+    }
+    (out_dir / "mixed_noise_summary.json").write_text(
+        json.dumps(summary, indent=2, ensure_ascii=False), encoding="utf-8")
+    status("done", elapsed_s=round(elapsed, 1))
+    return 0
+
+
+def main_report() -> int:
+    """Write the mixed-noise report from the CSV/JSON files under outputs/."""
+    print(write(Path("outputs")))
+    return 0
+
+
+def cli() -> int:
+    """Run the stage, or regenerate its report from saved outputs.
+
+    python -m strategy_survivorship.mixed_noise [OPTIONS]            run the stage
+    python -m strategy_survivorship.mixed_noise report [OPTIONS]    read saved outputs only
+    """
+    import sys
+
+    sub = {"report": main_report}
+    if len(sys.argv) > 1 and sys.argv[1] in sub:
+        return sub[sys.argv.pop(1)]() or 0
+    return main()
+
+
+if __name__ == "__main__":
+    raise SystemExit(cli())

@@ -16,13 +16,13 @@ from scipy.special import expit
 
 from strategy_survivorship import detectors as D
 from strategy_survivorship import simulate as S
-from strategy_survivorship.analytic_calibration import (
+from strategy_survivorship.stage11 import (
     analytic_calibration_table,
     order_statistic_rank,
 )
 from strategy_survivorship.config import DEFAULT
 from strategy_survivorship.evaluate import calibrate_threshold
-from strategy_survivorship.paired import paired_table
+from strategy_survivorship.stage11 import paired_table
 from strategy_survivorship.probability_time import (
     NOT_REACHED,
     analytic_mean_probability,
@@ -31,7 +31,7 @@ from strategy_survivorship.probability_time import (
     gaussian_failure_log_odds_law,
     threshold_table,
 )
-from strategy_survivorship.switching import (
+from strategy_survivorship.stage11 import (
     NO_ALARM,
     matched_pre_failure_thresholds,
     simulate_switching_returns,
@@ -288,7 +288,7 @@ def test_continuation_matching_rejects_the_degenerate_high_threshold_region():
     DOWN and a naive 'largest threshold under target' search picks a threshold
     that kills essentially every valid strategy before the switch.
     """
-    from strategy_survivorship.switching import matched_continuation_thresholds
+    from strategy_survivorship.stage11 import matched_continuation_thresholds
 
     ss = np.random.SeedSequence(31)
     cal, _ = simulate_switching_returns(ss, 800, 1764, np.inf, CFG)
@@ -304,7 +304,7 @@ def test_continuation_matching_rejects_the_degenerate_high_threshold_region():
 
 def test_continuation_ceiling_falls_with_the_valid_history():
     """The Bayesian ceiling collapses with T; the rolling one stays usable."""
-    from strategy_survivorship.switching import matched_continuation_thresholds
+    from strategy_survivorship.stage11 import matched_continuation_thresholds
 
     ss = np.random.SeedSequence(32)
     cal, _ = simulate_switching_returns(ss, 800, 1764, np.inf, CFG)
@@ -350,7 +350,7 @@ def _metrics_elig(T, first_eligible_day):
 
 
 def test_belief_at_failure_refuses_an_infinite_switch_time():
-    from strategy_survivorship.switching import belief_at_failure
+    from strategy_survivorship.stage11 import belief_at_failure
 
     lo = np.zeros((3, 10))
     with pytest.raises(ValueError, match="T = inf"):
