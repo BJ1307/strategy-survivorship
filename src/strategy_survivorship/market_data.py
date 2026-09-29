@@ -1,6 +1,6 @@
 """Real-data reference, stage 1: fetch, snapshot and clean a daily index series.
 
-The protocol this implements is ``docs/MARKET_STAGE1_PROTOCOL.md`` and was
+The protocol this implements is ``docs/DATA.md`` and was
 written before any diagnostic was produced.
 
 What the series IS
@@ -18,7 +18,7 @@ FRED states that the S&P 500 data comes from S&P Dow Jones Indices and may not b
 redistributed.  Raw snapshots and every per-day derived series sit under ``data/``
 and ``outputs/market/``, which are TRACKED in this repository by an explicit decision
 of its owner.  Presence there grants no redistribution right and alters none of the
-providers' terms; see ``docs/DATA_LICENCE_NOTICE.md`` before adding a new source.
+providers' terms; see ``docs/DATA.md`` before adding a new source.
 """
 
 from __future__ import annotations
@@ -50,7 +50,7 @@ SOURCES: dict[str, dict] = {
         "units": "index level, points (S&P 500 PRICE index; dividends excluded)",
         "redistribution": "S&P Dow Jones Indices data; FRED states it may not be "
                           "redistributed. Published here anyway by the owner's decision; "
-                          "see docs/DATA_LICENCE_NOTICE.md.",
+                          "see docs/DATA.md.",
     },
     "nasdaq100": {
         "role": "cross-market, price index",

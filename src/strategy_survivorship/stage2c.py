@@ -618,7 +618,7 @@ def write_stage2c_report(cfg, summary, metrics: pd.DataFrame, cal, boot, path: P
     A(f"Python {e['python']} / NumPy {e['numpy']} / SciPy {e['scipy']}; "
       f"this run took {summary['elapsed_s']:.1f} s.")
     A("")
-    A("> **504 days is the baseline horizon this study currently uses**; it is not a horizon explicitly specified by the mentor.")
+    A("> **504 days is the baseline horizon this study currently uses**; it is a design choice of this study, not an externally specified horizon.")
     A("")
     # ---------------- appendix ----------------
     A("")

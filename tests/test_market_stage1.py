@@ -369,19 +369,17 @@ def test_the_report_makes_no_forbidden_claim():
 
 
 def test_every_snapshot_is_traceable_to_its_provider():
-    """The licensed series are now TRACKED, so the guard has to change with them.
+    """Every local snapshot can be traced back to what its provider served.
 
-    The old test asserted `data/` and `outputs/market/` were git-ignored.  That was
-    the policy through commit 739519c; the owner then chose to publish the data, and a
-    test asserting the previous policy would simply fail.  Deleting it outright would
-    lose the only automated check on the licensing story, so it is replaced by the
-    invariant DATA_LICENCE_NOTICE.md actually promises: every published snapshot can
-    be traced back to what its provider served.
+    No data are under version control; the data boundary and the provenance record
+    each snapshot must carry are specified in docs/DATA.md. The check runs on the
+    snapshots found in the configured data directory and skips when there are none.
     """
-    notice = Path("docs/DATA_LICENCE_NOTICE.md")
-    assert notice.exists(), "publishing licensed data without the notice is not allowed"
+    assert Path("docs/DATA.md").exists(), "the data specification must be present"
 
-    raw = Path("data/raw")
+    from strategy_survivorship.config import raw_data_dir
+
+    raw = raw_data_dir()
     if not raw.exists():
         pytest.skip("no snapshots present in this checkout")
     # Two provenance shapes coexist, both legitimate: the earlier acquisition rounds

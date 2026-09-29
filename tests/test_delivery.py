@@ -1,9 +1,9 @@
-"""The delivery itself: links resolve, figures exist, and the brief's numbers
-are the ones in the CSVs.
+"""The delivery itself: links resolve, figures exist, and the numbers quoted in
+docs/RESULTS.md are the ones in the CSVs.
 
-The brief and the handoff document contain hand-written figures. These tests
-exist so a number cannot drift away from its source silently. Nothing here
-asserts that any method should win.
+RESULTS.md contains hand-written figures. These tests exist so a number cannot
+drift away from its source silently. Nothing here asserts that any method should
+win. The number checks skip when the CSVs have not been generated locally.
 """
 
 from __future__ import annotations
@@ -17,8 +17,9 @@ import pytest
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "outputs"
 DOCS = ROOT / "docs"
-DOCS_TO_CHECK = [ROOT / "README.md", DOCS / "BRIEF.md"]
-BRIEF_FIGURES = ["fig1_what_robustness_buys.png", "fig2_how_long_to_observe.png",
+RESULTS = DOCS / "RESULTS.md"
+DOCS_TO_CHECK = [ROOT / "README.md", RESULTS, DOCS / "DATA.md", ROOT / "theory.md", ROOT / "CLAUDE.md"]
+MAIN_FIGURES = ["fig1_what_robustness_buys.png", "fig2_how_long_to_observe.png",
                  "fig3_monitoring_horizon.png", "fig4_valid_then_failing.png"]
 
 
@@ -29,7 +30,7 @@ def _needs(p: Path):
 
 # ------------------------------------------------------------- structure ---
 
-@pytest.mark.parametrize("name", BRIEF_FIGURES)
+@pytest.mark.parametrize("name", MAIN_FIGURES)
 def test_every_brief_figure_exists_and_is_not_a_stub(name):
     f = DOCS / "figures" / name
     assert f.exists(), f"{name} missing; run `make brief`"
@@ -65,7 +66,7 @@ def test_no_double_bold_in_delivered_markdown(doc):
     assert "****" not in doc.read_text()
 
 
-# --------------------------------------------------- numbers in the brief ---
+# ------------------------------------------------ numbers in RESULTS.md ---
 
 def _stage3a(sharpe, method, col):
     m = pd.read_csv(OUT / "stage3a_metrics.csv")
@@ -74,24 +75,24 @@ def _stage3a(sharpe, method, col):
     return float(r[col].iloc[0])
 
 
-def test_the_brief_headline_table_matches_stage3a():
+def test_the_results_headline_table_matches_stage3a():
     """The 'how long must we watch' table, both signal strengths."""
     _needs(OUT / "stage3a_metrics.csv")
-    text = (DOCS / "BRIEF.md").read_text()
+    text = RESULTS.read_text()
     for sharpe, cells in ((1.0, ["4.1%", "21.1%", "48.7%", "76.2%"]),
                           (0.6, ["0.6%", "8.4%", "25.8%", "52.3%"])):
         for col, cell in zip(("detect_d63", "detect_d126", "detect_d252",
                               "detect_d504"), cells):
             got = _stage3a(sharpe, "ewma_trunc_student_t", col)
             assert f"{got:.1%}" == cell, (sharpe, col, got, cell)
-            assert cell in text, f"{cell} not in BRIEF.md"
+            assert cell in text, f"{cell} not in RESULTS.md"
 
 
-def test_the_brief_robustness_ladder_matches_stage2e():
+def test_the_results_robustness_ladder_matches_stage2e():
     _needs(OUT / "stage2e_metrics.csv")
     m = pd.read_csv(OUT / "stage2e_metrics.csv")
     d = m[(m.arm == "per_scenario") & (m.far_target == 0.15) & (m.scenario == "sv_jump")]
-    text = (DOCS / "BRIEF.md").read_text()
+    text = RESULTS.read_text()
     for method, cell in (("binary_gaussian", "56.03%"), ("binary_student_t", "69.41%"),
                          ("ewma_student_t", "75.86%"),
                          ("ewma_trunc_student_t", "76.51%")):
@@ -100,23 +101,23 @@ def test_the_brief_robustness_ladder_matches_stage2e():
         assert cell in text
 
 
-def test_the_brief_horizon_numbers_match_stage3a1():
+def test_the_results_horizon_numbers_match_stage3a1():
     _needs(OUT / "stage3a1_metrics.csv")
     m = pd.read_csv(OUT / "stage3a1_metrics.csv")
     d = m[(m.scenario == "sv_jump") & (m.far_target == 0.15) & (m.sharpe_valid == 1.0)
           & (m.method == "ewma_student_t") & (m.cutoff_H == 126)]
-    text = (DOCS / "BRIEF.md").read_text()
+    text = RESULTS.read_text()
     for arm, det, far in (("A", "20.21%", "3.28%"), ("B", "42.91%", "13.50%")):
         r = d[d.arm == arm].iloc[0]
         assert f"{float(r.detect):.2%}" == det and f"{float(r['far']):.2%}" == far
         assert det in text and far in text
 
 
-def test_the_brief_failure_numbers_match_stage3b():
+def test_the_results_failure_numbers_match_stage3b():
     _needs(OUT / "stage3b_metrics.csv")
     m = pd.read_csv(OUT / "stage3b_metrics.csv")
     d = m[(m.scenario == "sv_jump") & (m.far_target == 0.15) & (m.sharpe_valid == 1.0)]
-    text = (DOCS / "BRIEF.md").read_text()
+    text = RESULTS.read_text()
     for setting, method, col, cell in (
             ("fixed_T0", "ewma_student_t", "cond_detect_h252", "48.49%"),
             ("fixed_T252", "ewma_student_t", "joint_detect_h252", "25.78%"),

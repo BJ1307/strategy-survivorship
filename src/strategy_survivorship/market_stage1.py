@@ -145,7 +145,7 @@ def build(out: Path) -> str:
     L: list[str] = []
     A = L.append
     A("# Real-data reference, stage 1 — S&P 500 daily price returns\n")
-    A("Protocol: [`docs/MARKET_STAGE1_PROTOCOL.md`](../../docs/MARKET_STAGE1_PROTOCOL.md), "
+    A("Protocol: [`docs/DATA.md`](../../docs/DATA.md), "
       "written before any diagnostic below existed.\n")
     A("**No simulation comparison has been run in this stage.** Nothing here says "
       "whether the generator matches or fails to match the market; that is stage 2.\n")
@@ -355,7 +355,7 @@ DIAGNOSED_THIS_STAGE = ("training",)
 
 
 def protocol() -> dict:
-    """Quoted verbatim by the report; mirrors docs/MARKET_STAGE1_PROTOCOL.md."""
+    """Quoted verbatim by the report; mirrors docs/DATA.md."""
     return {
         "question": "What does real daily index-return noise actually look like, "
                     "measured under conventions fixed in advance?",

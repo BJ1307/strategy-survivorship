@@ -16,9 +16,10 @@ from strategy_survivorship import market_cross as mc
 from strategy_survivorship import market_data as md
 from strategy_survivorship import market_diagnostics as mdg
 from strategy_survivorship.config import DEFAULT
+from strategy_survivorship.config import raw_data_dir
 
 OUT = Path("outputs/market")
-RAW = Path("data/raw")
+RAW = raw_data_dir()
 
 
 def _needs(p: Path):

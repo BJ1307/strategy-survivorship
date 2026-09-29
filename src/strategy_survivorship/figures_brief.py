@@ -1,4 +1,4 @@
-"""The four figures for the supervisor brief.
+"""The four main figures (written to docs/figures).
 
 Every number is read from a results CSV already on disk -- nothing is recomputed
 and nothing is copied from a screenshot.  One colour, one name and one unit per

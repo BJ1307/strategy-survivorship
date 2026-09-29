@@ -1,7 +1,7 @@
 """Stage 1 data generating process and random-stream bookkeeping.
 
 The benchmark DGP is deliberately the simplest thing that still poses the
-question the supervisor asked: fixed volatility, iid Gaussian daily returns,
+question this study starts from: fixed volatility, iid Gaussian daily returns,
 
     r_t = S * sigma_ann / D  +  (sigma_ann / sqrt(D)) * eps_t ,   eps_t ~ N(0, 1).
 

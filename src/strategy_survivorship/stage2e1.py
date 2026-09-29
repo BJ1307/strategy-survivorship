@@ -219,7 +219,7 @@ def timing_rows(cfg: Stage1Config, data: dict, thresholds: dict, scenario: str) 
 
 def summary_rows(cfg: Stage1Config, data: dict, thresholds: dict, scenario: str,
                  days) -> list[dict]:
-    """The supervisor-facing table: progress in days, with no derived spin.
+    """The summary table: progress in days, with no derived spin.
 
     Truncated mean detection time scores an undetected path at the horizon, so it
     is a bounded summary over ALL invalid paths, not a mean over the detected
@@ -391,7 +391,7 @@ def write_stage2e1_report(cfg, S: dict, path: Path) -> Path:
     A("")
 
     # ---------------- 3 ----------------
-    A("## 3. Actual gains in the main scenarios (supervisor's reporting convention)")
+    A("## 3. Actual gains in the main scenarios (reporting convention: progress in days)")
     A("")
     for sc in COMBINED:
         A(f"**{SC[sc]}**")

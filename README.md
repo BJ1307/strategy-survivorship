@@ -1,174 +1,188 @@
 # strategy-survivorship
 
-一个新策略上线后要么有效、要么无效。**在可接受的累计误杀约束下，多快能识别出无效的那一个？**
-本仓库用模拟数据回答这个问题，并把结果解释成交易日、年数、检出比例与失效概率。
+A newly deployed trading strategy is either valid or invalid. **Under an acceptable
+cumulative false-alarm budget, how quickly can the invalid one be identified?**
+This repository answers the question by simulation and expresses the answer in trading
+days, years, detection rates and failure probabilities. A second, smaller part compares
+the simulation generator with real index returns (S&P 500 and others) as a diagnostic.
 
-全部为模拟研究，**不是真实市场部署的验证**。
+**What it does not claim.** It is a simulation study, not a validation of a live
+deployment. Every lead of one method over another holds under the stated data-generating
+processes and the rules as implemented, not in general. The real-data stages are
+diagnostics of one model; they do not identify the "true" parameters of any market.
 
-- **先读**：[`docs/BRIEF.md`](docs/BRIEF.md) —— 两页导师简报，四张主图。
-- **接手项目**：`docs/HANDOFF_COMPANY_CLAUDE.md` —— 完整方法、协议、指标定义与数据出处。
-- **推导**：[`theory.md`](theory.md)。
-- **各阶段报告**：`outputs/stage*_report.md`。
+The main results and their limitations are in [docs/RESULTS.md](docs/RESULTS.md).
 
----
+## Main result
 
-## 核心结果（Sharpe 1 对 0 为主线）
+Main scenario: stochastic volatility with jumps, Sharpe 1 (valid) against 0 (invalid),
+two-year cumulative false-alarm budget 15%, truncated-EWMA Student-t statistic.
+Cumulative share of invalid strategies detected after each observation length:
 
-主情境「随机波动率 + 跳跃」，两年累计误杀预算 15%，最好的方法是截断 EWMA Student-t：
-
-| 观察时长 | 一个季度 | 半年 | 一年 | 两年 |
+| observation length | one quarter | half a year | one year | two years |
 |---|---|---|---|---|
-| **Sharpe 1（主线）** | 4.1% | 21.1% | 48.7% | **76.2%** |
-| Sharpe 0.6（弱信号压力测试） | 0.6% | 8.4% | 25.8% | **52.3%** |
+| **Sharpe 1 (main line)** | 4.1% | 21.1% | 48.7% | **76.2%** |
+| Sharpe 0.6 (weak-signal stress test) | 0.6% | 8.4% | 25.8% | **52.3%** |
 
-中位检出时间：s=1 约 260 天，s=0.6 约 475 天。
+![How long must we observe](docs/figures/fig2_how_long_to_observe.png)
 
-三步稳健处理的贡献量级依次递减：重尾似然 +13.4 pp、方差自适应 +6.4 pp、截断更新 +0.7 pp；
-**在纯高斯情境里这套处理反而是负收益（−3.2 pp）**。
+## Layout
 
-![四张主图之一](docs/figures/fig2_how_long_to_observe.png)
+```
+src/strategy_survivorship/
+  config.py            every simulation parameter, the random-stream namespace, the data directory
+  noise.py simulate.py return generators (five noise laws) and seeded path simulation
+  detectors.py ewma.py monitoring statistics (binary log-odds, trailing Sharpe, EWMA variants)
+  evaluate.py          calibration, first passage, detection / false-alarm metrics, intervals
+  probability_time.py gaussian_bound.py   analytic references
+  plots.py figures_brief.py               shared figure style and the four main figures
+  stage1.py ... stage3b.py, mixed_noise.py  one module per simulation stage (run, report, figures)
+  market_data.py market_returns.py market_diagnostics.py   real-data loading and return rules
+  market_stage1.py ... market_stage4.py, market_cross.py, market_assets.py,
+  market_recovery.py, market_sensitivity.py   one module per real-data stage
+tests/          regression and property tests (analytic moments, first passage, truncation,
+                random failure-time boundaries, causality, protocol checks)
+docs/           RESULTS.md (main results), DATA.md (external data specification), figures/
+theory.md       notation, units and derivations
+CLAUDE.md       project conventions (statistical wording, code and figure rules)
+```
 
----
+Each stage module is run as `python -m strategy_survivorship.<stage>`. Generated files
+(CSV, JSON, Markdown reports, figures) are written under `outputs/` relative to the working
+directory, so run every command from the repository root. `outputs/` and `data/` are not
+under version control.
 
-## 环境与运行
+## Install
+
+Python 3.13.13 with the pinned versions in `requirements-lock.txt` reproduces the recorded
+runs exactly. With [uv](https://docs.astral.sh/uv/):
 
 ```bash
-python -m venv .venv
+uv venv --python 3.13.13 .venv
+uv pip install --python .venv/bin/python -r requirements-lock.txt
+uv pip install --python .venv/bin/python --no-deps -e .
+```
+
+Without uv, any Python 3.13 works the same way:
+
+```bash
+python3.13 -m venv .venv
 .venv/bin/pip install -r requirements-lock.txt
-.venv/bin/pip install -e .
-.venv/bin/python -m pytest -q
+.venv/bin/pip install --no-deps -e .
 ```
 
-### 不需要重跑实验的操作
+Runtime dependencies are numpy, scipy, pandas and matplotlib; pytest is needed for the tests.
+
+## Quick synthetic example (no data, no network, a few seconds)
 
 ```bash
-make brief          # 重画四张主图（只读 CSV）
-make figures        # 重画全部阶段图（只读 CSV）
-make report-only    # 重生成阶段报告（只读 CSV）
+.venv/bin/python -m strategy_survivorship.stage1 --smoke --out outputs/smoke
 ```
 
-### 完整复现（约 10 分钟，按顺序）
+This simulates valid and invalid strategies with small sample sizes, calibrates the
+thresholds, evaluates every detector and writes `outputs/smoke/stage1_metrics.csv`,
+`stage1_report.md` and figures. `--smoke` numbers are a pipeline check, not research results.
+
+## Tests
+
+```bash
+.venv/bin/python -m pytest
+```
+
+481 tests, about 30 s. Tests that check numbers in generated artefacts skip with a
+reason when those artefacts have not been generated locally.
+
+## Reproducing the simulation study
+
+The simulation stages need no external data. Run them in this order (about 10 minutes in
+total on a laptop according to the recorded runs):
 
 ```bash
 for s in stage1 stage11 stage2a stage2b stage2c stage2d stage2e stage2e1 \
-         stage3a stage3a1 stage3b; do
-  .venv/bin/python -m strategy_survivorship.run_$s
+         stage3a stage3a1 stage3b mixed_noise; do
+  .venv/bin/python -m strategy_survivorship.$s
 done
-.venv/bin/python -m strategy_survivorship.figures_brief
+.venv/bin/python -m strategy_survivorship.figures_brief    # the four main figures in docs/figures
 ```
 
-阶段之间有依赖：Stage 2D 读 Stage 2C 的统一门槛，Stage 3B 读 Stage 3A 的冻结门槛。
+Dependencies between stages: `stage2d` and `stage2e` read the Stage 2C unified thresholds
+(`outputs/stage2c_unified_thresholds.csv`); `stage2e1` reads the Stage 2E thresholds and
+metrics; `stage3b` reads the Stage 3A thresholds; `stage11` optionally reads Stage 1 first
+passages. A missing upstream file stops the command with `missing input: <path>` and the
+command to run first.
 
----
+Every stage accepts `--out DIR` (default `outputs/`) and `--smoke` (small samples, for
+checking the pipeline). Figures and reports can be redrawn from saved CSVs without any
+simulation:
 
-## 研究路线
+```bash
+make figures      # figures_brief plus --figures-only for 2D, 2E, 3A, 3A.1, 3B
+make reports      # --report-only for 3A.1 and 3B, and the mixed-noise report
+```
 
-| 阶段 | 问题 | 报告 |
+**Seeds.** All randomness comes from one root seed (`config.Stage1Config.root_seed =
+20260905`) split into named child streams (`config.STREAM_ORDER`, append-only). A few
+stages use additional fixed seeds written in their modules. With the pinned environment the
+outputs are bit-for-bit reproducible.
+
+## Real-data stages
+
+These need third-party market data that the repository does not contain. The required
+files, fields, units, calendars and the exact snapshots used (with SHA-256) are listed in
+[docs/DATA.md](docs/DATA.md). Put the snapshots in `data/raw/` or point the environment
+variable `STRATEGY_SURVIVORSHIP_DATA_DIR` at the directory that holds them:
+
+```bash
+export STRATEGY_SURVIVORSHIP_DATA_DIR=/path/to/raw-snapshots
+.venv/bin/python -m strategy_survivorship.market_stage1 --reuse-snapshot   # S&P 500 reference (seconds)
+.venv/bin/python -m strategy_survivorship.market_stage2 --paths 2000       # frozen-generator contrast
+.venv/bin/python -m strategy_survivorship.market_stage3                    # calibrate A and rho, validate
+.venv/bin/python -m strategy_survivorship.market_stage4                    # walk-forward replay (about 2 min)
+.venv/bin/python -m strategy_survivorship.market_cross --paths 2000        # cross-market baseline
+.venv/bin/python -m strategy_survivorship.market_assets --paths 1500       # cross-asset baseline
+.venv/bin/python -m strategy_survivorship.market_recovery                  # parameter recovery (about 9 min)
+.venv/bin/python -m strategy_survivorship.market_sensitivity               # seed sensitivity (about 4 min)
+.venv/bin/python -m strategy_survivorship.market_returns                   # return-boundary agreement check
+```
+
+`market_stage1` must run first: stages 2-4 read its per-day series from `outputs/market/`.
+Always pass `--reuse-snapshot`: without it the command downloads a fresh FRED vintage into
+the data directory and later results may change. Reports and figures of the real-data
+stages are regenerated from saved outputs with `python -m strategy_survivorship.<stage>
+report` (stages 1-4, cross, recovery, sensitivity) and `... <stage> plots` (assets,
+recovery, sensitivity). When an input is missing the command stops with
+`missing input: <path>`; no command ever falls back to synthetic data.
+
+## Cost of each command
+
+| command | what it does | cost |
 |---|---|---|
-| 1 | 最小可复现流程：模拟→检测→校准→评估 | `stage1_report.md` |
-| 1.1 | 失效概率与时间的对应 | `stage11_report.md` |
-| 2A | 厚尾、随机波动率、跳跃下的压力测试 | `stage2a_report.md` |
-| 2B | 因果 EWMA 方差预测是否有用 | `stage2b_report.md` |
-| 2C | 环境未知时的统一门槛与误杀控制 | `stage2c_report.md` |
-| 2D | 随机波动率与跳跃同时存在 | `stage2d_report.md` |
-| 2E | 截断方差更新的 2×2 消融 | `stage2e_report.md` |
-| 2E.1 | 收尾、跨预算统计、高斯理论参照 | `stage2e1_report.md` |
-| 3A | 弱信号 Sharpe 0.6，保留 1 作参照 | `stage3a_report.md` |
-| 3A.1 | 监测期限本身是不是原因 | `stage3a1_report.md` |
-| 3B | 先有效、后失效（第一年内） | `stage3b_report.md` |
+| `stage*`, `mixed_noise` | full simulation | about 10 min for all of them |
+| `... --smoke` | same pipeline, small samples | seconds |
+| `... --figures-only`, `--report-only`, `figures_brief`, `<market stage> report/plots` | read saved CSV/JSON only | seconds |
+| `market_stage1 --reuse-snapshot`, `market_returns` | read raw snapshots | seconds |
+| `market_stage2`, `market_stage3`, `market_cross`, `market_assets` | simulation against real data | minutes (not re-timed here) |
+| `market_stage4`, `market_sensitivity`, `market_recovery` | repeated calibrations | about 2, 4 and 9 min |
 
-| 真实数据 1 | 真实指数噪声的可复现参照与训练期诊断（**不含**模拟对比） | 本地生成：`outputs/market/market_stage1_report.md` |
-| 真实数据 2 | 冻结生成器与 S&P 500 训练样本的诊断对照（**不搜参数、不碰监测器**） | 本地生成：`outputs/market/market_stage2_report.md` |
-| 真实数据 3 | 只校准 A、ρ，冻结后在 2022–2023 验证（**改善未能延续**） | 本地生成：`outputs/market/market_stage3_report.md` |
-| 真实数据 4 | 2017–2023 回顾性 walk-forward 回放（**定期重估平均未胜过固定参数**） | 本地生成：`outputs/market/market_stage4_report.md` |
-| 跨市场 | S&P／Nasdaq-100／Nikkei 225／动量因子 × 三个**固定**模型的基线对照 | 本地生成：`outputs/market/market_cross_report.md` |
-| 跨资产 | 八个收益类对象 + 七个市场状态序列，按三类口径分开 | [`docs/CROSS_ASSET_FINDINGS.md`](docs/CROSS_ASSET_FINDINGS.md) |
-| 恢复实验 | 真实生成机制已知时，现有校准程序能否找回参数（**参数恢复差、筛选不稳**） | 本地生成：`outputs/market/market_recovery_report.md` |
-| 敏感性 | 固定伪历史、只换内部模拟种子，选择是否移动（**20 次拟合全部不动**） | 本地生成：`outputs/market/market_sensitivity_report.md` |
+## Entry points renamed in the 2026-09 consolidation
 
-真实数据阶段的口径写在 [`docs/MARKET_STAGE1_PROTOCOL.md`](docs/MARKET_STAGE1_PROTOCOL.md)，
-字段说明在 [`docs/MARKET_DATA_DICTIONARY.md`](docs/MARKET_DATA_DICTIONARY.md)。
-**市场数据、由它派生的每日序列、图和报告现在都在仓库里**（`data/` 与 `outputs/market/`），
-这是仓库所有者的明确决定，缘由与第三方条款记在
-[`docs/DATA_LICENCE_NOTICE.md`](docs/DATA_LICENCE_NOTICE.md)。
-其中部分数据**不属于本仓库可授权的范围**：FRED 载明 S&P 500 序列由 S&P Dow Jones Indices LLC
-提供且不得再分发，Nasdaq-100、日经、Cboe、SPDR、STOXX 各有其提供方条款。
-放在这里不等于授予你使用或再分发的权利。要复用请向原始提供方按其许可获取；
-`data/raw/*.provenance.json` 记录了每个文件的来源 URL、抓取时间和 SHA-256，可逐个追溯。
+| before | now |
+|---|---|
+| `python -m strategy_survivorship.run_<stage>` | `python -m strategy_survivorship.<stage>` |
+| `python -m strategy_survivorship.report_market_<x>` | `python -m strategy_survivorship.market_<x> report` |
+| `python -m strategy_survivorship.plots_market_<x>` | `python -m strategy_survivorship.market_<x> plots` |
+| `python -m strategy_survivorship.run_market_returns_check` | `python -m strategy_survivorship.market_returns` |
+| `python -c "...report_mixed_noise..."` | `python -m strategy_survivorship.mixed_noise report` |
 
-数据已在仓库中，因此下面的命令是**重新生成**产物，不是获取数据的前提：
+All flags are unchanged. The consolidation was checked against the previous version with
+smoke runs of every stage, small runs of every real-data stage and read-only regeneration
+of every report and figure: all CSV values are identical and every computed number in the
+reports is unchanged. Reports and figure labels are now in English.
 
-```bash
-.venv/bin/python -m strategy_survivorship.run_market_stage1
-.venv/bin/python -m strategy_survivorship.report_market_stage1
-.venv/bin/python -m strategy_survivorship.run_market_stage2 --paths 2000
-.venv/bin/python -m strategy_survivorship.report_market_stage2
-```
+## Limitations
 
-```bash
-.venv/bin/python -m strategy_survivorship.run_market_stage3
-.venv/bin/python -m strategy_survivorship.report_market_stage3
-.venv/bin/python -m strategy_survivorship.run_market_stage4      # 约 2 分钟
-.venv/bin/python -m strategy_survivorship.report_market_stage4
-```
-
-```bash
-.venv/bin/python -m strategy_survivorship.run_market_cross --paths 2000
-.venv/bin/python -m strategy_survivorship.report_market_cross
-```
-
-```bash
-.venv/bin/python -m strategy_survivorship.run_market_assets --paths 1500
-.venv/bin/python -m strategy_survivorship.plots_market_assets
-```
-
-```bash
-.venv/bin/python -m strategy_survivorship.run_market_recovery      # 约 9 分钟
-.venv/bin/python -m strategy_survivorship.report_market_recovery
-.venv/bin/python -m strategy_survivorship.plots_market_recovery
-.venv/bin/python -m strategy_survivorship.run_market_sensitivity   # 约 4 分钟
-.venv/bin/python -m strategy_survivorship.report_market_sensitivity
-.venv/bin/python -m strategy_survivorship.plots_market_sensitivity
-```
-
-收益取样的窗口边界口径（**按结束日期归属、首日可回取前一个收盘价、缺失交易日不静默跨过**）
-写在 [`docs/RETURN_BOUNDARY_CONVENTION.md`](docs/RETURN_BOUNDARY_CONVENTION.md)，
-由 `market_returns.py` 统一实现；两个旧入口在共同口径下逐位一致，可用下面一条命令复核：
-
-```bash
-.venv/bin/python -m strategy_survivorship.run_market_returns_check
-```
-
-下一轮的模型基准比较（iid Student-t、GARCH(1,1)-t 对照现有 SV 核）**只有设计、尚未实现**，
-写在 `docs/BENCHMARK_PROTOCOL_NEXT_ROUND.md`。
-
-参数与配置变更记入 [`docs/PARAMETER_CHANGE_LOG.md`](docs/PARAMETER_CHANGE_LOG.md)，
-给导师的数据请求在 `docs/DATA_REQUEST_FOR_SUPERVISOR.md`。
-导师数据来源清单在 `docs/DATA_SOURCE_INVENTORY.md`，
-下一轮跨市场扫描规范在 `docs/CROSS_MARKET_SCAN_SPEC.md`。
-
-**负面结果保留在报告里**：高斯情境下稳健处理的代价、门槛迁移失败、弱信号低检出、
-以及基线方法在某些设定下胜出，都没有被筛掉。
-
----
-
-## 目录
-
-```
-src/strategy_survivorship/   模型、DGP、校准、评估、绘图与报告生成
-tests/                       307 项测试：定义、因果性、协议、评分口径
-outputs/                     全部结果 CSV/JSON、各阶段报告与图
-docs/                        导师简报、交接文档、四张主图
-theory.md                    完整推导
-```
-
-`outputs/` 里的结果由 tag `pre-consolidation` 生成；审阅包是构建产物，
-用 `make bundle` 重建或从该 tag 取回。
-
----
-
-## 限制
-
-模拟研究；候选 Sharpe 只有 {1, 0.6} 且检测器知道候选值；五个噪声情境同出一族；
-Stage 3B 只覆盖第一年内失效；校准只覆盖所列固定情境；全部区间为逐项区间；
-评价只含检出率与误杀率，**等待成本未纳入**。
+Simulation study; candidate Sharpe ratios are {1, 0.6} and the detectors know the candidate
+values; the five noise scenarios come from one family; Stage 3B covers failures within the
+first year only; calibration covers the listed fixed scenarios only; all intervals are
+per-item intervals; the evaluation counts detections and false alarms only and does not
+price the cost of waiting.

@@ -357,7 +357,7 @@ def draw_all(cfg, out_dir: Path) -> list[str]:
     """One set of figures per signal strength.
 
     The pre-specified main comparison for Stage 3B was s = 0.6; the s = 1 set is
-    the supervisor's primary setting and is drawn from the same run's data, not
+    the study's primary setting and is drawn from the same run's data, not
     relabelled or rescaled from s = 0.6.
     """
     m = pd.read_csv(out_dir / "stage3b_metrics.csv")
@@ -652,16 +652,16 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
       "The post-failure median time also uses all survivors as the denominator, and is the first day on which the cumulative fraction reaches one half.")
     A("")
 
-    # ---------------- 3.5: the supervisor's primary setting -------------
+    # ---------------- 3.5: the primary setting -------------
     st0 = f"fixed_T{T0}"
     s_pri = max(S["sharpes"])
-    A(f"## 3.5 Primary setting s={s_pri:g} (specified by the supervisor)")
+    A(f"## 3.5 Primary setting s={s_pri:g} (the study's primary setting)")
     A("")
-    A(f"The primary setting specified by the supervisor is **Sharpe {s_pri:g} vs 0**; s={s0:g} is a weak-signal stress test added later. "
+    A(f"The primary setting of the study is **Sharpe {s_pri:g} vs 0**; s={s0:g} is a weak-signal stress test added later. "
       f"The full results for s={s_pri:g} are given first below, and s={s0:g} follows in Sections 4–5.")
     A("")
     A(f"**The protocol record is not rewritten**: the main comparison written down in advance for Stage 3B used s={s0:g}, T={T0}, "
-      f"α={a_main:g}. This section changes the **emphasis of the presentation** at the supervisor's request, "
+      f"α={a_main:g}. This section changes the **emphasis of the presentation**, "
       f"and does not retroactively describe s={s_pri:g} as the only pre-specified main analysis at the time. "
       f"s={s_pri:g} uses its own return drift μ₁={s_pri:g}·σ_ann/D, its own detector candidate mean, "
       "EWMA centre and the corresponding 504-day frozen threshold from Stage 3A — it is **not** a relabelling or rescaling of the s=0.6 results.")
@@ -913,14 +913,14 @@ def write_stage3b_report(cfg, S, metrics, always, boot, ev, path: Path) -> Path:
           f"and did **not** scan T, so it cannot be said that T={T0} is the globally most favourable failure time for {CN[tr]}. "
           "What can be recorded is: **the method ranking changes with the failure time**; for the causes see the four undecomposed mechanisms listed in the previous section.")
     A("")
-    A("**(2) Are these results enough to support explaining the scope of applicability to the supervisor this week?** "
+    A("**(2) Are these results enough to support a statement of the scope of applicability?** "
       "What can be stated is: the five existing detectors of this project remain usable in the “valid-then-failing” setting, "
       "and the three quantities pre-failure false alarm, conditional detection and joint detection have been measured and reported separately; "
       f"the coverage is T ≤ {cfg.stage3b_random_failure_max} days, two noise scenarios, "
       f"two signal strengths and two false-alarm budgets. "
       "This **cannot** be used to describe performance over longer lifetimes (several years), nor any method not included in this project.")
     A("")
-    A("**(3) Which questions should be left to the supervisor, to decide whether to continue next week?** This report does not answer them on the supervisor's behalf:")
+    A("**(3) Which questions remain open for deciding whether to continue?** This report does not answer them:")
     A("")
     A("1. Whether the coverage of failure times should be extended from one year to several years — that needs a longer simulation horizon, "
       "and would change the meaning of the “two-year monitoring” main benchmark.")

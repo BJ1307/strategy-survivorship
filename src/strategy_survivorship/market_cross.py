@@ -436,7 +436,7 @@ def build(out: Path) -> str:
       f"`{ci['working_tree_is_dirty']}` — every source file used is fingerprinted in "
       f"`market_cross_summary.json`. Raw snapshots and per-day derived series are "
       f"tracked in this repository by the owner's explicit decision; the providers' "
-      f"terms still apply and are set out in `docs/DATA_LICENCE_NOTICE.md`.\n")
+      f"terms still apply and are set out in `docs/DATA.md`.\n")
     return "\n".join(L) + "\n"
 
 

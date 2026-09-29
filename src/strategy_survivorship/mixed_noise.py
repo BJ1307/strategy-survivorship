@@ -314,7 +314,7 @@ def write(out_dir: Path) -> Path:
       "The monitor cannot see them; it sees only returns.")
     A("")
     A(f"**Scope statement.** These two ranges are **simulation choices** written down before the run; "
-      "they were not estimated from any market and were not specified by the supervisor.")
+      "they were not estimated from any market; they are design choices of this study.")
     A("")
 
     A("## 2. Normalisation and thresholds")
@@ -466,7 +466,7 @@ def protocol(cfg) -> dict:
             "drawn": "once per strategy, held for the whole window, independent of "
                      "the state and of every noise stream",
             "status": "a simulation choice fixed before the run; not estimated from "
-                      "any market and not specified by the supervisor",
+                      "any market; a design choice of this study",
         },
         "held_fixed": {"rho": ec.noise_sv_rho,
                        "jump_intensity_per_year": ec.noise_jump_lambda_annual,

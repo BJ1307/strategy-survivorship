@@ -612,7 +612,7 @@ def build(out: Path) -> str:
       "median and range above can be recomputed without re-running the simulation. "
       "Seeds and the full configuration are in `market_stage2_summary.json`. As in "
       "stage 1, the market data and everything derived from it are tracked here; "
-      "the providers' terms still apply, see docs/DATA_LICENCE_NOTICE.md.")
+      "the providers' terms still apply, see docs/DATA.md.")
     return "\n".join(L) + "\n"
 
 

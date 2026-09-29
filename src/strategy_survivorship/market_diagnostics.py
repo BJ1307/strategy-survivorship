@@ -5,7 +5,7 @@ rolling window or a lagged pair cannot reach across a period boundary.  Stage 2
 will call the same functions on simulated paths, so the real and the simulated
 series are measured the same way.
 
-Estimation conventions are fixed in ``docs/MARKET_STAGE1_PROTOCOL.md`` and
+Estimation conventions are fixed in ``docs/DATA.md`` and
 repeated in the docstrings: standard deviation with ``ddof=1``; skewness and
 excess kurtosis as the plain moment estimators with no small-sample correction;
 quantiles by linear interpolation; autocorrelation as the Pearson correlation of

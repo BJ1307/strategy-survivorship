@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "strategy-survivorship"
 version = "0.1.0"
-description = "Stage 1 baseline for monitoring live out-of-sample strategy validity"
+description = "How fast can an invalid trading strategy be detected under a cumulative false-alarm budget? A simulation study with real-data diagnostics."
 requires-python = ">=3.11"
 dependencies = [
     "numpy>=2.0",

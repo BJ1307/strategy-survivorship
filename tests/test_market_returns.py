@@ -18,9 +18,10 @@ from strategy_survivorship import market_assets as ma
 from strategy_survivorship import market_cross as mc
 from strategy_survivorship import market_returns as mr
 from strategy_survivorship import market_assets as ra
+from strategy_survivorship.config import raw_data_dir
 
 NYSE = "nyse"
-RAW = Path("data/raw")
+RAW = raw_data_dir()
 
 
 def _needs_snapshots():

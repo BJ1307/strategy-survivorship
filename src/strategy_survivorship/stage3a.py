@@ -894,7 +894,7 @@ def write_stage3a_report(cfg, S, metrics, boot, ptime, qrows, plevel, brier, ref
     A("**(5) Is it still appropriate to move next to the limited extension with a random T?** "
       "This round does not take that step and does not assert its conclusion in advance; the basis for the decision should be: "
       "under a weak signal, how long a positive early history delays identification, "
-      "and whether this delay is large enough to change the supervisor's decision window. This round's numbers give the baseline for this question.")
+      "and whether this delay is large enough to change the decision window. This round's numbers give the baseline for this question.")
     A("")
 
     # ---------------- 9 ----------------

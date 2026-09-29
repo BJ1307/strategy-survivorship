@@ -206,7 +206,7 @@ def write_report(
     A("## 1. What this stage does")
     A("")
     A(
-        "The mentor's question is: once a new strategy starts running out of sample, does it really have a return edge, "
+        "The research question is: once a new strategy starts running out of sample, does it really have a return edge, "
         "or has it had no edge from day one? This stage only builds a **minimal but complete** evaluation pipeline "
         "and does not address the later questions of heavy tails, time-varying volatility, jumps or \"valid-then-failing\" strategies."
     )

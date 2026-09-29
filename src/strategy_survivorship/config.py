@@ -294,7 +294,7 @@ class Stage1Config:
     # own jump scale kappa, once, held for the whole observation window, drawn
     # independently of the state and of every noise stream.  These ranges are a
     # SIMULATION CHOICE made before the run; they are not estimated from any
-    # market and were not specified by the supervisor.
+    # market; they are design choices of this study.
     mixed_A_max: float = 1.0
     mixed_kappa_max: float = 8.0
     mixed_calibration_paths: int = 10000

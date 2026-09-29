@@ -1,59 +1,63 @@
-# theory.md — 第一阶段的符号、单位、公式与推导
+# theory.md — Notation, units, formulas and derivations for the first stage
 
-本文件只覆盖第一阶段实际实现的内容。文末列出参考资料；**下面的阈值协议、
-观察期限和默认参数都是本项目的实现选择，不是这些参考文献直接规定的结论。**
+This file covers only what was actually implemented in the first stage. References are listed at the
+end; **the threshold protocol, observation horizons and default parameters below are implementation
+choices of this project, not conclusions prescribed directly by those references.**
 
 ---
 
-## 1. 符号与单位
+## 1. Notation and units
 
-| 符号 | 含义 | 单位 |
+| Symbol | Meaning | Unit |
 |---|---|---|
-| $D$ | 每年交易日数（本阶段 252） | 天/年 |
-| $H$ | 监控期限（本阶段 504） | 交易日 |
-| $t$ | 交易日序号，$t=1,\dots,H$ | 交易日 |
-| $\sigma_{\mathrm{ann}}$ | 年化波动率 | 年$^{-1/2}$ |
-| $\sigma_d=\sigma_{\mathrm{ann}}/\sqrt D$ | 日波动率 | 日$^{-1/2}$ |
-| $S$ | **年化** Sharpe，生成过程的参数 | 年$^{-1/2}$ |
-| $r_t$ | 第 $t$ 日的策略超额收益（已扣成本） | 日收益 |
-| $z_t=r_t/\sigma_d$ | 标准化收益 | 无量纲 |
-| $L_t$ | 后验 log odds | nat |
-| $p_t=\operatorname{expit}(L_t)$ | 有效概率 | 无量纲 |
-| $\tau$ | 首次报警时间（first passage） | 交易日 |
-| $\alpha$ | 整个 $H$ 期内的累计误杀率预算 | 无量纲 |
-| $\nu$ | Student-t 自由度（本阶段 5） | 无量纲 |
-| $a_\nu$ | Student-t 尺度参数 | 无量纲 |
+| $D$ | Trading days per year (252 in this stage) | days/year |
+| $H$ | Monitoring horizon (504 in this stage) | trading days |
+| $t$ | Trading-day index, $t=1,\dots,H$ | trading days |
+| $\sigma_{\mathrm{ann}}$ | Annualised volatility | year$^{-1/2}$ |
+| $\sigma_d=\sigma_{\mathrm{ann}}/\sqrt D$ | Daily volatility | day$^{-1/2}$ |
+| $S$ | **Annualised** Sharpe, a parameter of the generating process | year$^{-1/2}$ |
+| $r_t$ | Strategy excess return on day $t$ (net of costs) | daily return |
+| $z_t=r_t/\sigma_d$ | Standardised return | dimensionless |
+| $L_t$ | Posterior log odds | nat |
+| $p_t=\operatorname{expit}(L_t)$ | Probability of being valid | dimensionless |
+| $\tau$ | First alarm time (first passage) | trading days |
+| $\alpha$ | Cumulative false-alarm budget over the whole horizon $H$ | dimensionless |
+| $\nu$ | Student-t degrees of freedom (5 in this stage) | dimensionless |
+| $a_\nu$ | Student-t scale parameter | dimensionless |
 
-**单位约定。** 年化量与日频量之间只用两条换算：波动率按 $\sqrt{\text{时间}}$ 缩放，
-均值按时间线性缩放。因此年化 Sharpe $S$ 对应的日漂移是
+**Unit convention.** Only two conversions are used between annualised and daily quantities:
+volatility scales with $\sqrt{\text{time}}$, and the mean scales linearly with time. The daily drift
+corresponding to an annualised Sharpe $S$ is therefore
 
 $$\mu_d=\frac{S\,\sigma_{\mathrm{ann}}}{D},\qquad
 \frac{\mu_d}{\sigma_d}=\frac{S\sigma_{\mathrm{ann}}/D}{\sigma_{\mathrm{ann}}/\sqrt D}
 =\frac{S}{\sqrt D},$$
 
-即**日 Sharpe 等于 $S/\sqrt D$**，再乘 $\sqrt D$ 年化回 $S$。
+i.e. **the daily Sharpe equals $S/\sqrt D$**, and multiplying by $\sqrt D$ annualises it back to $S$.
 
 ---
 
-## 2. 数据生成过程
+## 2. Data-generating process
 
 $$r_t=\frac{S\sigma_{\mathrm{ann}}}{D}
 +\frac{\sigma_{\mathrm{ann}}}{\sqrt D}\,\varepsilon_t,
 \qquad \varepsilon_t\overset{\mathrm{iid}}{\sim}N(0,1).$$
 
-有效状态 $S=1$，无效状态 $S=0$。标准化后
+The valid state is $S=1$ and the invalid state is $S=0$. After standardisation
 
 $$z_t\mid S\;\sim\;N\!\left(\frac{S}{\sqrt D},\,1\right).$$
 
-$S$ 是**生成过程的参数**，不是任何一条路径的样本 Sharpe。路径生成之后没有做任何
-事后平移或缩放，所以每条路径的年化样本 Sharpe 仍然围绕 $S$ 波动，标准差约为
-$\sqrt{D/H}=\sqrt{252/504}\approx0.707$——这正是本问题困难的来源。
+$S$ is a **parameter of the generating process**, not the sample Sharpe of any single path. No
+ex-post shifting or rescaling is applied after the paths are generated, so the annualised sample
+Sharpe of each path still fluctuates around $S$, with a standard deviation of about
+$\sqrt{D/H}=\sqrt{252/504}\approx0.707$ — this is precisely where the difficulty of the problem
+comes from.
 
 ---
 
-## 3. 检测器 A：Binary Gaussian
+## 3. Detector A: Binary Gaussian
 
-两个简单假设 $S\in\{0,1\}$，日波动率已知。一步对数似然比：
+Two simple hypotheses $S\in\{0,1\}$, with known daily volatility. The one-step log-likelihood ratio is
 
 $$
 \begin{aligned}
@@ -65,437 +69,498 @@ $$
 \end{aligned}
 $$
 
-二次项与归一化常数完全抵消，所以增量对 $z_t$ 是**仿射**的。由贝叶斯定理，
-log odds 可加：
+The quadratic terms and the normalising constants cancel exactly, so the increment is **affine** in
+$z_t$. By Bayes' theorem the log odds are additive:
 
 $$L_t=L_{t-1}+\Delta_t,\qquad L_0=\log\frac{P(\text{valid})}{1-P(\text{valid})}=0
-\;\;(\text{先验 }0.5).$$
+\;\;(\text{prior }0.5).$$
 
-### 解析矩（用于校验实现）
+### Analytic moments (used to verify the implementation)
 
-在 $S=1$ 下 $E[z_t]=1/\sqrt D$，$\operatorname{Var}(z_t)=1$：
+Under $S=1$, $E[z_t]=1/\sqrt D$ and $\operatorname{Var}(z_t)=1$:
 
 $$E[\Delta_t\mid S{=}1]=\frac{1}{\sqrt D}\cdot\frac{1}{\sqrt D}-\frac{1}{2D}
 =\frac{1}{D}-\frac{1}{2D}=\frac{1}{2D}.$$
 
-在 $S=0$ 下 $E[z_t]=0$，于是 $E[\Delta_t\mid S{=}0]=-\frac{1}{2D}$。两种状态下
+Under $S=0$, $E[z_t]=0$, so $E[\Delta_t\mid S{=}0]=-\frac{1}{2D}$. In both states
 
 $$\operatorname{Var}(\Delta_t\mid S)=\frac{1}{D}\operatorname{Var}(z_t)=\frac1D.$$
 
-$\Delta_t$ 独立，故对 $L_0=0$：
+The $\Delta_t$ are independent, so with $L_0=0$:
 
 $$\boxed{\;E[L_n\mid S{=}1]=\frac{n}{2D},\quad
 E[L_n\mid S{=}0]=-\frac{n}{2D},\quad
 \operatorname{Var}(L_n\mid S)=\frac{n}{D}.\;}$$
 
-代入 $n=H=504$、$D=252$：漂移仅 $\pm1$ nat，而标准差 $\sqrt2\approx1.41$ nat。
-**两年的证据量比噪声还小**，这解释了后面为什么检出率无法很高。
+Substituting $n=H=504$ and $D=252$: the drift is only $\pm1$ nat, while the standard deviation is
+$\sqrt2\approx1.41$ nat. **Two years of evidence amount to less than the noise**, which explains why
+the detection rates later on cannot be high.
 
-数值上报警判定在 log odds 空间完成；$p_t=\operatorname{expit}(L_t)$ 只用于展示，
-避免概率接近 0 或 1 时的精度损失。
+Numerically, the alarm decision is made in log-odds space; $p_t=\operatorname{expit}(L_t)$ is used
+only for display, to avoid loss of precision when the probability is close to 0 or 1.
 
 ---
 
-## 4. 检测器 B：Binary Student-t
+## 4. Detector B: Binary Student-t
 
-状态、先验和已知日波动率都与 A 相同，只替换观测似然。在 $z$ 空间中两个状态的位置
-参数分别是 $0$ 与 $1/\sqrt D$，自由度 $\nu=5$。
+The states, the prior and the known daily volatility are the same as in A; only the observation
+likelihood is replaced. In $z$-space the location parameters of the two states are $0$ and
+$1/\sqrt D$, with degrees of freedom $\nu=5$.
 
-**尺度不是标准差。** 若 $X\sim t_\nu(\text{loc},\text{scale}=a)$，则
+**Scale is not the standard deviation.** If $X\sim t_\nu(\text{loc},\text{scale}=a)$, then
 
 $$\operatorname{Var}(X)=a^2\frac{\nu}{\nu-2}.$$
 
-要让两种似然的观测噪声方差都等于 1，必须取
+For the observation-noise variance to equal 1 under both likelihoods, one must take
 
 $$a_\nu=\sqrt{\frac{\nu-2}{\nu}},\qquad \nu=5\Rightarrow a_5=\sqrt{3/5}\approx0.774597.$$
 
-（若误用 $a=1$，Student-t 检测器面对的噪声方差会是 $\nu/(\nu-2)=5/3$，
-等于换了一个不同的、更容易的问题。）
+(If $a=1$ were used by mistake, the noise variance faced by the Student-t detector would be
+$\nu/(\nu-2)=5/3$, which amounts to switching to a different, easier problem.)
 
-递推：
+Recursion:
 
 $$L_t=L_{t-1}
 +\log t_\nu\!\left(z_t;\ \text{loc}=\tfrac{1}{\sqrt D},\ \text{scale}=a_\nu\right)
 -\log t_\nu\!\left(z_t;\ \text{loc}=0,\ \text{scale}=a_\nu\right).$$
 
-实现使用 `scipy.stats.t.logpdf`，不对密度取对数。
+The implementation uses `scipy.stats.t.logpdf` rather than taking the logarithm of the density.
 
-### 影响函数：有界且 redescending
+### Influence function: bounded and redescending
 
-$t_\nu$ 的对数密度为 $-\frac{\nu+1}{2}\log\!\left(1+\frac{(x-\text{loc})^2}{\nu a^2}\right)+\text{const}$，
-于是
+The log density of $t_\nu$ is $-\frac{\nu+1}{2}\log\!\left(1+\frac{(x-\text{loc})^2}{\nu a^2}\right)+\text{const}$,
+so
 
 $$\Delta^{t}(z)=-\frac{\nu+1}{2}
 \left[\log\!\left(1+\frac{(z-1/\sqrt D)^2}{\nu a_\nu^2}\right)
 -\log\!\left(1+\frac{z^2}{\nu a_\nu^2}\right)\right].$$
 
-当 $|z|\to\infty$ 时括号内两项之比趋于 1，对数之差趋于 0，故
+As $|z|\to\infty$ the ratio of the two terms inside the brackets tends to 1 and the difference of
+the logarithms tends to 0, hence
 
 $$\Delta^{t}(z)\longrightarrow 0 .$$
 
-也就是说 $|\Delta^t|$ 在中等 $|z|$（本参数下 $z\approx-1.7$，峰值约 0.109）取极大，
-之后**衰减回零**。直观解释：两个假设的位置只差 $1/\sqrt D\approx0.063$，一个足够极端
-的观测在两个状态下都同样不可能，因此几乎不携带区分信息。
+In other words, $|\Delta^t|$ reaches its maximum at moderate $|z|$ (for these parameters at
+$z\approx-1.7$, with a peak of about 0.109) and then **decays back to zero**. Intuition: the two
+hypotheses differ in location by only $1/\sqrt D\approx0.063$; a sufficiently extreme observation is
+equally improbable under both states and therefore carries almost no discriminating information.
 
-对比之下 Gaussian 的 $\Delta(z)=z/\sqrt D-1/(2D)$ 无界。这就是为什么单次巨大冲击
-把 Gaussian 的 log odds 永久平移 $\pm k/\sqrt D$，却几乎不动 Student-t——甚至可能
-把它推向相反方向（见报告第 6 节）。
+By contrast, the Gaussian $\Delta(z)=z/\sqrt D-1/(2D)$ is unbounded. This is why a single huge shock
+permanently shifts the Gaussian log odds by $\pm k/\sqrt D$ but barely moves the Student-t — and may
+even push it in the opposite direction (see Section 6 of the report, generated locally).
 
-> 这是对**单次观测**的降权，不是对持续性随机波动率的解决方案。
+> This is a down-weighting of **single observations**, not a solution to persistent stochastic
+> volatility.
 
-**本阶段的数据是高斯的，因此 Student-t 检测器是似然失配模型。** 这是有意安排，
-用来量化“为稳健性买保险”的代价，不通过调整数据或参数来让它胜出。
+**The data in this stage are Gaussian, so the Student-t detector is a misspecified-likelihood
+model.** This is deliberate: it quantifies the cost of "buying insurance for robustness", and
+neither the data nor the parameters are adjusted to make it win.
 
 ---
 
-## 5. 检测器 C：Trailing 12-month Sharpe
+## 5. Detector C: Trailing 12-month Sharpe
 
-$t\ge W$（$W=252$）时
+For $t\ge W$ ($W=252$)
 
 $$\widehat S_t=\sqrt D\;\frac{\bar r_{t-W+1:t}}{s_{t-W+1:t}},\qquad
 s^2=\frac{1}{W-1}\sum_{i=t-W+1}^{t}(r_i-\bar r)^2\quad(\texttt{ddof}=1).$$
 
-$t<W$ 时不定义（记 `NaN`），既不参与阈值校准也不能报警。不使用未来数据填窗口，
-不退化为 expanding window。
+For $t<W$ it is undefined (recorded as `NaN`) and takes part neither in threshold calibration nor in
+alarms. Future data are not used to fill the window, and it does not fall back to an expanding
+window.
 
-关于样本 Sharpe 的统计误差：即使在 iid 正态、无自相关的理想条件下，年化样本 Sharpe
-的标准误约为 $\sqrt{(1+S^2/2)/n_{\text{years}}}$（Lo 2002）。$n_\text{years}=1$、
-$S\approx1$ 时约 0.7，与信号本身同量级。
+On the statistical error of the sample Sharpe: even under ideal iid normal conditions with no
+autocorrelation, the standard error of the annualised sample Sharpe is about
+$\sqrt{(1+S^2/2)/n_{\text{years}}}$ (Lo 2002). With $n_\text{years}=1$ and $S\approx1$ it is about
+0.7, the same order of magnitude as the signal itself.
 
-## 6. 检测器 D：Known-vol rolling（诊断对照）
+## 6. Detector D: Known-vol rolling (diagnostic control)
 
-窗口与 C 完全相同，只把分母换成本实验中已知的日波动率：
+The window is identical to C; only the denominator is replaced by the daily volatility that is known
+in this experiment:
 
 $$S_t^{\mathrm{known\ vol}}=\sqrt D\;\frac{\bar r_{t-W+1:t}}{\sigma_d}.$$
 
-C 与 D 之差**只**来自“估计波动率 vs 已知波动率”，其余设定完全一致。
+The difference between C and D comes **only** from "estimated vs known volatility"; every other
+setting is identical.
 
 ---
 
-## 7. 决策协议、阈值与指标
+## 7. Decision protocol, thresholds and metrics
 
-**报警规则。** 统计量在可报警日上**严格小于**阈值即报警；首次报警关闭决策，
-$\tau$ 是首次穿越时间，不可重开。`NaN` 永不触发报警。
+**Alarm rule.** An alarm is raised when the statistic is **strictly less than** the threshold on an
+alarm-eligible day; the first alarm closes the decision, $\tau$ is the first-passage time, and the
+decision cannot be reopened. `NaN` never triggers an alarm.
 
-**累计误杀率。**
+**Cumulative false-alarm rate.**
 
 $$F_H=\Pr_{S=1}(\tau\le H).$$
 
-**阈值选择。** 一条路径在监控期内报警，当且仅当其可报警日上的最小统计量低于阈值：
+**Threshold selection.** A path raises an alarm within the monitoring horizon if and only if the
+minimum of its statistic over alarm-eligible days is below the threshold:
 
-$$\{\tau\le H\}=\Big\{\min_{t\in[t_0,H]}X_t<c\Big\},\qquad t_0=\text{最早可报警日}.$$
+$$\{\tau\le H\}=\Big\{\min_{t\in[t_0,H]}X_t<c\Big\},\qquad t_0=\text{earliest alarm-eligible day}.$$
 
-设校准集（**只用有效路径**）的 $N$ 个路径最小值排序后为 $m_{(1)}\le\dots\le m_{(N)}$，
-取 $k=\lfloor\alpha N\rfloor$，阈值 $c=m_{(k+1)}$（0 基索引 $k$）。则
+Let the $N$ path minima of the calibration set (**valid paths only**), sorted, be
+$m_{(1)}\le\dots\le m_{(N)}$; take $k=\lfloor\alpha N\rfloor$ and threshold $c=m_{(k+1)}$
+(0-based index $k$). Then
 
 $$\widehat F_H=\frac{\#\{m_i<c\}}{N}\le\frac{k}{N}\le\alpha,$$
 
-并列值只会让左边更小。这是**构造性保守**的：无需分布假设。缺失值不参与最小值。
+and ties only make the left-hand side smaller. This is **conservative by construction**: no
+distributional assumption is needed. Missing values do not enter the minimum.
 
-**截断等待时间。** $\min(\tau,H)$；未报警路径按 $H$ 计入，但 `alarmed` 标志与
-`first_alarm_day=-1` 哨兵使它与“恰好第 $H$ 天报警”可区分。
+**Truncated waiting time.** $\min(\tau,H)$; paths without an alarm are counted as $H$, but the
+`alarmed` flag and the `first_alarm_day=-1` sentinel distinguish them from "alarm on exactly day
+$H$".
 
-**总体中位检测时间。** 满足 $\Pr(\tau\le t)\ge0.5$ 的最小 $t$；若两年内检出率不足
-一半则报告“在观察期内未达到”，**不**退化为“已检出样本的中位数”。
+**Population median detection time.** The smallest $t$ with $\Pr(\tau\le t)\ge0.5$; if less than half
+of the paths are detected within two years, report "not reached within the observation window",
+and do **not** fall back to "the median of the detected samples".
 
-**Wilson 区间。** 对比例 $\hat p=k/n$：
+**Wilson interval.** For a proportion $\hat p=k/n$:
 
 $$\frac{\hat p+\frac{z^2}{2n}\pm\frac{z}{1}\sqrt{\frac{\hat p(1-\hat p)}{n}+\frac{z^2}{4n^2}}}{1+\frac{z^2}{n}},\qquad z=1.95996.$$
 
-它只覆盖**单个时点、单个比例**的 Monte-Carlo 噪声；不是整条时间曲线的同时置信带，
-也不包含阈值校准本身的不确定性。
+It covers only the Monte-Carlo noise of **a single proportion at a single time point**; it is not a
+simultaneous confidence band for the whole time curve, and it does not include the uncertainty of
+the threshold calibration itself.
 
-**随机关闭解析参考。** 每日独立以概率 $q$ 关闭，令
+**Random-closure analytic reference.** Each day the decision is closed independently with
+probability $q$; let
 
 $$q=1-(1-\alpha)^{1/H}
 \;\Longrightarrow\;
 \Pr(\tau\le t)=1-(1-q)^t=1-(1-\alpha)^{t/H},$$
 
-在 $t=H$ 时恰好等于 $\alpha$，且对有效与无效策略**完全相同**。其截断期望为
+which equals $\alpha$ exactly at $t=H$ and is **identical** for valid and invalid strategies. Its
+truncated expectation is
 
 $$E[\min(\tau,H)]=\sum_{t=0}^{H-1}\Pr(\tau>t)=\sum_{t=0}^{H-1}(1-q)^t
 =\frac{1-(1-q)^H}{q}=\frac{\alpha}{q}.$$
 
-这些是精确解析值，因此**不**为其编造 Monte-Carlo 区间。由于 $\alpha<0.5$，该参考线
-的中位检测时间在 $H$ 内永远达不到。
+These are exact analytic values, so **no** Monte-Carlo intervals are fabricated for them. Since
+$\alpha<0.5$, the median detection time of this reference line is never reached within $H$.
 
 ---
 
-## 7.5 校准阈值本身的抽样不确定性
+## 7.5 Sampling uncertainty of the calibrated threshold itself
 
-阈值 `c` 是从一份有限的校准样本估出来的统计量，不是常数。把整个流程
-（模拟 → 校准 → 冻结 → 在独立测试集上测量）视为一次实验，实际误杀率
-`F̂_H` 的方差可以分解为两项：
+The threshold `c` is a statistic estimated from a finite calibration sample, not a constant.
+Treating the whole pipeline (simulate → calibrate → freeze → measure on an independent test set) as
+one experiment, the variance of the realised false-alarm rate `F̂_H` decomposes into two terms:
 
 ```
 Var(F̂_H) = Var_calib( E[F̂_H | c] )  +  E_calib[ Var(F̂_H | c) ]
-                 阈值抽样贡献              测试集二项抽样贡献
+             threshold-sampling part      test-set binomial-sampling part
 ```
 
-第二项就是通常报告的 `α(1-α)/n_test`，也是 Wilson 区间覆盖的那一项；
-第一项完全不在 Wilson 区间里。`robustness.py` 在 R 个独立根种子下重复整个
-流程，用复算间的样本方差估计左边，用 `α(1-α)/n_test` 作为右边第二项，
-两者相减（截断在 0）得到阈值分量：
+The second term is the usual `α(1-α)/n_test`, which is also the term covered by the Wilson
+interval; the first term is entirely absent from the Wilson interval. `robustness.py` repeats the
+whole pipeline under R independent root seeds, estimates the left-hand side by the sample variance
+across replications, uses `α(1-α)/n_test` as the second term on the right, and subtracts the two
+(truncating at 0) to obtain the threshold component:
 
 ```
 sd_calib ≈ sqrt( max(0, s²_R − α(1-α)/n_test) )
 ```
 
-并用样本方差的卡方抽样律做单边检验 `H0: Var(F̂_H) = α(1-α)/n_test`：
+It also performs a one-sided test of `H0: Var(F̂_H) = α(1-α)/n_test` using the chi-square sampling
+law of the sample variance:
 
 ```
-(R-1) · s²_R / σ0²  ~  χ²_{R-1}      （近似：复算间的比率视为近正态）
+(R-1) · s²_R / σ0²  ~  χ²_{R-1}      (approximation: the rates across replications are treated as near-normal)
 ```
 
-**这套模拟已被第 8 节的精确解取代。** 顺序统计量的抽样律给出闭式答案，
-不需要重复模拟，也就不存在「R 取多大」的问题。原先以「所有比较是否显著」
-决定 R 的做法是无效的停止规则（以显著性决定何时停止采样会使结论偏向显著），
-已撤回；100 次重复保留为一次性交叉验证（与解析值一致，max |z| = 1.57），
-并已从默认运行中移除。
+**This simulation has been superseded by the exact solution in Section 8.** The sampling law of order
+statistics gives a closed-form answer that requires no repeated simulation, so the question "how
+large should R be" does not arise. The earlier practice of choosing R according to "whether all
+comparisons are significant" was an invalid stopping rule (deciding when to stop sampling on the
+basis of significance biases the conclusions towards significance) and has been withdrawn; the 100
+replications are kept as a one-off cross-check (in agreement with the analytic values,
+max |z| = 1.57) and have been removed from the default run.
 
 ---
 
-## 8. Stage 1.1：门槛的精确抽样律
+## 8. Stage 1.1: Exact sampling law of the threshold
 
-门槛取校准集路径最小值的第 `j` 个顺序统计量（1 基）：
+The threshold is the `j`-th order statistic (1-based) of the calibration-set path minima:
 
 ```
-j = floor(alpha * N) + 1          报警规则：统计量 < c
+j = floor(alpha * N) + 1          alarm rule: statistic < c
 ```
 
-设 `M_i` 为路径 i 在可报警日上的统计量最小值，CDF 为 `F`，连续（无并列）。
-则门槛 `c = m_(j)` 的**真实**误杀概率为
+Let `M_i` be the minimum of the statistic over the alarm-eligible days of path i, with CDF `F`,
+continuous (no ties). Then the **true** false-alarm probability of the threshold `c = m_(j)` is
 
 ```
 p_FA(c) = P(M_test < c) = F(c) = F(m_(j)) ~ Beta(j, N+1-j)
 ```
 
-这是顺序统计量的概率积分变换标准结果：`F(M_i)` 独立同分布 U(0,1)，
-其第 j 个顺序统计量服从 `Beta(j, N+1-j)`。注意它**与检测器无关**——
-只要最小值分布连续即可，与统计量的具体形式无关。
+This is the standard probability-integral-transform result for order statistics: the `F(M_i)` are
+iid U(0,1), and their j-th order statistic follows `Beta(j, N+1-j)`. Note that it is
+**detector-independent** — it only requires the distribution of the minimum to be continuous,
+regardless of the specific form of the statistic.
 
-给定 `c` 后测试集报警数为 `Binomial(n_test, p_FA)`，对 Beta 混合得
+Given `c`, the number of alarms in the test set is `Binomial(n_test, p_FA)`; mixing over the Beta
+gives
 
 ```
 alarms ~ BetaBinomial(n_test, j, N+1-j)
 ```
 
-其方差除以 `n_test²` 为
+Its variance divided by `n_test²` is
 
 ```
 Var(FAR) = p(1-p) * (N+1+n_test) / (n_test * (N+2)),      p = j/(N+1)
 ```
 
-当 `n_test = N` 时它趋于 `2 p(1-p)/n_test`，即**总标准差恰为二项标准差的 √2 倍**。
+When `n_test = N` this tends to `2 p(1-p)/n_test`, i.e. **the total standard deviation is exactly √2
+times the binomial standard deviation**.
 
-`E[p_FA] = j/(N+1)` 略**高于**名义 α（取整方向所致）。这与「校准集经验误杀率恰好等于 α」
-是两件不同的事：后者是规则的机械结果，前者才是这个门槛的真实覆盖水平。
+`E[p_FA] = j/(N+1)` is slightly **above** the nominal α (because of the rounding direction). This is
+a different matter from "the empirical false-alarm rate on the calibration set equals α exactly":
+the latter is a mechanical consequence of the rule, while the former is the true coverage level of
+this threshold.
 
-> 这里的 Beta 是**频率派覆盖概率的抽样分布**，不是对策略有效性的贝叶斯先验。
+> The Beta here is **the sampling distribution of a frequentist coverage probability**, not a
+> Bayesian prior on strategy validity.
 
 ---
 
-## 9. Stage 1.1：失效概率与时间
+## 9. Stage 1.1: Failure probability and time
 
-记号统一为
-
-```
-q_n = P(theta = 0 | r_1:n)        失效概率
-U_n = logit(q_n) = -L_n           失效对数赔率
-```
-
-Gaussian 检测器以 S=0 对 S=s 为两个假设，一步增量为 `z_t * s/sqrt(D) - s^2/(2D)`。
-在真实 Sharpe 为 `S_true` 时，
+The notation is unified as
 
 ```
-E[增量] = s (s - 2 S_true) / (2D),     Var(增量) = s^2 / D
+q_n = P(theta = 0 | r_1:n)        failure probability
+U_n = logit(q_n) = -L_n           failure log odds
 ```
 
-于是
+The Gaussian detector takes S=0 versus S=s as its two hypotheses, with one-step increment
+`z_t * s/sqrt(D) - s^2/(2D)`. When the true Sharpe is `S_true`,
+
+```
+E[increment] = s (s - 2 S_true) / (2D),     Var(increment) = s^2 / D
+```
+
+Hence
 
 ```
 U_n ~ N( U_0 + n * s(s - 2 S_true)/(2D),  n * s^2 / D )
 ```
 
-`S_true = 0` 时化为题目给出的 `N(U_0 + n s^2/(2D), n s^2/D)`。
+When `S_true = 0` this reduces to `N(U_0 + n s^2/(2D), n s^2/D)` as given in the problem statement.
 
-**平均概率不是概率的 sigmoid。** `E[q_n] = E[expit(U_n)]` 必须对 `U_n` 的分布积分
-（本实现用 Gauss–Hermite 求积），`expit(E[U_n])` 是另一个数，两者在两年处已相差约 0.05。
+**The mean probability is not the sigmoid of the mean.** `E[q_n] = E[expit(U_n)]` must be integrated
+over the distribution of `U_n` (this implementation uses Gauss–Hermite quadrature);
+`expit(E[U_n])` is a different number, and the two already differ by about 0.05 at two years.
 
-**固定概率门槛的时间尺度。** `U` 是漂移 `mu = s^2/(2D)`、方差 `sigma^2 = s^2/D` 的
-布朗运动，首次到达 `a = logit(b) - U_0` 的时间服从逆高斯分布，
+**Time scale of a fixed probability threshold.** `U` is a Brownian motion with drift
+`mu = s^2/(2D)` and variance `sigma^2 = s^2/D`; its first time to reach `a = logit(b) - U_0` follows
+an inverse Gaussian distribution,
 
 ```
 E[tau] = a / mu = 2 D logit(b) / s^2
 ```
 
-对 b = 0.9、s = 1、D = 252：`E[tau] ≈ 1107` 个交易日 ≈ 4.4 年。时间尺度随 `1/s^2` 变化，
-s 从 1 降到 0.6 会把它乘以约 2.8。
+For b = 0.9, s = 1, D = 252: `E[tau] ≈ 1107` trading days ≈ 4.4 years. The time scale varies as
+`1/s^2`; lowering s from 1 to 0.6 multiplies it by about 2.8.
 
-> **连续 vs 每日观察**：上式是连续观察的结果。真实检测器每天只看一次，只能在整数日停下，
-> 也抓不到日内穿越，因此实际首达时间**不短于**解析值。把它当时间尺度参照与下界。
-
----
-
-## 10. Stage 1.1：随机失效时间
-
-`T` 为**最后一个有效交易日**：
-
-```
-t <= T  ->  Sharpe = 1        T = 0        第一天起即无效
-t >  T  ->  Sharpe = 0        T = infinity 永不失效
-```
-
-每条路径在失效后再观察 `post = 504` 个交易日，故路径 i 的监测窗口为 `1 .. T_i + post`，
-post-failure 窗口长度对所有 `T` 相同。
-
-实现上先抽噪声再加漂移，因此同种子同形状下两次运行的噪声**逐位相同**：
-改变 `T` 只改变 `T` 之后的漂移，不动任何更早的收益。这使得
-`T=0` 与固定无效 DGP、`T=inf` 与固定有效 DGP 逐位一致，可直接作为回归测试。
-
-指标的分母约定：`tau <= T` 的报警是**失效前误杀**，该路径**永久移出** post-failure 分母，
-不能再被计为检出。截断失效后延迟 `min(tau - T, post)` 只在存活路径上计算，删失者按 `post` 计入；
-中位延迟仅在**检出比例 ≥ 50%** 时报出，否则标注未达到——否则删失上限会被误读成延迟。
+> **Continuous vs daily observation**: the formula above is the result for continuous observation.
+> The real detector looks only once per day, can stop only on integer days and cannot catch
+> intraday crossings, so the actual first-passage time is **no shorter** than the analytic value.
+> Treat it as a time-scale reference and a lower bound.
 
 ---
 
-## 11. Stage 2A：四种噪声
+## 10. Stage 1.1: Random failure time
 
-收益始终是 `r_t = mu_S + sigma_0 * eps_t`，`mu_S = S*sigma_ann/D`，`sigma_0 = sigma_ann/sqrt(D)`。
-四种 `eps` 全部**零均值、单位无条件方差**，归一化只用理论常数。
+`T` is the **last valid trading day**:
 
-**厚尾**：`eps = sqrt((nu-2)/nu) * X`，`X ~ t_nu`。`Var(X) = nu/(nu-2)`，故 `Var(eps) = 1`。
-`nu = 5` 时二阶矩存在、四阶矩存在但其抽样方差不存在，因此**样本峰度不可作为验收统计量**，
-改用尾部频率。
+```
+t <= T  ->  Sharpe = 1        T = 0        invalid from the first day
+t >  T  ->  Sharpe = 0        T = infinity never fails
+```
 
-**随机波动率**：`a_t = rho a_{t-1} + sqrt(1-rho^2) xi_t`，`a_0 ~ N(0,1)`，故 `a_t ~ N(0,1)`
-对每个 `t` 成立（无 burn-in）。取 `v_t = exp(a_t - 1/2)`，则
+Each path is observed for a further `post = 504` trading days after failure, so the monitoring
+window of path i is `1 .. T_i + post`, and the post-failure window has the same length for every
+`T`.
+
+The implementation draws the noise first and then adds the drift, so two runs with the same seed and
+the same shape have **bit-identical** noise: changing `T` changes only the drift after `T` and does
+not touch any earlier return. This makes `T=0` bit-identical to the fixed invalid DGP and `T=inf`
+bit-identical to the fixed valid DGP, which can be used directly as regression tests.
+
+Denominator convention for the metrics: an alarm with `tau <= T` is a **pre-failure false alarm**;
+that path is **permanently removed** from the post-failure denominator and can no longer be counted
+as a detection. The truncated post-failure delay `min(tau - T, post)` is computed only on the
+surviving paths, with censored paths counted as `post`; the median delay is reported only when **the
+detected fraction is ≥ 50%**, and is otherwise marked as not reached — otherwise the censoring cap
+would be misread as a delay.
+
+---
+
+## 11. Stage 2A: Four noise types
+
+Returns are always `r_t = mu_S + sigma_0 * eps_t`, with `mu_S = S*sigma_ann/D` and
+`sigma_0 = sigma_ann/sqrt(D)`. All four kinds of `eps` have **zero mean and unit unconditional
+variance**, and the normalisation uses theoretical constants only.
+
+**Heavy-tailed**: `eps = sqrt((nu-2)/nu) * X`, `X ~ t_nu`. `Var(X) = nu/(nu-2)`, so `Var(eps) = 1`.
+With `nu = 5` the second moment exists and the fourth moment exists but its sampling variance does
+not, so **the sample kurtosis cannot be used as an acceptance statistic**; tail frequencies are used
+instead.
+
+**Stochastic volatility**: `a_t = rho a_{t-1} + sqrt(1-rho^2) xi_t`, `a_0 ~ N(0,1)`, so
+`a_t ~ N(0,1)` holds for every `t` (no burn-in). Taking `v_t = exp(a_t - 1/2)`,
 
 ```
 E[v_t] = exp(-1/2) E[exp(a_t)] = exp(-1/2) exp(1/2) = 1
-Var(eps_t) = E[v_t] E[z_t^2] = 1        （无条件）
+Var(eps_t) = E[v_t] E[z_t^2] = 1        (unconditional)
 ```
 
-真实日波动率为 `sigma_0 sqrt(v_t)`。**漂移不随 v_t 缩放**——否则条件 Sharpe 会被强行固定，
-那是另一个问题。有效状态只要求**长期** Sharpe 为 1。
+The true daily volatility is `sigma_0 sqrt(v_t)`. **The drift does not scale with v_t** — otherwise
+the conditional Sharpe would be forcibly fixed, which is a different problem. The valid state only
+requires the **long-run** Sharpe to be 1.
 
-**跳跃**：`K_t ~ Poisson(lambda/D)`，`w_t ~ N(0,1)`，
+**Jumps**: `K_t ~ Poisson(lambda/D)`, `w_t ~ N(0,1)`,
 
 ```
 eps_t = (z_t + kappa sqrt(K_t) w_t) / sqrt(1 + kappa^2 lambda/D)
 ```
 
-给定 `K_t`，`kappa sqrt(K_t) w_t ~ N(0, kappa^2 K_t)`，与 `K_t` 个独立 `N(0, kappa^2)` 跳跃之和同分布。
-由全方差公式 `Var(kappa sqrt(K) w) = E[kappa^2 K] = kappa^2 lambda/D`，均值为 0。
-分子方差 `1 + kappa^2 lambda/D`，故 `Var(eps) = 1`。
-**单位**：`lambda` 是**年度**跳跃强度（每年期望次数），日强度 `lambda/D`；
-`kappa` 是**单次跳跃**的标准差，以日高斯冲击为单位。
+Given `K_t`, `kappa sqrt(K_t) w_t ~ N(0, kappa^2 K_t)`, which has the same distribution as the sum of
+`K_t` independent `N(0, kappa^2)` jumps. By the law of total variance,
+`Var(kappa sqrt(K) w) = E[kappa^2 K] = kappa^2 lambda/D`, and the mean is 0. The numerator variance is
+`1 + kappa^2 lambda/D`, so `Var(eps) = 1`.
+**Units**: `lambda` is the **annual** jump intensity (expected number of jumps per year), with daily
+intensity `lambda/D`; `kappa` is the standard deviation of a **single jump**, in units of the daily
+Gaussian shock.
 
-**退化情形**：随机波动率振幅为 0、或 `kappa = 0`、或 `lambda = 0`，都必须逐位回到高斯模型。
+**Degenerate cases**: a stochastic-volatility amplitude of 0, `kappa = 0` or `lambda = 0` must each
+reproduce the Gaussian model bit for bit.
 
-**误差评估**：`rho = 0.98` 时对数方差半衰期约 `log(0.5)/log(0.98) ~ 34` 天，
-路径内交易日强相关。所有标准误按**路径级**计算，不把 path-day 当独立样本。
+**Error assessment**: with `rho = 0.98` the half-life of the log variance is about
+`log(0.5)/log(0.98) ~ 34` days, so trading days within a path are strongly correlated. All standard
+errors are computed at the **path level**; path-days are not treated as independent samples.
 
 ---
 
-## 12. Stage 2A：真实波动率 oracle
+## 12. Stage 2A: True-volatility oracle
 
-只在随机波动率情境下加入，使用真实当期方差但保留两个**固定均值**假设：
+Added only in the stochastic-volatility scenario; it uses the true current variance but keeps the two
+**fixed-mean** hypotheses:
 
 ```
 dL_t = (mu1 - mu0) [ r_t - (mu1+mu0)/2 ] / sigma_t^2,    mu0 = 0, mu1 = sigma_ann/D
 ```
 
-推导：`log N(r; mu1, sig^2) - log N(r; mu0, sig^2) = [(r-mu0)^2 - (r-mu1)^2]/(2 sig^2)`
-`= (mu1-mu0)[r - (mu0+mu1)/2]/sig^2`。
+Derivation: `log N(r; mu1, sig^2) - log N(r; mu0, sig^2) = [(r-mu0)^2 - (r-mu1)^2]/(2 sig^2)`
+`= (mu1-mu0)[r - (mu0+mu1)/2]/sig^2`.
 
-注意这**不是**「把收益除以当期波动率再沿用固定条件 Sharpe 的更新式」——后者检验的是另一对假设。
-该 oracle 使用任何可部署规则都拿不到的信息，只用于标定上界。
+Note that this is **not** "dividing returns by the current volatility and then reusing the update for
+a fixed conditional Sharpe" — the latter tests a different pair of hypotheses. This oracle uses
+information that no deployable rule can obtain, and serves only to calibrate an upper benchmark.
 
 ---
 
-## 13. Stage 2B：因果 EWMA 方差预测与两个检测器
+## 13. Stage 2B: Causal EWMA variance forecast and two detectors
 
-预测只用历史收益：
+The forecast uses past returns only:
 
 ```
 m = (mu_0 + mu_1)/2,   v_1 = sigma_0^2
 v_{t+1} = lambda v_t + (1 - lambda) (r_t - m)^2,   lambda = 0.94
 ```
 
-`v_t` 是**看到第 t 天收益之前**对该天方差的预测，只依赖 `r_1..r_{t-1}`。
-不用全样本 backcast、全路径样本方差或真实状态初始化。
+`v_t` is the forecast of that day's variance made **before seeing day t's return**, and depends only on
+`r_1..r_{t-1}`. No full-sample backcast, full-path sample variance or true-state initialisation is
+used.
 
-**固定中点 m 的代价。** 在两个真实均值假设下，平方残差都多出同一项：
-`E[(r - m)^2 | mu_i] = v + (mu_1 - mu_0)^2/4`。因此这不是严格无偏的方差递推。
-本轮 `(mu_1-mu_0)^2/4` 约为 `sigma_0^2` 的 0.0992%。
-选它是为了不读取真实状态、也不引入第二个均值估计器。
+**The cost of the fixed midpoint m.** Under both true-mean hypotheses the squared residual picks up the
+same extra term: `E[(r - m)^2 | mu_i] = v + (mu_1 - mu_0)^2/4`. This is therefore not a strictly
+unbiased variance recursion. In this round `(mu_1-mu_0)^2/4` is about 0.0992% of `sigma_0^2`.
+It was chosen so as not to read the true state and not to introduce a second mean estimator.
 
-**Gaussian 更新**是 `N(mu_1, v_t)` 对 `N(mu_0, v_t)` 的精确对数似然比，二次项抵消：
+**The Gaussian update** is the exact log-likelihood ratio of `N(mu_1, v_t)` against `N(mu_0, v_t)`;
+the quadratic terms cancel:
 
 ```
 dL_t = (mu_1 - mu_0)(r_t - m) / v_t
 ```
 
-**Student-t 更新**共用同一 `v_t`，尺度取
+**The Student-t update** shares the same `v_t`, with scale
 
 ```
 b_t = sqrt( (nu-2)/nu * v_t )
 ```
 
-使 t 分布的**方差**等于 `v_t`（`b_t` 是尺度参数，不是标准差，两者差 `sqrt(nu/(nu-2))`）。
+so that the **variance** of the t distribution equals `v_t` (`b_t` is a scale parameter, not a
+standard deviation; the two differ by a factor of `sqrt(nu/(nu-2))`).
 
-**退化关系**（实现正确性的强约束）：`lambda = 1` 时 `v_t` 恒为 `sigma_0^2`，
-两个 EWMA 检测器必须分别精确退化为固定尺度的对应基线。
+**Degeneracy relation** (a strong constraint on implementation correctness): with `lambda = 1`, `v_t`
+stays at `sigma_0^2`, and the two EWMA detectors must reduce exactly to their respective fixed-scale
+baselines.
 
-**输出的性质**：这是**各自 EWMA 条件分布假设下的模型后验**，
-不是对真实潜在 SV 状态积分之后的精确后验。
+**Nature of the output**: this is **the model posterior under each detector's own EWMA
+conditional-distribution assumption**, not the exact posterior obtained by integrating over the true
+latent SV state.
 
-**QLIKE** `v/vhat - log(v/vhat) - 1` 是机制诊断；模型失配时不同预测损失的排序可能不同
-（Patton），主结论仍由误杀与检测指标决定。
+**QLIKE** `v/vhat - log(v/vhat) - 1` is a mechanism diagnostic; under model misspecification the
+ranking by different forecast losses may differ (Patton), and the main conclusions are still
+determined by the false-alarm and detection metrics.
 
-**信息等价观测天数** `N_info(n) = sum_{t<=n} sigma_0^2 / v_t`。
-`v_t = exp(a_t - amp^2/2)`、`a_t ~ N(0, amp^2)` 时
-`E[sigma_0^2/v_t] = E[exp(amp^2/2 - a_t)] = exp(amp^2)`，故 `E[N_info(n)] = n e^{amp^2}`，
-`amp = 1` 时即 `n·e`。它使用真实方差，是 oracle 的解释工具，不是可部署检测器的数据。
+**Information-equivalent observation days** `N_info(n) = sum_{t<=n} sigma_0^2 / v_t`.
+When `v_t = exp(a_t - amp^2/2)` and `a_t ~ N(0, amp^2)`,
+`E[sigma_0^2/v_t] = E[exp(amp^2/2 - a_t)] = exp(amp^2)`, so `E[N_info(n)] = n e^{amp^2}`,
+which is `n·e` for `amp = 1`. It uses the true variance and is an interpretive tool for the oracle,
+not data available to a deployable detector.
 
 ---
 
-## 14. Stage 2C：带校准误差缓冲的次序统计量门槛
+## 14. Stage 2C: Order-statistic thresholds with a calibration-error buffer
 
-报警规则为「统计量严格小于门槛」，因此一条路径在监测期内报警当且仅当其**最小统计量**
-`M = min_t L_t` 低于门槛 `c`。门槛 `c` 的**真实** FAR 就是 `M` 的 CDF 值 `F(c)`。
+The alarm rule is "statistic strictly less than threshold", so a path raises an alarm within the
+monitoring horizon if and only if its **minimum statistic** `M = min_t L_t` falls below the threshold
+`c`. The **true** FAR of threshold `c` is simply the value `F(c)` of the CDF of `M`.
 
-取 `c = M_(k)`（N 条校准路径的第 k 小最小值）。在 `F` 连续、**路径**独立同分布时
-（不要求同一路径内各天独立），概率积分变换给出
+Take `c = M_(k)` (the k-th smallest minimum among N calibration paths). When `F` is continuous and
+the **paths** are iid (days within a path need not be independent), the probability integral
+transform gives
 
 ```
 F(M_(k)) ~ Beta(k, N+1-k)
 ```
 
-利用 Beta 与二项的对偶
+Using the Beta–binomial duality
 
 ```
 P{Beta(k, N+1-k) > alpha} = P{Binomial(N, alpha) <= k-1}
 ```
 
-要求 `P{Bin(N, alpha) <= k-1} <= delta/J`，并取**最大**的可行 k：
-`M_(k)` 关于 k 单调不减，门槛越高报警越多，所以最大可行 k 是仍满足要求的最不保守选择。
+we require `P{Bin(N, alpha) <= k-1} <= delta/J` and take the **largest** feasible k: `M_(k)` is
+non-decreasing in k, and a higher threshold produces more alarms, so the largest feasible k is the
+least conservative choice that still meets the requirement.
 
-**统一门槛的方向。** `F_g` 单调不减，故 `c_unified = min_g c_g <= c_g` 蕴含
-`F_g(c_unified) <= F_g(c_g) <= alpha`（在该情境保证成立的事件上）。
-对 J 项做 Bonferroni 并集界，得到 `1 - delta` 水平的同时成立陈述。
+**Direction of the unified threshold.** `F_g` is non-decreasing, so `c_unified = min_g c_g <= c_g`
+implies `F_g(c_unified) <= F_g(c_g) <= alpha` (on the event where the guarantee for that scenario
+holds). A Bonferroni union bound over the J items gives a simultaneous statement at level
+`1 - delta`.
 
-**三个概率是不同的东西**：`delta` 是校准程序失败的概率；`alpha` 是策略误杀预算；
-测试表中的 Wilson 区间是有限测试集上单个比率的抽样区间。
+**Three probabilities that are different things**: `delta` is the probability that the calibration
+procedure fails; `alpha` is the strategy's false-alarm budget; the Wilson intervals in the test
+tables are sampling intervals for a single rate on a finite test set.
 
-**保证的范围**：仅在所列的完整路径生成规律及其假设下成立。
-不覆盖任意市场分布、任意参数或规律拼接，也不保证任何一次有限测试观测到的 FAR 低于目标。
-这是针对单调路径误杀风险的次序统计量构造，**不是** Learn-then-Test 框架的完整实现。
+**Scope of the guarantee**: it holds only under the listed complete path-generating laws and their
+assumptions. It does not cover arbitrary market distributions, arbitrary parameters or spliced
+combinations of laws, nor does it guarantee that the FAR observed in any single finite test is below
+the target. This is an order-statistic construction for monotone path-wise false-alarm risk, **not** a
+full implementation of the Learn-then-Test framework.
 
 ---
 
-## 15. Stage 2D：SV 与跳跃的组合 DGP
+## 15. Stage 2D: Combined SV and jump DGP
 
 ```
 r_t   = mu_S + sigma_0 eps_t
@@ -505,507 +570,595 @@ K_t   ~ Poisson(lambda/D)
 eps_t = ( sqrt(v_t) z_t + kappa sqrt(K_t) w_t ) / sqrt(1 + kappa^2 lambda/D)
 ```
 
-`xi, z, w, K` 的基础随机来源相互独立。**跳跃是独立加性成分**：它不乘以 `sqrt(v_t)`，
-因此落在平静日上的跳跃相对更大。
+The underlying random sources `xi, z, w, K` are mutually independent. **Jumps are an independent
+additive component**: they are not multiplied by `sqrt(v_t)`, so jumps landing on calm days are
+relatively larger.
 
-**零均值**：两项都是零均值随机变量与独立零均值因子的乘积。
+**Zero mean**: each of the two terms is the product of a zero-mean random variable and an independent
+factor with zero mean.
 
-**单位无条件方差**：`a_t` 边际为 `N(0,1)`，故 `A a_t ~ N(0, A^2)`，
-`E[v_t] = exp(A^2/2 - A^2/2) = 1`（对任意 `A`）。两个分子项独立，
+**Unit unconditional variance**: `a_t` has marginal `N(0,1)`, so `A a_t ~ N(0, A^2)` and
+`E[v_t] = exp(A^2/2 - A^2/2) = 1` (for any `A`). The two numerator terms are independent,
 
 ```
 Var(sqrt(v) z) = E[v] E[z^2] = 1
 Var(kappa sqrt(K) w) = kappa^2 E[K] E[w^2] = kappa^2 lambda/D
 ```
 
-分子方差 `1 + kappa^2 lambda/D`，故 `Var(eps) = 1` 对**任意** `(A, kappa)` 成立。
+The numerator variance is `1 + kappa^2 lambda/D`, so `Var(eps) = 1` holds for **any** `(A, kappa)`.
 
-**退化关系**：`kappa = 0` 给出 `eps = sqrt(v) z`，即 Stage 2A 的 SV 模型；
-`A = 0` 给出 `v = 1`、`eps = (z + kappa sqrt(K) w)/sqrt(1+kappa^2 lambda/D)`，
-即 Stage 2A 的跳跃模型；两者都关时 `eps = z`。
+**Degeneracy relations**: `kappa = 0` gives `eps = sqrt(v) z`, i.e. the Stage 2A SV model;
+`A = 0` gives `v = 1` and `eps = (z + kappa sqrt(K) w)/sqrt(1+kappa^2 lambda/D)`,
+i.e. the Stage 2A jump model; with both switched off, `eps = z`.
 
-**kappa 不是单调的难度参数**。单位方差常数同时压低无跳跃日的扩散尺度：
+**kappa is not a monotone difficulty parameter.** The unit-variance constant simultaneously shrinks the
+diffusion scale on jump-free days:
 
 ```
-无跳跃日的 sd = 1 / sqrt(1 + kappa^2 lambda/D)
+sd on jump-free days = 1 / sqrt(1 + kappa^2 lambda/D)
 ```
 
-`lambda = 2`、`D = 252` 时，`kappa = 5` 给 0.9135、`kappa = 8` 给 0.8143。
-也就是说 `kappa` 越大，普通交易日**越安静**，单日信噪比反而更高。
-报告中不预设 `kappa` 的单调效应。
+With `lambda = 2` and `D = 252`, `kappa = 5` gives 0.9135 and `kappa = 8` gives 0.8143.
+That is, the larger `kappa` is, the **quieter** ordinary trading days become, and the single-day
+signal-to-noise ratio is actually higher. The report does not presuppose a monotone effect of
+`kappa`.
 
-**单次冲击对 EWMA 方差预测的影响**。在第 t 日加入 `c sigma_0` 的冲击，
-次日预测方差多出约 `(1-lambda_ewma) c^2 sigma_0^2`（忽略中点项），
-其后按 `lambda_ewma` 每日衰减，半衰期 `ln(0.5)/ln(lambda_ewma)`。
-`lambda_ewma = 0.94` 时半衰期约 11.2 个交易日。
-Student-t 似然能压住**当日**的证据增量，但**其后各日**它与 Gaussian 共用同一个被抬高的
-方差预测，因此同样受影响。
+**Effect of a single shock on the EWMA variance forecast.** Adding a shock of `c sigma_0` on day t
+raises the next day's forecast variance by about `(1-lambda_ewma) c^2 sigma_0^2` (ignoring the
+midpoint term), which then decays by a factor `lambda_ewma` per day, with half-life
+`ln(0.5)/ln(lambda_ewma)`. For `lambda_ewma = 0.94` the half-life is about 11.2 trading days.
+The Student-t likelihood can suppress the **same-day** evidence increment, but **on the following
+days** it shares the same inflated variance forecast with the Gaussian and is therefore affected in
+the same way.
 
 ---
 
-## 16. Stage 2E：截断方差更新与 2×2 消融
+## 16. Stage 2E: Truncated variance update and 2×2 ablation
 
-### 16.1 定义
+### 16.1 Definition
 
-只改方差递推的一步，似然本身不动：
+Only one step of the variance recursion is changed; the likelihood itself is untouched:
 
 ```
     plain:      V_{t+1} = lambda V_t + (1-lambda) e_t^2
     truncated:  V_{t+1} = lambda V_t + (1-lambda) min(e_t^2, c^2 V_t)
-    e_t = r_t - m,  lambda = 0.94,  c = 4（固定，不搜索）
+    e_t = r_t - m,  lambda = 0.94,  c = 4 (fixed, not searched)
 ```
 
-`V_1 = sigma_daily^2` 与 plain 版本相同。**当日的似然仍然读到完整的 `r_t`**：截断只作用在
-写入下一日方差状态的那一项。
+`V_1 = sigma_daily^2`, the same as in the plain version. **The same-day likelihood still reads the full
+`r_t`**: truncation acts only on the term written into the next day's variance state.
 
-**这是新模型，不是稳健化改写。** 检测规则由统计量与门槛共同定义，改变 `V_t` 的递推就改变了
-统计量的整条路径，因此两个截断版本不继承 plain EWMA 门槛上的任何 FAR 保证，必须重新校准。
+**This is a new model, not a robustified rewrite.** A detection rule is defined jointly by its
+statistic and its threshold; changing the recursion for `V_t` changes the entire path of the
+statistic, so the two truncated versions inherit no FAR guarantee from the plain-EWMA thresholds and
+must be recalibrated.
 
-### 16.2 两条已证性质
+### 16.2 Two proven properties
 
-**性质 1（逐日支配）：** 同一收益序列下 `Vt_trunc <= V_plain` 对所有 t 成立。
+**Property 1 (day-by-day dominance):** For the same return sequence, `Vt_trunc <= V_plain` holds for
+all t.
 
-归纳。t=1 相等。设 `Vt <= V`。则
-`min(e^2, c^2 Vt) <= e^2` 且 `lambda Vt <= lambda V`，两式相加得 `Vt_{t+1} <= V_{t+1}`。∎
+Induction. They are equal at t=1. Suppose `Vt <= V`. Then
+`min(e^2, c^2 Vt) <= e^2` and `lambda Vt <= lambda V`; adding the two gives `Vt_{t+1} <= V_{t+1}`. ∎
 
-**性质 2（FAR 方向不被自动决定）：** Gaussian 增量为 `(mu1-mu0)(r_t-m)/v_t`，
-方差在分母上。更小的 `v_t` 使 `|dL_t|` **更大**，即截断版本的统计量波动更大而不是更小。
-所以“截断让方差更稳 ⇒ 误杀更少”这一推断是无效的；FAR 的方向只能由校准决定。
+**Property 2 (the direction of the FAR is not determined automatically):** The Gaussian increment is
+`(mu1-mu0)(r_t-m)/v_t`, with the variance in the denominator. A smaller `v_t` makes `|dL_t|`
+**larger**, i.e. the statistic of the truncated version fluctuates more, not less. The inference
+"truncation makes the variance more stable ⇒ fewer false alarms" is therefore invalid; the direction
+of the FAR can only be settled by calibration.
 
-### 16.3 截断对方差水平的影响：能说什么，不能说什么
+### 16.3 Effect of truncation on the variance level: what can and cannot be said
 
-**能说的（一个精确的参考量）。** 若把标准化残差 `u = e_t/sqrt(V_t)` 当作标准正态，
-则单步更新输入的二阶矩为
+**What can be said (one exact reference quantity).** If the standardised residual
+`u = e_t/sqrt(V_t)` is treated as standard normal, the second moment of the input to a one-step
+update is
 
 ```
     E[min(u^2, c^2)] = (2 Phi(c) - 1) - 2 c phi(c) + 2 c^2 (1 - Phi(c))
 ```
 
-`c = 4` 时等于 `0.99987946`，比未截断的 `E[u^2] = 1` 少 `0.01205%`。
+For `c = 4` this equals `0.99987946`, which is `0.01205%` less than the untruncated `E[u^2] = 1`.
 
-**不能说的。** 这个数**不是**递推的长期方差偏差。要从它推出长期偏差，至少需要下面四条
-同时成立，而它们在本项目里没有一条成立：
+**What cannot be said.** This number is **not** the long-run variance bias of the recursion. Deriving
+a long-run bias from it would require at least the following four conditions to hold simultaneously,
+and not one of them holds in this project:
 
-1. **截断点不是常数。** 门限 `c^2 V_t` 依赖模型自己的状态 `V_t`，而 `V_t` 是随机的、
-   与 `e_t` 的历史相关；`E[min(e_t^2, c^2 V_t)] != E[V_t] E[min(u^2, c^2)]`。
-2. **`u` 不是标准正态。** 真实 DGP 含随机波动与跳跃，`e_t/sqrt(V_t)` 的分布是厚尾且
-   时变的；`min` 的截断比例因此不是常数。
-3. **中点是固定的。** `e_t = r_t - m` 围绕一个**固定**的 `m` 计算，不是围绕条件均值，
-   所以 `E[e_t^2]` 本身就含一项 `(mu - m)^2`。
-4. **递推是非线性反馈。** 普通 EWMA 的权重和为 1，故 `E[V_inf] = E[e^2]` 这一线性不动点
-   论证成立；截断版本的更新项 `min(e_t^2, c^2 Vt_t)` 同时出现在等式两边，
-   `E[Vt_inf]` 不能由把输入的均值代入同一不动点得到。方差被压低 → 门限 `c^2 Vt_t` 变低
-   → 截断更频繁 → 方差进一步被压低，这是一个自我强化的反馈，其定态不是线性外推的结果。
+1. **The truncation point is not a constant.** The cap `c^2 V_t` depends on the model's own state
+   `V_t`, which is random and correlated with the history of `e_t`;
+   `E[min(e_t^2, c^2 V_t)] != E[V_t] E[min(u^2, c^2)]`.
+2. **`u` is not standard normal.** The true DGP contains stochastic volatility and jumps, so the
+   distribution of `e_t/sqrt(V_t)` is heavy-tailed and time-varying; the fraction truncated by the
+   `min` is therefore not constant.
+3. **The midpoint is fixed.** `e_t = r_t - m` is computed around a **fixed** `m`, not around the
+   conditional mean, so `E[e_t^2]` itself contains a term `(mu - m)^2`.
+4. **The recursion is a nonlinear feedback.** The weights of plain EWMA sum to 1, so the linear
+   fixed-point argument `E[V_inf] = E[e^2]` holds; in the truncated version the update term
+   `min(e_t^2, c^2 Vt_t)` appears on both sides of the equation, and `E[Vt_inf]` cannot be obtained by
+   substituting the mean of the input into the same fixed point. Variance pushed down → cap
+   `c^2 Vt_t` lower → truncation more frequent → variance pushed down further: this is a
+   self-reinforcing feedback, and its steady state is not the result of a linear extrapolation.
 
-因此本项目只记录第一条，并且**不**把截断后的 `Vt_t` 解释为对工作尺度、扩散方差或总方差
-中任何一个的无偏估计。它是一个检测规则的内部状态，其正当性来自校准后的检测表现，
-不来自它是否等于某个真值。
+This project therefore records only the first statement, and does **not** interpret the truncated
+`Vt_t` as an unbiased estimator of any of the working scale, the diffusion variance or the total
+variance. It is an internal state of a detection rule; its justification comes from its calibrated
+detection performance, not from whether it equals some true value.
 
-**同一冲击前状态下的准确表述。** 截断只作用在写入**次日**方差的那一项，因此在冲击前状态
-相同的前提下，它不会改变**当日**已经算好的方差预测，也不会提前替当日的似然消除冲击。
-但两个模型的当日预测通常仍然不同——因为它们过去的更新历史不同，`Vt_t` 与 `V_t` 早已分岔。
-这两件事必须分开陈述。
+**Precise statement for the same pre-shock state.** Truncation acts only on the term written into the
+**next day's** variance, so, given the same pre-shock state, it does not change the **same-day**
+variance forecast that has already been computed, nor does it remove the shock from the same-day
+likelihood in advance. The two models' same-day forecasts nevertheless usually differ — because their
+past update histories differ, `Vt_t` and `V_t` have long since diverged. These two points must be
+stated separately.
 
-### 16.4 交互项：它回答什么，不回答什么
+### 16.4 The interaction term: what it answers and what it does not
 
-2×2 消融的四个格子给出两个主效应和一个交互项：
+The four cells of the 2×2 ablation give two main effects and one interaction:
 
 ```
-    主效应（截断，t 一侧）:  D(截断-t) - D(EWMA t)
-    主效应（截断，G 一侧）:  D(截断-G) - D(EWMA G)
-    交互项 I(alpha):        [D(截断-t) - D(EWMA t)] - [D(截断-G) - D(EWMA G)]
+    main effect (truncation, t side):  D(trunc-t) - D(EWMA t)
+    main effect (truncation, G side):  D(trunc-G) - D(EWMA G)
+    interaction I(alpha):              [D(trunc-t) - D(EWMA t)] - [D(trunc-G) - D(EWMA G)]
 ```
 
-**`I > 0` 只说明一件事：截断在 Student-t 一侧的增益大于在 Gaussian 一侧的增益。**
-它不证明 Gaussian 一侧的增益为零（例如 t 侧 +3pp、G 侧 +1pp 也给出正交互），
-不证明 Student-t 似然是必要条件，也不证明两条机制互补而非替代。
-同理 `I < 0` 不证明替代关系成立。
+**`I > 0` says only one thing: the gain from truncation on the Student-t side is larger than the gain
+on the Gaussian side.** It does not prove that the gain on the Gaussian side is zero (for example,
++3pp on the t side and +1pp on the G side also give a positive interaction), it does not prove that
+the Student-t likelihood is a necessary condition, and it does not prove that the two mechanisms are
+complements rather than substitutes. Likewise, `I < 0` does not prove that they are substitutes.
 
-**区间覆盖 0 不等于可加性成立。** 它只说明本轮的分辨率没有分出差别。
-报告时必须同时给出区间半宽：若半宽与主效应同量级，那么“没有交互”与
-“样本量看不出交互”在这批数据里无法区分。
+**An interval covering 0 does not mean that additivity holds.** It only means that the resolution of
+this round did not separate the two. The interval half-width must be reported alongside: if the
+half-width is of the same order as the main effects, then "no interaction" and "the sample size
+cannot reveal an interaction" are indistinguishable in this batch of data.
 
-“数哪一边显著的情境更多”不是对交互的检验：两边可以都显著且大小相同。
+"Counting on which side more scenarios are significant" is not a test of the interaction: both sides
+can be significant and of the same size.
 
-### 16.5 两个预算之间的比较：显著性之差不是差的显著性
+### 16.5 Comparing two budgets: a difference in significance is not the significance of a difference
 
-若 `I(0.05)` 的区间排除 0 而 `I(0.15)` 的区间覆盖 0，**不能**由此断言两个预算下的
-交互不同。这是 Gelman–Stern 指出的经典错误。正确的估计量是差本身：
+If the interval for `I(0.05)` excludes 0 while the interval for `I(0.15)` covers 0, one **cannot**
+conclude from this that the interaction differs between the two budgets. This is the classic error
+pointed out by Gelman–Stern. The correct estimand is the difference itself:
 
 ```
     I(0.05) - I(0.15)
 ```
 
-它的区间必须由**配对**重抽得到，不能把两个独立生成的区间相减。每一次重抽里：
+Its interval must be obtained by **paired** resampling; it cannot be obtained by subtracting two
+independently generated intervals. In each resample:
 
 ```
-    抽一组校准下标 ic 与一组测试下标 ii            <- 两个预算、四个模型共用
-    对每个预算 alpha:
-        k_alpha = 该预算的缓冲秩（0.05 -> 431, 0.15 -> 1386）
-        对每个模型 m:
-            门槛 = 第 k_alpha 小的  cal_minima[m][ic]     <- 在同一份重抽校准样本上重算
-            D[m, alpha] = mean( test_invalid_minima[m][ii] < 门槛 )
+    draw a set of calibration indices ic and a set of test indices ii     <- shared by both budgets and all four models
+    for each budget alpha:
+        k_alpha = buffered rank for this budget (0.05 -> 431, 0.15 -> 1386)
+        for each model m:
+            threshold = k_alpha-th smallest of cal_minima[m][ic]    <- recomputed on the same resampled calibration sample
+            D[m, alpha] = mean( test_invalid_minima[m][ii] < threshold )
     I[alpha] = (D[tt,a]-D[et,a]) - (D[tg,a]-D[eg,a])
-    记录 I[0.05] - I[0.15]
+    record I[0.05] - I[0.15]
 ```
 
-**多重性的边界。** 校准协议里的 Bonferroni 拆分 `delta/J` 保护的是**门槛的误杀约束**：
-让每个方法在自己预算下的实际误杀率以高概率不超标。它**不**为检出率之差的 bootstrap 区间
-提供同时置信保证——那是另一族统计量，需要对这些差本身做联合校正。
+**Limits of the multiplicity control.** The Bonferroni split `delta/J` in the calibration protocol
+protects the **false-alarm constraint of the thresholds**: it ensures, with high probability, that
+each method's realised false-alarm rate does not exceed its own budget. It does **not** provide a
+simultaneous confidence guarantee for bootstrap intervals of detection-rate differences — those are a
+different family of statistics and would require a joint correction applied to the differences
+themselves.
 
-### 16.6 误杀时点的三分类与理论巧合基准
+### 16.6 Three-way classification of false-alarm timing and the theoretical coincidence baseline
 
-对有效策略路径的**第一次**误杀 `tau`，用潜在跳跃计数 `k_t`（只对评估者可见）分成三类：
+For the **first** false alarm `tau` on a valid-strategy path, the latent jump count `k_t` (visible
+only to the evaluator) is used to split it into three classes:
 
 ```
-    类 1: k_tau >= 1                                          报警当日本身有跳跃标记
-    类 2: k_tau = 0 且 存在 s, max(1, tau-W) <= s <= tau-1, k_s >= 1
-    类 3: 其余
+    class 1: k_tau >= 1                                          the alarm day itself carries a jump marker
+    class 2: k_tau = 0 and there exists s, max(1, tau-W) <= s <= tau-1, k_s >= 1
+    class 3: all others
 ```
 
-`W = 20`。三类按构造互斥且并集等于 `{tau != -1}`，故三者之和恒等于总 FAR。
+`W = 20`. By construction the three classes are mutually exclusive and their union is
+`{tau != -1}`, so the three always sum to the total FAR.
 
-**理论巧合基准。** `K_t ~ Poisson(lambda/D)`，`lambda = 2` 每年，`D = 252`。
-注意 `lambda/D = 0.00793651` 是**计数均值**，不是概率；当日有标记的概率是
+**Theoretical coincidence baseline.** `K_t ~ Poisson(lambda/D)`, with `lambda = 2` per year and
+`D = 252`. Note that `lambda/D = 0.00793651` is the **mean count**, not a probability; the probability
+that a given day carries a marker is
 
 ```
     p_J = 1 - exp(-lambda/D) = 0.00790510
 ```
 
-两者在第四位有效数字起就不同。在 `kappa = 0` 的情境里跳跃幅度为 0，标记既不影响收益
-也不影响停止规则，因此与 `tau` 独立，三类的条件概率（条件于该路径确实误杀）为
+The two differ from the fourth significant digit onwards. In the `kappa = 0` scenario the jump size is
+0, so the marker affects neither the returns nor the stopping rule and is therefore independent of
+`tau`; the conditional probabilities of the three classes (conditional on the path actually having a
+false alarm) are
 
 ```
-    P(类1 | 报警) = p_J
-    P(类2 | 报警) = E_tau[ (1 - p_J) * (1 - (1 - p_J)^min(W, tau-1)) ]
-    P(类3 | 报警) = 1 - P(类1) - P(类2)
+    P(class 1 | alarm) = p_J
+    P(class 2 | alarm) = E_tau[ (1 - p_J) * (1 - (1 - p_J)^min(W, tau-1)) ]
+    P(class 3 | alarm) = 1 - P(class 1) - P(class 2)
 ```
 
-**类 2 必须按报警日聚合。** 第 `tau` 天报警时只有 `min(W, tau-1)` 个可回看的交易日，
-早期报警的窗口不足 `W` 天，所以概率依赖 `tau`，必须对**实测的报警日分布**取期望，
-不能套用 `tau >> W` 的极限常数 `(1-p_J)(1-(1-p_J)^W) = 0.14561318`。
-本项目的数据里两者恰好重合到机器精度，原因是最早的首次误杀发生在第 42 天
-（统计量从 `log-odds = 0` 出发，需要时间漂移到较深的门槛以下），因此没有一条路径落在
-边界区。这是这批数据的性质，不是公式可以省略的理由。
+**Class 2 must be aggregated over alarm days.** An alarm on day `tau` has only `min(W, tau-1)` trading
+days to look back on, and the window of an early alarm is shorter than `W` days, so the probability
+depends on `tau` and must be averaged over the **observed distribution of alarm days**; the
+`tau >> W` limiting constant `(1-p_J)(1-(1-p_J)^W) = 0.14561318` cannot simply be used.
+In this project's data the two happen to coincide to machine precision, because the earliest first
+false alarm occurs on day 42 (the statistic starts from `log-odds = 0` and needs time to drift below a
+fairly deep threshold), so no path falls in the boundary region. This is a property of this batch of
+data, not a reason to omit the formula.
 
-对应的**无条件**概率（以全部有效路径为分母）是上面三个数各乘总 FAR `F`，三者之和等于 `F`。
+The corresponding **unconditional** probabilities (with all valid paths as the denominator) are the
+three numbers above each multiplied by the total FAR `F`, and the three sum to `F`.
 
-**必须同时报告两种分母。** 只看“占误杀的份额”会被其它类别的变化带偏：份额下降也可能是
-别处的误杀上升所致，而不是该类误杀减少。
+**Both denominators must be reported.** Looking only at "share of false alarms" can be distorted by
+changes in the other classes: a falling share may also be caused by rising false alarms elsewhere
+rather than by fewer false alarms in that class.
 
-**这是时点关联，不是因果分解。** 实测份额减去巧合基准所得的数，不能称为跳跃对误杀的
-因果贡献。还需注意本 DGP 的独立结构：跳跃计数 `k_t` 由 `rng.poisson(lambda/D)` 独立抽出，
-与随机波动的潜在状态 `v_t` **相互独立**（实测 `corr(v_t, k_t) = -0.0024`，
-n = 200,000，标准误 0.0022）。与两者都相关的是**观测到的**大幅收益
-（`corr(v_t, |r_t|) = 0.43`，`corr(k_t, |r_t|) = 0.37`），而不是潜在波动状态本身。
+**This is a timing association, not a causal decomposition.** The observed share minus the coincidence
+baseline cannot be called the causal contribution of jumps to false alarms. Note also the independence
+structure of this DGP: the jump counts `k_t` are drawn independently by `rng.poisson(lambda/D)` and are
+**independent** of the latent stochastic-volatility state `v_t` (observed `corr(v_t, k_t) = -0.0024`,
+n = 200,000, standard error 0.0022). What is correlated with both is the **observed** large return
+(`corr(v_t, |r_t|) = 0.43`, `corr(k_t, |r_t|) = 0.37`), not the latent volatility state itself.
 
 ---
 
-## 17. 一个条件明确的高斯理论参照
+## 17. A Gaussian theoretical reference with explicit conditions
 
-这一节存在的唯一目的，是防止把“改动带来的收益变小”读成“已经接近信息上界”。
-它给出的是一个**在其假设成立处精确、在别处不适用**的参照，不是本项目情境的上界。
+The sole purpose of this section is to prevent "the gains from changes are getting smaller" from being
+read as "we are already close to the information upper bound". What it provides is a reference that
+is **exact where its assumptions hold and inapplicable elsewhere**, not an upper bound for the
+scenarios of this project.
 
-### 17.1 设定与推导
+### 17.1 Setup and derivation
 
-设日收益 `r_t` 独立同分布 `N(mu, sigma^2)`，`sigma` 已知，`D = 252`，观察 `h` 年即
-`n = hD` 天。两个简单假设：有效 `mu1 = s sigma / sqrt(D)`（年化 Sharpe 为 `s`），
-无效 `mu0 = 0`。“报警”＝判定为无效。约束是**有效时**在期限内报警的概率不超过 `alpha`，
-所以在 Neyman–Pearson 的语言里，**有效**是原假设，**无效**是备择假设，检出率就是功效。
+Let the daily returns `r_t` be iid `N(mu, sigma^2)` with `sigma` known, `D = 252`, observed for `h`
+years, i.e. `n = hD` days. Two simple hypotheses: valid `mu1 = s sigma / sqrt(D)` (annualised Sharpe
+`s`) and invalid `mu0 = 0`. "Alarm" = judged invalid. The constraint is that the probability of an
+alarm within the horizon **when valid** does not exceed `alpha`, so in Neyman–Pearson terms **valid**
+is the null hypothesis, **invalid** is the alternative, and the detection rate is the power.
 
-充分统计量是样本均值 `bar r`；似然比关于 `bar r` 单调，故最强检验在 `bar r` 足够小时报警。
-在原假设下 `(bar r - mu1) sqrt(n) / sigma_d ~ N(0,1)`（`sigma_d` 为日标准差），
-水平 `alpha` 要求临界点取 `mu1 - z_{1-alpha} sigma_d / sqrt(n)`。
-在备择假设 `mu = 0` 下把它标准化，并代入 `mu1 sqrt(n)/sigma_d = s sqrt(h)`，得到
+The sufficient statistic is the sample mean `bar r`; the likelihood ratio is monotone in `bar r`, so
+the most powerful test raises an alarm when `bar r` is small enough. Under the null,
+`(bar r - mu1) sqrt(n) / sigma_d ~ N(0,1)` (`sigma_d` is the daily standard deviation), and level
+`alpha` requires the critical point `mu1 - z_{1-alpha} sigma_d / sqrt(n)`.
+Standardising it under the alternative `mu = 0` and substituting `mu1 sqrt(n)/sigma_d = s sqrt(h)`
+gives
 
 ```
     D_max(h, alpha) = Phi( s sqrt(h) - Phi^{-1}(1 - alpha) )
 ```
 
-`sigma` 与 `D` 全部约掉，只剩 `s sqrt(h)`。
+`sigma` and `D` cancel completely, leaving only `s sqrt(h)`.
 
-### 17.2 为什么序贯规则也受它约束
+### 17.2 Why sequential rules are also bound by it
 
-设任一序贯规则在时刻 `n` 之前的某一天报警。事件「截至第 `n` 天已经报警」是
-时刻 `n` 的信息集 `F_n` 上的可测事件，即同一批数据的一个（可能随机化的）检验的拒绝域。
-它的水平就是累计误杀率 `<= alpha`。Neyman–Pearson 引理对**所有**这样的检验给出功效上界，
-序贯与否不影响这一点，因为提前停止只会丢弃信息，不会增加信息。
+Suppose any sequential rule raises an alarm on some day before time `n`. The event "an alarm has been
+raised by day `n`" is measurable with respect to the information set `F_n` at time `n`, i.e. it is the
+rejection region of a (possibly randomised) test on the same data. Its level is the cumulative
+false-alarm rate `<= alpha`. The Neyman–Pearson lemma gives an upper bound on the power of **all**
+such tests, sequential or not, because stopping early can only discard information, never add it.
 
-**这个论证会在什么条件下失效：** 若规则可以使用 `F_n` 之外的信息（例如未来数据、
-外生的横截面证据），或者两个假设不是本节所设的这一对简单假设，则上界不适用。
+**When this argument fails:** if the rule can use information outside `F_n` (for example future data
+or exogenous cross-sectional evidence), or if the two hypotheses are not the pair of simple
+hypotheses set out in this section, the upper bound does not apply.
 
-### 17.3 参考表
+### 17.3 Reference table
 
-`s in {1, 0.6}`，`h in {0.25, 0.5, 1, 2}`，`alpha in {0.05, 0.15}`，
-由 `gaussian_bound.reference_table()` 生成，并由第二条独立数值路径
-（在日频尺度上直接构造检验，不做任何解析约简）核对，两者一致到 4.4e-16。
+`s in {1, 0.6}`, `h in {0.25, 0.5, 1, 2}`, `alpha in {0.05, 0.15}`,
+generated by `gaussian_bound.reference_table()` and checked against a second, independent numerical
+route (constructing the test directly on the daily scale, without any analytic reduction); the two
+agree to 4.4e-16.
 
-### 17.4 适用范围
+### 17.4 Scope
 
-- **不适用于 SV+跳跃情境。** 那里波动本身可预测，证据权重可以随时间调整，
-  检出率高于这个数并不构成矛盾；Stage 2B 之后 EWMA 类方法的表现正是这一点的体现。
-- **不给出任何下界。**
-- **不能用来说“现有方法已接近由 Sharpe 决定的信息上界”。** 同一个年化 Sharpe
-  并不唯一决定一条收益序列的可辨识程度：可预测的波动、分布中心的形状与跳跃结构
-  都会改变可以提取多少证据。
-- **更密的采样不自动带来更多漂移信息。** 在漂移恒定、噪声独立同分布的模型里，
-  同一日历窗口内关于漂移的信息由 `s sqrt(h)` 决定，与采样频率无关；
-  提高频率有助于识别波动与跳跃结构，那是另一回事。
+- **Not applicable to the SV+jump scenarios.** There, volatility itself is predictable and the weight
+  given to evidence can be adjusted over time, so detection rates above this number are not a
+  contradiction; the performance of the EWMA-type methods from Stage 2B onwards is exactly a
+  manifestation of this.
+- **It gives no lower bound.**
+- **It cannot be used to say "existing methods are already close to the information upper bound
+  determined by the Sharpe".** The same annualised Sharpe does not uniquely determine how identifiable
+  a return series is: predictable volatility, the shape of the centre of the distribution and the jump
+  structure all change how much evidence can be extracted.
+- **Denser sampling does not automatically bring more information about the drift.** In a model with
+  constant drift and iid noise, the information about the drift within a given calendar window is
+  determined by `s sqrt(h)` and is independent of the sampling frequency; higher frequency helps to
+  identify the volatility and jump structure, which is a different matter.
 
-**可以合法套用的地方**只有高斯对照情境（`A = 0, kappa = 0`），那里收益确实是独立同分布
-高斯。代入每个方法的**实际**误杀率（而非预算），本项目的全部八个方法都落在上界以下，
-最接近的是精确似然比统计量 `binary_gaussian`，达到上界的 87.7%（`alpha = 0.15`）。
-其余差距是序贯监控的代价：误杀预算被摊在两年的每一天上，而上界对应的是把全部预算
-一次性用在期限末。
+**The only place where it can legitimately be applied** is the Gaussian control scenario
+(`A = 0, kappa = 0`), where returns really are iid Gaussian. Plugging in each method's **realised**
+false-alarm rate (rather than the budget), all eight methods of this project fall below the upper
+bound; the closest is the exact likelihood-ratio statistic `binary_gaussian`, which reaches 87.7% of
+the bound (`alpha = 0.15`). The remaining gap is the cost of sequential monitoring: the false-alarm
+budget is spread over every day of the two years, whereas the upper bound corresponds to spending the
+entire budget at once at the end of the horizon.
 
 ---
 
 ---
 
-## 18. Stage 3A：更弱的信号
+## 18. Stage 3A: A weaker signal
 
-### 18.1 只改一件事
+### 18.1 Change only one thing
 
 ```
     r_t = mu_S + sigma_0 eps_t
-    有效:  mu_1(s) = s sigma_ann / D,   s in {1, 0.6}
-    无效:  mu_0 = 0
+    valid:    mu_1(s) = s sigma_ann / D,   s in {1, 0.6}
+    invalid:  mu_0 = 0
 ```
 
-D = 252、H = 504、sigma_ann = 0.10、先验 0.5、五个噪声情境、八个检测方法、
-EWMA lambda = 0.94、Student-t nu = 5、截断 c = 4，全部沿用。
+D = 252, H = 504, sigma_ann = 0.10, prior 0.5, five noise scenarios, eight detection methods,
+EWMA lambda = 0.94, Student-t nu = 5 and truncation c = 4 are all carried over unchanged.
 
-**候选均值必须与生成器同步。** 在 s = 0.6 这一组，检测器知道候选状态是 0.6 或 0，
-所以似然比里的 `mu_1`、以及 EWMA 中点 `m = (mu_0 + mu_1)/2` 都用 0.6。
-只降低生成器而让检测器继续假设 s = 1，是模型设定错误实验，是另一个问题。
+**The candidate means must be kept in sync with the generator.** In the s = 0.6 group the detector
+knows that the candidate states are 0.6 or 0, so both `mu_1` in the likelihood ratio and the EWMA
+midpoint `m = (mu_0 + mu_1)/2` use 0.6.
+Lowering only the generator while the detector continues to assume s = 1 is a model-misspecification
+experiment, which is a different question.
 
-两个例外由定义决定：252 日 trailing Sharpe 与固定尺度 rolling 对照的统计量是
-`sqrt(D) * mean / scale` 一类的滚动样本量，本身不含候选均值；对它们，`s` 只通过
-校准门槛与数据进入。
+Two exceptions follow from the definitions: the statistics of the 252-day trailing Sharpe and of the
+fixed-scale rolling control are rolling sample quantities of the `sqrt(D) * mean / scale` type and
+contain no candidate mean; for them, `s` enters only through the calibrated threshold and the data.
 
-### 18.2 共同随机数
+### 18.2 Common random numbers
 
-两个 `s` 设定**共用**每个 (情境, 角色) 的噪声块：同一批 `eps`，只换漂移。
-这使 s = 1 与 s = 0.6 的每一个比较都是配对比较，也意味着
-
-```
-    基础噪声路径 = 5 情境 x 3 角色 x 10,000 = 150,000
-    收益路径评估 = 150,000 x 2 个 s      = 300,000
-```
-
-后者**不是** 300,000 条彼此独立的噪声路径。校准块与测试块从不共享。
-
-### 18.3 校准范围
-
-本轮把两个 `s` 一并纳入同时校准：
+The two `s` settings **share** the noise block of each (scenario, role): the same `eps`, with only the
+drift changed. This makes every comparison between s = 1 and s = 0.6 a paired comparison, and also
+means that
 
 ```
-    J = 8 方法 x 5 情境 x 2 预算 x 2 信号强度 = 160
+    base noise paths        = 5 scenarios x 3 roles x 10,000 = 150,000
+    return-path evaluations = 150,000 x 2 values of s        = 300,000
+```
+
+The latter are **not** 300,000 mutually independent noise paths. Calibration blocks and test blocks
+are never shared.
+
+### 18.3 Calibration scope
+
+This round includes both values of `s` in the simultaneous calibration:
+
+```
+    J = 8 methods x 5 scenarios x 2 budgets x 2 signal strengths = 160
     delta = 0.05,  delta/J = 3.125e-4
-    n_cal = 10,000  ->  秩 427 (alpha = 0.05),  1379 (alpha = 0.15)
+    n_cal = 10,000  ->  rank 427 (alpha = 0.05),  1379 (alpha = 0.15)
 ```
 
-三条独立路径（二项式尾、Beta 上尾、暴力搜索）给出同一对秩。
-J 从 80 加宽到 160 使秩下降（1386 -> 1379，431 -> 427），即门槛更深、更保守；
-加宽同时比较数不应换来更松的门槛。
+Three independent routes (binomial tail, Beta upper tail, brute-force search) give the same pair of
+ranks. Widening J from 80 to 160 lowers the ranks (1386 -> 1379, 431 -> 427), i.e. the thresholds
+become deeper and more conservative; widening the set of simultaneous comparisons should not buy
+looser thresholds.
 
-覆盖范围：这五个固定情境，**不**构成未知环境下的统一门槛保证。
+Coverage: these five fixed scenarios; this does **not** constitute a unified-threshold guarantee in an
+unknown environment.
 
-### 18.4 一个期限，一个门槛
+### 18.4 One horizon, one threshold
 
-每个方法在每个 (情境, s, alpha) 只有**一个**两年门槛。报告里第 63、126、252 天的
-累计检出率与误杀率读的是同一个门槛，不是在每个期限各花一次完整的 alpha。
-图中的高斯参照曲线按**名义预算**逐期限计算，因此它高于我们的规则所能达到的水平，
-这是设计上的差别而不是缺陷。
+Each method has only **one** two-year threshold per (scenario, s, alpha). The cumulative detection and
+false-alarm rates on days 63, 126 and 252 in the report are read from the same threshold, not obtained
+by spending a full alpha at each horizon. The Gaussian reference curve in the figures is computed
+horizon by horizon with the **nominal budget**, so it lies above what our rule can achieve; this is a
+difference in design, not a defect.
 
-### 18.5 证据积累的时间尺度
+### 18.5 Time scale of evidence accumulation
 
-在纯高斯二值模型、无效状态、初始赔率为 1 时，`U_n = -L_n` 满足
+In the pure Gaussian binary model, in the invalid state and with initial odds of 1, `U_n = -L_n`
+satisfies
 
 ```
     E[U_n] = s^2 n / (2D),    Var(U_n) = s^2 n / D
 ```
 
-因为 `L` 的每日增量是 `z_t s/sqrt(D) - s^2/(2D)`，在 `mu = 0` 下均值 `-s^2/(2D)`、
-方差 `s^2/D`。平均对数证据的积累速度随 `s^2` 缩放，故 `1/0.6^2 = 2.78`。
+because the daily increment of `L` is `z_t s/sqrt(D) - s^2/(2D)`, which under `mu = 0` has mean
+`-s^2/(2D)` and variance `s^2/D`. The rate at which mean log evidence accumulates scales with `s^2`,
+hence `1/0.6^2 = 2.78`.
 
-**这只是该模型下的证据时间尺度参照。** 它不宣称所有噪声情境、门槛与实际停止时间
-都按 2.78 倍缩放——本阶段的实测数字就不按它缩放，因为门槛是按分位数校准的、
-噪声不是 iid 高斯、而停止时间是首次穿越时间而非固定期限的统计量。
+**This is only an evidence time-scale reference under that model.** It does not claim that all noise
+scenarios, thresholds and actual stopping times scale by a factor of 2.78 — the measured numbers in
+this stage do not scale that way, because the thresholds are calibrated by quantile, the noise is not
+iid Gaussian, and the stopping time is a first-passage time rather than a fixed-horizon statistic.
 
-### 18.6 q >= 0.9 这个解释性指标
+### 18.6 The interpretive metric q >= 0.9
 
-“首次达到失效概率 0.9 的累计比例”是一个便于沟通的刻度，
-但它**不是** alpha = 10% 的误杀控制：`q >= 0.9` 是一条与后验概率有关的界线，
-与“有效策略越过它的概率”没有恒等关系。因此必须同时报告有效策略错误达到该水平的比例，
-且不用它替代正式排名。
+"The cumulative fraction that first reaches a failure probability of 0.9" is a convenient scale for
+communication, but it is **not** a 10% false-alarm control: `q >= 0.9` is a boundary on the posterior
+probability and has no identity relationship with "the probability that a valid strategy crosses it".
+The fraction of valid strategies that wrongly reach this level must therefore be reported alongside
+it, and it is not used in place of the formal ranking.
 
 ---
 
 ---
 
-## 19. Stage 3A.1：监测期限诊断
+## 19. Stage 3A.1: Monitoring-horizon diagnostic
 
-### 19.1 两种安排回答不同的问题
+### 19.1 The two arrangements answer different questions
 
 ```
-    A   按 H = 504 校准一个门槛，读它在 63/126/252/504 天的累计表现
-    B   分别按 H in {63,126,252,504} 校准门槛，在各自截止日评价
+    A   calibrate one threshold for H = 504 and read its cumulative performance at days 63/126/252/504
+    B   calibrate a separate threshold for each H in {63,126,252,504} and evaluate each at its own cutoff
 ```
 
-**B 的四个期限是四个独立设计的监测方案。** 每一个都在自己的窗口里花掉自己的 `alpha`。
-把它们依次拼起来并声称仍共享一个两年预算，是把四次独立的误杀预算算成了一次。
+**The four horizons in B are four independently designed monitoring schemes.** Each spends its own
+`alpha` within its own window. Chaining them together and claiming that they still share one two-year
+budget counts four independent false-alarm budgets as one.
 
-因此 B 相对 A 的早期检出提升，**必须与同期误杀率一起读**：两种安排的输入逐日完全相同
-（同一批收益、同一条统计量路径），B 只是把误杀预算提前花掉。
-提前使用更多误杀预算不是模型信息利用能力的提高。
+The early-detection gain of B over A therefore **must be read together with the false-alarm rate over
+the same period**: the day-by-day inputs of the two arrangements are identical (the same returns, the
+same statistic path); B merely spends its false-alarm budget earlier. Spending more false-alarm budget
+earlier is not an improvement in the model's ability to use information.
 
-**对齐已花预算再比较**是更有说服力的读法：若 B 在半年窗口花掉 `f` 的误杀换来 `d_B`，
-而 A 在两年窗口花掉同样的 `f` 换来 `d_A`，则 `d_A / d_B` 直接回答
-“同样的误杀代价下，拉长窗口和提前花钱哪个更有效”。
+**Comparing at a matched spent budget** is the more convincing reading: if B spends `f` of false
+alarms in a half-year window to obtain `d_B`, and A spends the same `f` in a two-year window to obtain
+`d_A`, then `d_A / d_B` directly answers "at the same false-alarm cost, which is more effective:
+lengthening the window or spending earlier".
 
-### 19.2 期限必须是前缀
+### 19.2 Horizons must be prefixes
 
-统计量在完整的 504 天上算**一次**，各期限取 `[起始日, H]` 的最小值：
+The statistic is computed **once** over the full 504 days, and each horizon takes the minimum over
+`[start day, H]`:
 
 ```
     prefix_minima(stat, elig, H) = min over days [elig, H] of stat
 ```
 
-改变 `H` 不重新计算统计量，因此不可能改变此前任何一天的 EWMA 状态、收益或似然增量。
-测试同时从另一侧核验：把**数据**截断到 `H` 再算统计量，与把**统计量**切到 `H`，
-两者逐点相等（`atol = 1e-12`）。
+Changing `H` does not recompute the statistic, so it cannot change the EWMA state, returns or
+likelihood increments on any earlier day. The tests also verify this from the other side: truncating
+the **data** at `H` and then computing the statistic, and slicing the **statistic** at `H`, give
+pointwise equal results (`atol = 1e-12`).
 
-由此得到两条结构性性质：期限嵌套使前缀最小值只能随 `H` 增大而下降；
-在同一预算下，更长的期限有更多机会越界，故其校准门槛必然不高于更短期限的门槛。
+Two structural properties follow: because the horizons are nested, the prefix minimum can only
+decrease as `H` increases; and under the same budget a longer horizon has more opportunities to
+cross, so its calibrated threshold is necessarily no higher than that of a shorter horizon.
 
-### 19.3 一致性检验
+### 19.3 Consistency check
 
-`B` 在 `H = 504` 处按定义就是 `A`：同一个门槛、同一个截止日。
-两者的检出率、误杀率与 `E[min(tau,H)]` 必须逐位相同，`B - A` 必须恒为 0。
-这是整个安排对照的内部一致性检验。
+`B` at `H = 504` is by definition `A`: the same threshold and the same cutoff.
+Their detection rates, false-alarm rates and `E[min(tau,H)]` must be bit-identical, and `B - A` must be
+identically 0. This is the internal consistency check of the whole comparison of arrangements.
 
-### 19.4 截断时间不可跨期限比较
+### 19.4 Truncated times are not comparable across horizons
 
-`E[min(tau, H)]` 的上限就是 `H`：`H = 63` 的截断均值最大只能是 63 天。
-因此“短期限方案的截断平均时间更小”**不能**读成“它更快”。
-本阶段的所有时间比较都在**同一截止日**上做配对。
+The upper limit of `E[min(tau, H)]` is `H` itself: the truncated mean for `H = 63` can be at most
+63 days. "The short-horizon scheme has a smaller truncated mean time" therefore **cannot** be read as
+"it is faster". All time comparisons in this stage are paired at **the same cutoff**.
 
-### 19.5 期限外诊断
+### 19.5 Beyond-horizon diagnostic
 
-把按 `H = 63/126/252` 校准的门槛继续用到第 504 天，记录实际累计误杀率。
-短期门槛得到的预算是针对自己那个窗口的，**不自动继承两年保证**；
-这条诊断量化了越界的幅度。
+The thresholds calibrated for `H = 63/126/252` are applied all the way to day 504, and the realised
+cumulative false-alarm rate is recorded. The budget obtained by a short-horizon threshold applies to
+its own window and **does not automatically inherit the two-year guarantee**; this diagnostic
+quantifies the size of the overshoot.
 
-### 19.6 校准范围
+### 19.6 Calibration scope
 
-本轮规则数为 `4 x 2 x 2 x 2 x 4 = 128`，但仍沿用 Stage 3A 的每格缓冲
-`delta/160`（而非更松的 `delta/128`），因此校准不弱于上一轮。
-`n_cal = 10,000` 时秩仍为 427（`alpha = 0.05`）与 1379（`alpha = 0.15`）。
-这一保证覆盖的是本轮列出的两个情境、四个方法、两个 `s`、两个预算与四个期限，
-**不是**跨全部历史阶段的统一保证。
+The number of rules in this round is `4 x 2 x 2 x 2 x 4 = 128`, but the per-cell buffer `delta/160` of
+Stage 3A is kept (rather than the looser `delta/128`), so the calibration is no weaker than in the
+previous round. With `n_cal = 10,000` the ranks are still 427 (`alpha = 0.05`) and 1379
+(`alpha = 0.15`). This guarantee covers the two scenarios, four methods, two values of `s`, two
+budgets and four horizons listed for this round; it is **not** a unified guarantee across all
+historical stages.
 
 ---
 
 ---
 
-## 20. Stage 3B：随机失效时间的有限诊断
+## 20. Stage 3B: A limited diagnostic of random failure times
 
-### 20.1 设定
-
-```
-    theta_t = s   当 t <= T          T 是最后一个有效交易日
-    theta_t = 0   当 t >  T
-```
-
-`T` 固定为 0、126、252，或均匀抽自整数交易日 `0..252`，外加 `T = 无穷` 的始终有效对照。
-`T` 独立于噪声、潜在波动率与跳跃，只对生成器与评分可见；模型在 `T` 处不重置先验、
-累计证据、方差状态或任何窗口。
-
-**覆盖范围是“一年内失效”。** `T <= 252` 使每个设定都有完整的 252 天失效后窗口落在
-504 天期限内。这不是 0–5 年或 0–10 年的寿命研究。
-
-门槛读取 Stage 3A 冻结的 504 日校准值，**不按真实 T 单独校准**——真实失效时间
-在实践中不可得，按它校准会得到一个无法部署的规则。
-
-### 20.2 三个必须一起读的量
+### 20.1 Setup
 
 ```
-    失效前误杀   P(tau <= T)
-    条件检出     P(T < tau <= T+h | tau > T)
-    联合检出     P(T < tau <= T+h) = P(tau > T) * P(T < tau <= T+h | tau > T)
+    theta_t = s   when t <= T          T is the last valid trading day
+    theta_t = 0   when t >  T
 ```
 
-联合检出的差既可以来自条件检出的差，也可以来自失效前误杀的差；只报其一会把两种
-完全不同的行为混为一谈。恒等式在每一行上核验。
+`T` is fixed at 0, 126 or 252, or drawn uniformly from the integer trading days `0..252`, plus an
+always-valid control with `T = infinity`. `T` is independent of the noise, the latent volatility and
+the jumps, and is visible only to the generator and the scoring; the model does not reset its prior,
+accumulated evidence, variance state or any window at `T`.
 
-**`tau = 无穷` 的编码。** 从不报警在实现里记作 `-1`。它是失效前窗口的**存活者**、
-失效后的**未检出**路径，绝不是提前误杀。把 `-1` 当作一个小数值会同时高估失效前误杀
-并压低存活率，方向上完全反掉。
+**The coverage is "failure within one year".** `T <= 252` ensures that every setting has a complete
+252-day post-failure window inside the 504-day horizon. This is not a lifetime study over 0–5 or
+0–10 years.
 
-**失效后延迟** `E[min(tau - T, h_max)]`（条件于 `tau > T`）的分母是全部存活者：
-未检出的存活者按窗口上限计入而非删去，被提前误杀的路径不计为零延迟——它根本不在
-存活集合里。失效后中位数同样以全部存活者为分母。
+The thresholds are the frozen 504-day calibrated values from Stage 3A and are **not calibrated
+separately for the true T** — the true failure time is not available in practice, and calibrating on
+it would produce a rule that cannot be deployed.
 
-**共同窗口。** 不同 `T` 必须使用相同的 `h`，否则较早的失效会隐含更长的观察机会，
-比较的就不是方法而是机会。
+### 20.2 Three quantities that must be read together
 
-### 20.3 失效时刻的证据
+```
+    pre-failure false alarm   P(tau <= T)
+    conditional detection     P(T < tau <= T+h | tau > T)
+    joint detection           P(T < tau <= T+h) = P(tau > T) * P(T < tau <= T+h | tau > T)
+```
 
-`U_T = -L_T` 与 `q_T = expit(U_T)` 描述模型在失效瞬间带着多少有利历史。
-**`T = 0` 取先验值**，不是数组最后一天——后者会把整个期限末的状态误报成初始状态。
+A difference in joint detection can come either from a difference in conditional detection or from a
+difference in pre-failure false alarms; reporting only one of them conflates two completely different
+behaviours. The identity is verified on every row.
 
-这个诊断只对**对数赔率型**统计量成立。252 日 trailing Sharpe 的统计量是年化 Sharpe
-比率，不在对数赔率尺度上，对它取 `expit` 得到的数没有可解释含义，因此不列入。
+**Encoding of `tau = infinity`.** Never alarming is recorded as `-1` in the implementation. Such a path
+is a **survivor** of the pre-failure window and an **undetected** path after failure, never an early
+false alarm. Treating `-1` as a small number would simultaneously overstate pre-failure false alarms
+and understate the survival rate, getting the direction completely backwards.
 
-在 iid 高斯、固定 `T`、**全部路径**上可以核验
+**The post-failure delay** `E[min(tau - T, h_max)]` (conditional on `tau > T`) has all survivors as its
+denominator: undetected survivors are counted at the window cap rather than dropped, and paths with an
+early false alarm are not counted as zero delay — they are not in the survivor set at all. The
+post-failure median likewise uses all survivors as its denominator.
+
+**Common window.** Different `T` must use the same `h`; otherwise earlier failures would implicitly get
+longer observation opportunities, and the comparison would be of opportunity rather than of method.
+
+### 20.3 Evidence at the failure time
+
+`U_T = -L_T` and `q_T = expit(U_T)` describe how much favourable history the model carries at the
+instant of failure. **For `T = 0` the prior value is used**, not the last day of the array — the latter
+would misreport the state at the end of the whole horizon as the initial state.
+
+This diagnostic is valid only for **log-odds-type** statistics. The statistic of the 252-day trailing
+Sharpe is an annualised Sharpe ratio, not on the log-odds scale; applying `expit` to it yields a number
+with no interpretable meaning, so it is not listed.
+
+Under iid Gaussian noise, a fixed `T` and over **all paths**, one can verify
 
 ```
     E[U_T] = -s^2 T / (2D),      E[U_{T+h} - U_T] = s^2 h / (2D)
 ```
 
-**这两条不自动适用于经过提前误杀筛选的样本**（条件统计正是这样的样本），
-也不自动适用于 SV+跳跃。
+**These two do not automatically apply to samples filtered by early false alarms** (conditional
+statistics are exactly such samples), nor do they automatically apply to SV+jumps.
 
-### 20.4 读结果时的两个混淆源
+### 20.4 Two sources of confounding when reading the results
 
-252 日 trailing Sharpe 在 `T = 252` 处同时误杀更少、条件检出与联合检出更高，
-这是实测事实。**本阶段没有分解这个优势的来源**，至少有四条机制可能同时起作用：
+At `T = 252` the 252-day trailing Sharpe simultaneously has fewer false alarms and higher conditional
+and joint detection; this is an observed fact. **This stage does not decompose the source of that
+advantage**; at least four mechanisms may be acting at the same time:
 
-1. **启动期**：它最早在第 252 天才能说话，因此 `T = 0` 时失效后窗口只有一半可用，
-   `T = 252` 时启动期恰在失效时刻走完；同一件事也限制了它在失效前的报警机会。
-2. **滚动窗口逐步移除失效前的数据**：失效后有利的历史会随窗口滑出，
-   累计型模型不会自动丢弃它。
-3. **方差状态**：EWMA 类方法在失效时刻带着由过去数据形成的方差估计。
-4. **存活者筛选**：条件统计只在未被提前误杀的路径上计算，各方法的存活集合不同。
+1. **Warm-up period**: it can speak at the earliest on day 252, so for `T = 0` only half of the
+   post-failure window is usable, while for `T = 252` the warm-up ends exactly at the moment of
+   failure; the same fact also limits its opportunities to alarm before failure.
+2. **The rolling window progressively removes pre-failure data**: after failure, the favourable history
+   slides out of the window, whereas cumulative models do not automatically discard it.
+3. **Variance state**: EWMA-type methods carry into the moment of failure a variance estimate formed
+   from past data.
+4. **Survivor selection**: conditional statistics are computed only on paths that were not stopped by
+   an early false alarm, and the survivor sets differ across methods.
 
-因此不能把这个优势归给其中任何单独一条，也不能断言“只是窗口对齐”或“判别能力更强”。
-本阶段只测了四个失效设定，没有扫描 `T`，所以也不能称 `T = 252` 是全局最有利的失效时刻。
+This advantage therefore cannot be attributed to any single one of these mechanisms, nor can it be
+asserted that it is "just window alignment" or "stronger discriminating power". This stage tested only
+four failure settings and did not scan `T`, so it also cannot claim that `T = 252` is the globally most
+favourable failure time.
 
-### 20.5 中位检测时间的统一口径
+### 20.5 A single definition of median detection time
 
-全项目使用同一个定义：**全部路径的累计报警比例首次达到 1/2 的那一天**，
-恰好达到 1/2 也算达到；未达到则如实标记，不外推。
+The whole project uses one definition: **the first day on which the cumulative alarm fraction over all
+paths reaches 1/2**, where reaching exactly 1/2 counts as reached; if it is not reached, this is marked
+as such, without extrapolation.
 
-一条从不报警的路径不是缺失数据，而是一个大于期限的检测时间，因此必须留在分母里。
-取“已报警子集的中位数”会回答另一个问题，并且在检出率不足一半时无定义——
-而弱信号设定里这恰恰是常态。
+A path that never alarms is not missing data but a detection time greater than the horizon, so it must
+stay in the denominator. Taking "the median of the alarmed subset" answers a different question and is
+undefined when the detection rate is below one half — which is precisely the norm in weak-signal
+settings.
 
 ---
 
-## 21. 参考资料
+## 21. References
 
 - Lo, A. W. (2002). *The Statistics of Sharpe Ratios.* Financial Analysts Journal 58(4), 36–52.
   <https://alo.mit.edu/wp-content/uploads/2017/06/The-Statistics-of-Sharpe-Ratios.pdf>
-  ——样本 Sharpe 的统计误差与时间尺度换算。
-- SciPy, `scipy.stats.t`：<https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html>
-  ——`logpdf`、`loc`/`scale` 的含义（scale 不是标准差）。
-- Stan Functions Reference / User's Guide，Student-t 的尺度混合表示：
+  — statistical error of the sample Sharpe and time-scale conversion.
+- SciPy, `scipy.stats.t`: <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.t.html>
+  — meaning of `logpdf` and of `loc`/`scale` (scale is not the standard deviation).
+- Stan Functions Reference / User's Guide, scale-mixture representation of the Student-t:
   <https://mc-stan.org/docs/stan-users-guide/robust-noise-models.html>
-  ——重尾似然等价于对每个观测赋予随机方差，是理解“降权”的另一视角。
-- NumPy random `SeedSequence` / `Generator`：
+  — a heavy-tailed likelihood is equivalent to giving each observation a random variance, which is
+  another way of understanding "down-weighting".
+- NumPy random `SeedSequence` / `Generator`:
   <https://numpy.org/doc/stable/reference/random/parallel.html>
-  ——校准、测试与诊断数据的可复现、互相独立的随机流。
+  — reproducible, mutually independent random streams for the calibration, test and diagnostic data.
 
-**范围声明。** 上述文献支撑的是公式与 API 用法。本阶段实现的两个二值基线不是对任何
-尚未确认题名的 “EKV” 或 “Stefan” 论文的复现，也不应被这样引用。
+**Scope statement.** The references above support the formulas and the API usage. The two binary
+baselines implemented in this stage are not reproductions of any "EKV" or "Stefan" paper whose title
+has not been confirmed, and they should not be cited as such.

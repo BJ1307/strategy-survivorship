@@ -1,75 +1,87 @@
-# strategy-survivorship — 项目约定
+# strategy-survivorship — project conventions
 
-## 研究目标
+## Research goal
 
-新策略上线后的有效性验证：在可接受的**累计误杀预算**下，尽快识别真实无效的策略。
-主 benchmark 设定固定为 Sharpe 1 对 0、D=252、H=504 日、名义累计误杀预算 5% 与 15%、
-校准集与测试集独立。改动这些默认值前先确认是否真的必要。
+Validate a newly deployed strategy: identify strategies that are truly invalid as
+quickly as possible while staying within an acceptable **cumulative false-alarm budget**.
+The main benchmark defaults are fixed: annualised Sharpe 1 (valid) vs 0 (invalid),
+D = 252 trading days per year, monitoring horizon H = 504 days, nominal cumulative
+false-alarm budgets of 5% and 15%, and independent calibration and test sets.
+Confirm that a change is genuinely necessary before altering any of these defaults.
 
-## 进度汇报规则（长任务必须遵守）
+## Progress-report rules (mandatory for long tasks)
 
-工作期间**约每 120 秒**向用户汇报一次状态，每次**不超过 6 行**，包含：
+While working, report status **about every 120 seconds**, in **at most 6 lines**, covering:
 
-1. 已用时间与当前工作项。
-2. 自上次汇报以来实际完成了什么。
-3. 正在做什么，接下来做什么。
-4. 可核查的进度量（完成工作项数、已处理路径数、已完成实验数）。
-5. 当前最大的不确定性或挑战，以及正在如何处理。
-6. 最近一次成功的结果、检查点或验证结论。
+1. Elapsed time and the current work item.
+2. What was actually completed since the last report.
+3. What is in progress now and what comes next.
+4. A verifiable progress count (work items done, paths processed, experiments finished).
+5. The largest current uncertainty or challenge, and how it is being handled.
+6. The most recent successful result, checkpoint or verification conclusion.
 
-约束：
+Constraints:
 
-- 没有可度量的总量就**不要编造完成百分比**；不知道剩余时间就**不要编造 ETA**。
-- 没有进展也要如实说明「无进展」及原因。
-- 长任务用**可轮询的后台运行或分批处理**，及时刷新日志，以便持续查看并汇报。
-- 可用一个简洁状态文件（如 `outputs/status.json`：最近更新时间、阶段、计数）。
-  **不要**建独立服务、守护进程或进度 UI。
-- 若工具调用阻塞导致无法准时汇报，返回后**立即补报真实状态**，
-  **不得**伪称期间已发送心跳。
+- **Do not invent a completion percentage** without a measurable total; **do not invent
+  an ETA** when the remaining time is unknown.
+- If there is no progress, say "no progress" and why.
+- Run long tasks as **pollable background jobs or in batches**, flushing logs promptly so
+  progress can be checked and reported continuously.
+- A single concise status file is allowed (e.g. `outputs/status.json`: last update time,
+  stage, counts). **Do not** build a separate service, daemon or progress UI.
+- If a blocking operation prevents an on-time report, **report the true status immediately**
+  once control returns; **never** claim that heartbeats were sent in the meantime.
 
-### 分阶段的固定工作项清单
+### Fixed per-stage work-item list
 
-从 Stage 2B 起，每一轮开始时先建立一份**固定编号的工作项清单**，并在
-开始时、每完成一个主要工作项时、以及持续工作约 120 秒时，**完整重列全部工作项及状态**
-（未开始／进行中／完成／阻塞），不得只报当前这一项。清单编号与名称在一轮内保持稳定。
+From Stage 2B onward, start each round by drawing up a **fixed, numbered list of work
+items**. At the start, after each major work item is completed, and after about 120 seconds
+of continuous work, **re-list every work item with its status** (not started / in progress /
+done / blocked), not just the current one. Item numbers and names stay stable within a round.
 
-每次列表之后补一段简短说明：完成几项共几项、自上次更新以来实际完成了什么、
-正在做什么与接下来做什么、最大的不确定性或阻碍、**实际运行计数**
-（已完成情境数、路径批次、bootstrap 次数等）。
+After each list, add a short note: items done out of the total; what was actually completed
+since the last update; what is in progress and what comes next; the largest uncertainty or
+blocker; and **actual run counts** (scenarios completed, path batches, bootstrap replicates, etc.).
 
-**不得把工作项数量伪装成精确工时进度。** 长任务采用能返回控制权或分批报告的方式；
-若平台限制导致无法实时发送，如实说明，**不补造历史心跳**。
+**Never present a count of work items as a precise measure of time progress.** Run long tasks
+in a way that returns control or reports in batches; if platform limits prevent real-time
+reporting, say so plainly and **do not back-fill fabricated past heartbeats**.
 
-## 统计表述纪律
+## Statistical wording discipline
 
-- `E[min(τ,H)]` 只能叫**截断平均检测时间**，不是「所有无效策略的平均发现时间」。
-- 累计检出不足 50% 时，中位检测时间标为**观察期内未达到**，不得只在已检出路径上重算。
-- 任何模型的领先都必须限定在**当前 DGP 与当前已实现规则**下，不得宣称普遍最优。
-- 未经隔离实验验证的**因果归因**不写进报告（例如把滚动模型的落后归因于启动延迟）。
-- 相同**名义**误杀预算 ≠ 相同**实测**误杀率；不得用测试集回调门槛。
-- 区分「冻结门槛下测试误杀率的区间」与「重新校准整个流程的波动」，两者回答不同问题。
-- 小样本重复实验中经验标准差低于参照值**不等于**理论错误；
-  **不得**以「所有比较都显著」作为增加模拟次数的停止规则。
-- 固定状态分类器在切换数据上的输出，只能称为**该模型假设下的输出**，
-  不得未经校准宣称是真实当前失效状态的后验。
+- `E[min(τ,H)]` may only be called the **truncated mean detection time**; it is not "the mean
+  time to detect all invalid strategies".
+- When cumulative detection is below 50%, report the median detection time as **not reached
+  within the observation window**; do not recompute it on detected paths only.
+- Any model's lead must be qualified as holding **under the current DGP and the currently
+  implemented rules**; never claim universal optimality.
+- **Causal attributions** that have not been verified by an isolating experiment stay out of
+  reports (e.g. attributing a rolling model's lag to its start-up delay).
+- The same **nominal** false-alarm budget ≠ the same **realised** false-alarm rate; never tune
+  thresholds on the test set.
+- Distinguish "the interval for the test false-alarm rate under a frozen threshold" from "the
+  variability from recalibrating the whole pipeline"; they answer different questions.
+- In small-sample repeated experiments, an empirical standard deviation below the reference
+  value **does not imply** the theory is wrong; **never** use "all comparisons are significant"
+  as the stopping rule for adding more simulations.
+- The output of a fixed-state classifier applied to switching data may only be called **the
+  output under that model's assumptions**; without calibration it must not be presented as
+  the posterior of the true current failure state.
 
-## 代码与图表
+## Code and figures
 
-- 主代码保持简洁直接，不为少量模型建复杂框架、注册表或深继承。
-- 注释只保留：单位、因果时序、数值稳定性、非显然的数学理由。推导写进 `theory.md`。
-- 测试针对**实际风险**（解析矩、首次越界、截断、随机 T 边界、因果性），
-  **不以**代码行数或测试数量作为完成标准。
-- 图内文字以**简洁英文**为主，中文解释放报告；统一模型配色；
-  明确区分**路径分位带**与**估计置信区间**。
-- 交付前清理本轮产生的废弃实现、重复脚本与重复输出。
+- Keep the main code simple and direct; do not build elaborate frameworks, registries or deep
+  inheritance for a small number of models.
+- Comments are limited to: units, causal timing, numerical stability, and non-obvious
+  mathematical reasoning. Derivations go in `theory.md`.
+- Tests target **actual risks** (analytic moments, first passage, truncation, random-T
+  boundaries, causality); line counts or number of tests are **not** completion criteria.
+- In-figure text is **concise English**; longer explanations belong in the reports. Use a
+  consistent colour per model, and clearly distinguish **path quantile bands** from
+  **estimated confidence intervals**.
+- Before delivery, remove abandoned implementations, duplicate scripts and duplicate outputs
+  produced in the current round.
 
-## 复现
+## Reproduction
 
-```bash
-uv venv --python 3.13.13 .venv
-uv pip install --python .venv/bin/python -r requirements-lock.txt
-uv pip install --python .venv/bin/python -e .
-.venv/bin/python -m pytest
-.venv/bin/python -m strategy_survivorship.run_stage1     # 主 benchmark
-.venv/bin/python -m strategy_survivorship.run_stage11    # Stage 1.1 诊断
-```
+Installation, commands and data requirements are in README.md and docs/DATA.md.
